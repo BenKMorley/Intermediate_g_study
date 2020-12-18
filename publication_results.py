@@ -28,7 +28,6 @@
 from frequentist_run import run_frequentist_analysis
 from model_definitions import *
 from tqdm import tqdm
-from bayesian_functions import *
 import matplotlib.pyplot as plt
 import pdb
 
