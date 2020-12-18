@@ -3,15 +3,15 @@
 N=2
 g=1
 L=16
-NOR = 10
-ALPHA = 0
+NOR=10
+ALPHA=0
 
 # Don't bother saving at the moment as the runs are so cheap
-SAVE_FREQ = 99999999
+SAVE_FREQ=99999999
 
-END = 100000
+END=100000
 
-NODES = 1
+NODES=1
 
 # Use my virtual environment for this project
 source /home/dc-kitc1/virtual_envs/Intermediate_g_env/bin/activate
