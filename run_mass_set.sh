@@ -3,11 +3,14 @@
 N=2
 g=1
 L=16
-NOR=10
+nOR=10
 ALPHA=0
 
 # Don't bother saving at the moment as the runs are so cheap
-SAVE_FREQ=99999999
+FREQ=99999999
+
+# One larger than end because of fencepost
+TPJOB = 100001
 
 END=100000
 
@@ -31,7 +34,7 @@ for m in `echo $X`
 do
     echo About to submit job with N=$N, g=$g, L=$L, m=$m
 
-    ./start-run.sh $g $N $L $m
+    ./start-run.sh $g $N $L $m $nOR $ALPHA $FREQ $TPJOB $END $NODES
     sleep 1
 done
 
