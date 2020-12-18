@@ -31,7 +31,7 @@ for m in `echo $X`
 do
     echo About to submit job with N=$N, g=$g, L=$L, m=$m
 
-    ./do_start_run.sh $g $N $L $m
+    ./start_run.sh $g $N $L $m
     sleep 1
 done
 
