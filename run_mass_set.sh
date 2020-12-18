@@ -10,7 +10,7 @@ ALPHA=0
 FREQ=99999999
 
 # One larger than end because of fencepost
-TPJOB = 100001
+TPJOB=100001
 
 END=100000
 
