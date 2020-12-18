@@ -34,6 +34,8 @@ for m in `echo $X`
 do
     echo About to submit job with N=$N, g=$g, L=$L, m=$m
 
+    echo ./start-run.sh $g $N $L $m $nOR $ALPHA $FREQ $TPJOB $END $NODES
+
     ./start-run.sh $g $N $L $m $nOR $ALPHA $FREQ $TPJOB $END $NODES
     sleep 1
 done
