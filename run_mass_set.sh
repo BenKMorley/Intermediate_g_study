@@ -29,9 +29,9 @@ cd /rds/project/dirac_vol4/rds-dirac-dp099/cosmhol-hbor
 
 for m in `echo $X`
 do
-    echo About to submit job with N=$N, g=$g, L=$16, m=$m
+    echo About to submit job with N=$N, g=$g, L=$L, m=$m
 
-    # ./do_start_run.sh $g $N $L $m 
+    ./do_start_run.sh $g $N $L $m
     sleep 1
 done
 
