@@ -4,7 +4,7 @@ N=2
 g=1
 L=16
 nOR=10
-ALPHA=0
+ALPHA=0.0001
 
 # Don't bother saving at the moment as the runs are so cheap
 FREQ=99999999
