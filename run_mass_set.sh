@@ -2,7 +2,7 @@
 
 N=2
 g=1
-L=16
+L=32
 nOR=10
 ALPHA=0.0001
 
@@ -14,7 +14,7 @@ TPJOB=100001
 
 END=100000
 
-NODES=1
+NODES=2
 
 # Use my virtual environment for this project
 source /home/dc-kitc1/virtual_envs/Intermediate_g_env/bin/activate
