@@ -1,7 +1,7 @@
 import h5py
 import numpy
 
-def read_in_raw(N, g, L, m, base_dir="/rds/project/dirac_vol4/rds-dirac-dp099/cosmhol-hbor/", OR=10):
+def read_in_raw(N, g, L, m, base_dir="/rds/project/dirac_vol4/rds-dirac-dp099/cosmhol-hbor", OR=10):
 
     in_dir = f"{base_dir}/g{g}/su{N}/L{L}/m2-{m:.5f}/mag"
     file_prefix = f"cosmhol-hbor-su2_L{L}_g{g}_m2-{m:.5f}_or{OR}"
