@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 N=2
-g=1
+g=1.0
 L=32
 nOR=10
 ALPHA=0.0001
