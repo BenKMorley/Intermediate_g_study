@@ -30,6 +30,8 @@ def get_SQL_data(N, L, g, m, OR):
 
 
 def write_data_to_MCMC(N, L, g, m, phi2, m2, m4, num_entries):
+    f = h5py.File("MCMC_test.h5", "w")
+
     assert len(m2) == num_entries
     assert len(m4) == num_entries
     assert len(phi2) == num_entries
