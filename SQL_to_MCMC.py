@@ -34,7 +34,6 @@ def get_SQL_data(N, L, g, m, OR):
 
 def write_data_to_MCMC(N, L, g, m, phi2, m2, m4, num_entries, rewrite_data=False):
     with h5py.File("MCMC_test.h5", "a") as f:
-
         assert len(m2) == num_entries
         assert len(m4) == num_entries
         assert len(phi2) == num_entries
@@ -57,6 +56,7 @@ def write_data_to_MCMC(N, L, g, m, phi2, m2, m4, num_entries, rewrite_data=False
 
         # If this key is present then the data has already been written in
         if f"msq={float(m):.8f}" not in L_level.keys():
+            print(f"About to write data for N = {N}, L = {L}, g = {g}, m = {m}")
             data = L_level.create_dataset(f"msq={float(m):.8f}", (3, num_entries), dtype='f')
 
             data[0] = numpy.array(m2)[:, 0]
@@ -64,6 +64,7 @@ def write_data_to_MCMC(N, L, g, m, phi2, m2, m4, num_entries, rewrite_data=False
             data[2] = numpy.array(phi2)[:, 0]
 
         elif rewrite_data:
+            print(f"About to write data for N = {N}, L = {L}, g = {g}, m = {m}")
             data = L_level.create_dataset(f"msq={float(m):.8f}", (3, num_entries), dtype='f')
 
             data[0] = numpy.array(m2)[:, 0]
