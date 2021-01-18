@@ -1,6 +1,8 @@
 import sqlite3
 import h5py
 import pdb
+import numpy
+
 from mass_array import get_masses
 
 
@@ -56,20 +58,18 @@ def write_data_to_MCMC(N, L, g, m, phi2, m2, m4, num_entries):
     # If this key is present then the data has already been written in
     if f"msq={float(m):.8f}" not in L_level.keys():
         pdb.set_trace()
-        m_level = L_level.create_group(f"msq={float(m):.8f}")
-        data = m_level.create_dataset((3, num_entries))
+        data = L_level.create_dataset(f"msq={float(m):.8f}", (3, num_entries), dtype='f')
 
-        data[0] = m2
-        data[1] = m4
-        data[2] = phi2
+        data[0] = numpy.array(m2)[:, 0]
+        data[1] = numpy.array(m4)[:, 0]
+        data[2] = numpy.array(phi2)[:, 0]
 
     elif rewrite_data:
-        m_level = L_level[f"msq={float(m):.8f}"]
-        data = m_level.create_dataset(shape=(3, num_entries))
+        data = L_level.create_dataset(f"msq={float(m):.8f}", (3, num_entries), dtype='f')
 
-        data[0] = m2
-        data[1] = m4
-        data[2] = phi2
+        data[0] = numpy.array(m2)[:, 0]
+        data[1] = numpy.array(m4)[:, 0]
+        data[2] = numpy.array(phi2)[:, 0]
 
     else:
         print("Data aleady in file - continuing without rewrite")
