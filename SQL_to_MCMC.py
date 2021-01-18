@@ -15,7 +15,6 @@ def get_SQL_data(N, L, g, m, OR):
     directory = f"/rds/project/dirac_vol4/rds-dirac-dp099/cosmhol-hbor-dbtest/g{g:.1f}/su{N}/L{L}/m2{m}/mag/"
     file_name = f"cosmhol-scalar-hbor-su{N}_L{L}_g{g_string(g)}_m2{m}_or{OR}_database.0.db"
 
-    pdb.set_trace()
     conn = sqlite3.connect(f"{directory}{file_name}")
 
     cur = conn.execute('select * from Observables')
@@ -53,6 +52,8 @@ def write_data_to_MCMC(N, L, g, m, phi2, m2, m4, num_entries):
     else:
         L_level = g_level[f"L={L}"]
 
+    pdb.set_trace()
+
     # If this key is present then the data has already been written in
     if f"msq={float(m):.8f}" not in f.keys():
         m_level = L_level.create_group(f"msq={float(m):.8f}")
@@ -64,7 +65,7 @@ def write_data_to_MCMC(N, L, g, m, phi2, m2, m4, num_entries):
 
     elif rewrite_data:
         m_level = L_level[f"msq={float(m):.8f}"]
-        data = m_level.create_dataset((3, num_entries))
+        data = m_level.create_dataset(shape=(3, num_entries))
 
         data[0] = m2
         data[1] = m4
