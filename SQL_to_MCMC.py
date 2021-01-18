@@ -33,46 +33,46 @@ def get_SQL_data(N, L, g, m, OR):
 
 
 def write_data_to_MCMC(N, L, g, m, phi2, m2, m4, num_entries):
-    f = h5py.File("MCMC_test.h5", "w")
+    with h5py.File("MCMC_test.h5", "a") as f:
 
-    assert len(m2) == num_entries
-    assert len(m4) == num_entries
-    assert len(phi2) == num_entries
+        assert len(m2) == num_entries
+        assert len(m4) == num_entries
+        assert len(phi2) == num_entries
 
-    if f"N={N}" not in f.keys():
-        N_level = f.create_group(f"N={N}")
-    else:
-        N_level = f[f"N={N}"]
+        if f"N={N}" not in f.keys():
+            N_level = f.create_group(f"N={N}")
+        else:
+            N_level = f[f"N={N}"]
 
-    if f"g={g:.2f}" not in N_level.keys():
-        g_level = N_level.create_group(f"g={g:.2f}")
-    else:
-        g_level = N_level[f"g={g:.2f}"]
+        if f"g={g:.2f}" not in N_level.keys():
+            g_level = N_level.create_group(f"g={g:.2f}")
+        else:
+            g_level = N_level[f"g={g:.2f}"]
 
-    if f"L={L}" not in g_level.keys():
-        L_level = g_level.create_group(f"L={L}")
-    else:
-        L_level = g_level[f"L={L}"]
+        if f"L={L}" not in g_level.keys():
+            L_level = g_level.create_group(f"L={L}")
+        else:
+            L_level = g_level[f"L={L}"]
 
 
-    # If this key is present then the data has already been written in
-    if f"msq={float(m):.8f}" not in L_level.keys():
-        pdb.set_trace()
-        data = L_level.create_dataset(f"msq={float(m):.8f}", (3, num_entries), dtype='f')
+        # If this key is present then the data has already been written in
+        if f"msq={float(m):.8f}" not in L_level.keys():
+            pdb.set_trace()
+            data = L_level.create_dataset(f"msq={float(m):.8f}", (3, num_entries), dtype='f')
 
-        data[0] = numpy.array(m2)[:, 0]
-        data[1] = numpy.array(m4)[:, 0]
-        data[2] = numpy.array(phi2)[:, 0]
+            data[0] = numpy.array(m2)[:, 0]
+            data[1] = numpy.array(m4)[:, 0]
+            data[2] = numpy.array(phi2)[:, 0]
 
-    elif rewrite_data:
-        data = L_level.create_dataset(f"msq={float(m):.8f}", (3, num_entries), dtype='f')
+        elif rewrite_data:
+            data = L_level.create_dataset(f"msq={float(m):.8f}", (3, num_entries), dtype='f')
 
-        data[0] = numpy.array(m2)[:, 0]
-        data[1] = numpy.array(m4)[:, 0]
-        data[2] = numpy.array(phi2)[:, 0]
+            data[0] = numpy.array(m2)[:, 0]
+            data[1] = numpy.array(m4)[:, 0]
+            data[2] = numpy.array(phi2)[:, 0]
 
-    else:
-        print("Data aleady in file - continuing without rewrite")
+        else:
+            print("Data aleady in file - continuing without rewrite")
 
 
 N = 2
