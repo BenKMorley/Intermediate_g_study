@@ -7,15 +7,12 @@ from mass_array import get_masses
 
 
 def g_string(g):
-    if abs(g - 1) < 10 ** -10:
-        return "1."
-    else:
-        return f"{g:.1f}"
+    return f"{g:.1f}".rstrip('0')
 
 
 def get_SQL_data(N, L, g, m, OR):
     directory = f"/rds/project/dirac_vol4/rds-dirac-dp099/cosmhol-hbor-dbtest/g{g:.1f}/su{N}/L{L}/m2{m}/mag/"
-    file_name = f"cosmhol-scalar-hbor-su{N}_L{L}_g{g_string(g)}_m2{m}_or{OR}_database.0.db"
+    file_name = f"cosmhol-scalar-hbor-su{N}_L{L}_g" + f"{g:.1f}".rstrip('0') + f"_m2{float(m):.5f}".rstrip('0') + f"_or{OR}_database.0.db"
 
     conn = sqlite3.connect(f"{directory}{file_name}")
 
