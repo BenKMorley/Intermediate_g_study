@@ -5,7 +5,7 @@ from mass_array import get_masses
 
 def g_string(g):
     if abs(g - 1) < 10 ** -10:
-        retrun "1."
+        return "1."
     else:
         return f"{g:.1f}"
 
