@@ -54,8 +54,8 @@ def write_data_to_MCMC(N, L, g, m, phi2, m2, m4, num_entries):
         L_level = g_level[f"L={L}"]
 
     # If this key is present then the data has already been written in
-    if f"msq={m:.8f}" not in f.keys():
-        m_level = L_level.create_group(f"msq={m:.8f}")
+    if f"msq={float(m):.8f}" not in f.keys():
+        m_level = L_level.create_group(f"msq={float(m):.8f}")
         data = m_level.create_dataset((3, num_entries))
 
         data[0] = m2
@@ -63,7 +63,7 @@ def write_data_to_MCMC(N, L, g, m, phi2, m2, m4, num_entries):
         data[2] = phi2
 
     elif rewrite_data:
-        m_level = L_level[f"msq={m:.8f}"]
+        m_level = L_level[f"msq={float(m):.8f}"]
         data = m_level.create_dataset((3, num_entries))
 
         data[0] = m2
