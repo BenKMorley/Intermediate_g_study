@@ -18,7 +18,7 @@ def get_SQL_data(N, L, g, m, OR):
     pdb.set_trace()
     conn = sqlite3.connect(f"{directory}{file_name}")
 
-    cur = conn.cursor()
+    cur = conn.execute('select * from Observables')
 
     names = list(map(lambda x: x[0], cur.description))
 
