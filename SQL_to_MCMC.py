@@ -12,7 +12,7 @@ def g_string(g):
 
 
 def get_SQL_data(N, L, g, m, OR):
-    directory = f"/rds/project/dirac_vol4/rds-dirac-dp099/cosmhol-hbor-dbtest/g{g:.2f}/su{N}/L{L}/m2{m}/"
+    directory = f"/rds/project/dirac_vol4/rds-dirac-dp099/cosmhol-hbor-dbtest/g{g:.1f}/su{N}/L{L}/m2{m}/"
     file_name = f"cosmhal-scalar-hbor-su{N}-L{L}_g{g_string(g)}_m2{m}_or{OR}_database.0.db"
 
     pdb.set_trace()
