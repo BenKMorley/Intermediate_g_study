@@ -84,6 +84,7 @@ num_m = 20
 masses = get_masses(N, g, L, num_m)
 
 for m in masses:
+    print(f"Retrieving data for N = {N}, L = {L}, g = {g}, m = {m}")
     phi2, m2, m4, num_entries = get_SQL_data(N, L, g, m, OR)
 
     write_data_to_MCMC(N, L, g, m, phi2, m2, m4, num_entries)
