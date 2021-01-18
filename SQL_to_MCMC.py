@@ -42,20 +42,20 @@ def write_data_to_MCMC(N, L, g, m, phi2, m2, m4, num_entries):
     else:
         N_level = f[f"N={N}"]
 
-    if f"g={g:.2f}" not in f.keys():
+    if f"g={g:.2f}" not in N_level.keys():
         g_level = N_level.create_group(f"g={g:.2f}")
     else:
         g_level = N_level[f"g={g:.2f}"]
 
-    if f"L={L}" not in f.keys():
+    if f"L={L}" not in g_level.keys():
         L_level = g_level.create_group(f"L={L}")
     else:
         L_level = g_level[f"L={L}"]
 
-    pdb.set_trace()
 
     # If this key is present then the data has already been written in
-    if f"msq={float(m):.8f}" not in f.keys():
+    if f"msq={float(m):.8f}" not in L_level.keys():
+        pdb.set_trace()
         m_level = L_level.create_group(f"msq={float(m):.8f}")
         data = m_level.create_dataset((3, num_entries))
 
