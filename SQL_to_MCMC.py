@@ -78,7 +78,6 @@ OR = 10
 num_m = 20
 
 for L in [16, 32]:
-    L = 16
     masses = get_masses(N, g, L, num_m)
 
     for m in masses:
