@@ -6,7 +6,7 @@ import sys
 
 def get_masses(N, g, L, num_m):
     # Use the previous work to predict m_crit
-    params = get_statistical_errors_central_fit(2)['params_central']
+    params = get_statistical_errors_central_fit(N)['params_central']
     alpha = params[0]
     beta = params[-2]
     nu = params[-1]
