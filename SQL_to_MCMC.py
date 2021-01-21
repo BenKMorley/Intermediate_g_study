@@ -29,7 +29,7 @@ def get_SQL_data(N, L, g, OR):
     for m in masses:
         file_name = f"cosmhol-scalar-hbor-su{N}_L{L}_g" + f"{g:.1f}".rstrip('0') + f"_m2{float(m):.5f}".rstrip('0') + f"_or{OR}_database.0.db"
 
-        conn = sqlite3.connect(f"{directory}{file_name}")
+        conn = sqlite3.connect(f"{directory}/m2{m}/mag/{file_name}")
 
         cur = conn.execute('select * from Observables')
 
