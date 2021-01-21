@@ -18,8 +18,8 @@ def get_masses(N, g, L, num_m):
 
     x = g * L
 
-    m_max = m_crit - span * x ** (-1 / nu) * m_crit
-    m_min = m_crit + span * x ** (-1 / nu) * m_crit
+    m_max = m_crit - span * x ** (-1 / nu) * g ** 2
+    m_min = m_crit + span * x ** (-1 / nu) * g ** 2
 
 
     # Save the masses at the 5 dp. level for use in a bash script
