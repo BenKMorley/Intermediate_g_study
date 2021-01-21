@@ -2,6 +2,7 @@ import sqlite3
 import h5py
 import pdb
 import numpy
+import os
 
 from mass_array import get_masses
 
@@ -10,21 +11,34 @@ def g_string(g):
     return f"{g:.1f}".rstrip('0')
 
 
-def get_SQL_data(N, L, g, m, OR):
-    directory = f"/rds/project/dirac_vol4/rds-dirac-dp099/cosmhol-hbor-dbtest/g{g:.1f}/su{N}/L{L}/m2{m}/mag/"
-    file_name = f"cosmhol-scalar-hbor-su{N}_L{L}_g" + f"{g:.1f}".rstrip('0') + f"_m2{float(m):.5f}".rstrip('0') + f"_or{OR}_database.0.db"
+def get_SQL_data(N, L, g, OR):
+    directory = f"/rds/project/dirac_vol4/rds-dirac-dp099/cosmhol-hbor-dbtest/g{g:.1f}/su{N}/L{L}/"
 
-    conn = sqlite3.connect(f"{directory}{file_name}")
+    masses = []
+    files = os.popen('ls')
+    for name in files:
+        if re.findall(r'-\d+\.\d+', name)[0] is not None:
+            masses.append(float(re.findall(r'-\d+\.\d+', string)[0]))
 
-    cur = conn.execute('select * from Observables')
+    phi2 = {}
+    m2 = {}
+    m4 = {}
+    num_entries = {}
 
-    names = list(map(lambda x: x[0], cur.description))
+    for m in masses:
+        file_name = f"cosmhol-scalar-hbor-su{N}_L{L}_g" + f"{g:.1f}".rstrip('0') + f"_m2{float(m):.5f}".rstrip('0') + f"_or{OR}_database.0.db"
 
-    phi2 = cur.execute('select phi2 from Observables').fetchall()
-    m2 = cur.execute('select m2 from Observables').fetchall()
-    m4 = cur.execute('select m4 from Observables').fetchall()
+        conn = sqlite3.connect(f"{directory}{file_name}")
 
-    num_entries = len(m2)
+        cur = conn.execute('select * from Observables')
+
+        names = list(map(lambda x: x[0], cur.description))
+
+        phi2[m] = cur.execute('select phi2 from Observables').fetchall()
+        m2[m] = cur.execute('select m2 from Observables').fetchall()
+        m4[m] = cur.execute('select m4 from Observables').fetchall()
+
+        num_entries[m] = len(m2[m])
 
     return phi2, m2, m4, num_entries
 
