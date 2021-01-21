@@ -3,6 +3,7 @@ import h5py
 import pdb
 import numpy
 import os
+import re
 
 from mass_array import get_masses
 
