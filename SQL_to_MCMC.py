@@ -102,4 +102,4 @@ for m in masses:
     num_entries_ = num_entries[m]
     print(f"Retrieving data for N = {N}, L = {L}, g = {g}, m = {m}")
 
-    write_data_to_MCMC(N, L, g, m, phi2, m2, m4, num_entries)
+    write_data_to_MCMC(N, L, g, m, phi2_, m2_, m4_, num_entries_)
