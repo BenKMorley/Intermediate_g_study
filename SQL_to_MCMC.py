@@ -16,7 +16,7 @@ def get_SQL_data(N, L, g, OR):
     directory = f"/rds/project/dirac_vol4/rds-dirac-dp099/cosmhol-hbor-dbtest/g{g:.1f}/su{N}/L{L}/"
 
     masses = []
-    files = os.popen('ls directory')
+    files = os.popen(f'ls {directory}')
     for name in files:
         if len(re.findall(r'-\d+\.\d+', name)) != 0:
             masses.append(float(re.findall(r'-\d+\.\d+', string)[0]))
