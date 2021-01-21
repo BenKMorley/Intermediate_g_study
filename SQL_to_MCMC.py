@@ -19,7 +19,7 @@ def get_SQL_data(N, L, g, OR):
     files = os.popen(f'ls {directory}')
     for name in files:
         if len(re.findall(r'-\d+\.\d+', name)) != 0:
-            masses.append(float(re.findall(r'-\d+\.\d+', string)[0]))
+            masses.append(float(re.findall(r'-\d+\.\d+', name)[0]))
 
     phi2 = {}
     m2 = {}
