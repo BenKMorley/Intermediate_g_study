@@ -4,7 +4,10 @@ from model_definitions import K1, mPT_1loop
 import sys
 
 
-def get_masses(N, g, L, num_m):
+def get_masses(N, g, L, num_m, span=10):
+    """
+        span is the number of multiples of g^2 * (gL)^1/nu
+    """
     # Use the previous work to predict m_crit
     params = get_statistical_errors_central_fit(N)['params_central']
     alpha = params[0]
@@ -12,9 +15,6 @@ def get_masses(N, g, L, num_m):
     nu = params[-1]
 
     m_crit = mPT_1loop(g, N) + g ** 2 * (alpha - beta * K1(g, N))
-
-    # The number of multiples of m_c^2 * (gL)^1/nu
-    span = 10
 
     x = g * L
 
@@ -36,10 +36,11 @@ if __name__ == "__main__":
     N = int(N)
     g = float(g)
     L = int(L)
+    span = 10
 
     num_m = 20
 
-    masses = get_masses(N, g, L, num_m)
+    masses = get_masses(N, g, L, num_m, span=span)
 
     with open('masses_to_run_temp.txt', 'w') as f:
         s = ' '
