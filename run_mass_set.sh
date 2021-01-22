@@ -3,6 +3,7 @@
 N=$1
 g=$2
 L=$3
+SPAN=$4
 nOR=10
 ALPHA=0.0001
 
@@ -19,7 +20,7 @@ NODES=1
 # Use my virtual environment for this project
 source /home/dc-kitc1/virtual_envs/Intermediate_g_env/bin/activate
 
-python3 mass_array.py $N $g $L
+python3 mass_array.py $N $g $L $SPAN
 
 # Leave this virtual environment
 deactivate

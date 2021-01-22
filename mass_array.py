@@ -21,7 +21,6 @@ def get_masses(N, g, L, num_m, span=10):
     m_max = m_crit - span * x ** (-1 / nu) * g ** 2
     m_min = m_crit + span * x ** (-1 / nu) * g ** 2
 
-
     # Save the masses at the 5 dp. level for use in a bash script
     masses = numpy.linspace(m_min, m_max, num_m)
 
@@ -32,11 +31,11 @@ def get_masses(N, g, L, num_m, span=10):
 
 
 if __name__ == "__main__":
-    N, g, L = sys.argv[1:]
+    N, g, L, span = sys.argv[1:]
     N = int(N)
     g = float(g)
     L = int(L)
-    span = 10
+    span = float(span)
 
     num_m = 20
 
