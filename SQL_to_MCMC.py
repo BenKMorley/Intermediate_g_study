@@ -88,18 +88,19 @@ def write_data_to_MCMC(N, L, g, m, phi2, m2, m4, num_entries, rewrite_data=False
 
 
 N = 2
-g = 1
+g_s = [1, 2, 4, 8, 16, 32]
 OR = 10
 num_m = 20
 L = 16
 
-phi2, m2, m4, num_entries, masses = get_SQL_data(N, L, g, OR)
+for g in g_s:
+    phi2, m2, m4, num_entries, masses = get_SQL_data(N, L, g, OR)
 
-for m in masses:
-    phi2_ = phi2[m]
-    m2_ = m2[m]
-    m4_ = m4[m]
-    num_entries_ = num_entries[m]
-    print(f"Retrieving data for N = {N}, L = {L}, g = {g}, m = {m}")
+    for m in masses:
+        phi2_ = phi2[m]
+        m2_ = m2[m]
+        m4_ = m4[m]
+        num_entries_ = num_entries[m]
+        print(f"Retrieving data for N = {N}, L = {L}, g = {g}, m = {m}")
 
-    write_data_to_MCMC(N, L, g, m, phi2_, m2_, m4_, num_entries_)
+        write_data_to_MCMC(N, L, g, m, phi2_, m2_, m4_, num_entries_)
