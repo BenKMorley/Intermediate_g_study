@@ -11,33 +11,65 @@ from model_definitions import K1, mPT_1loop
 matplotlib.use('tkagg')
 
 
-def plot_Binder(N, g_s, L_s):
+def fig3_color(gL, min_gL=0.79, max_gL=76.81, func=numpy.log):
+    top = numpy.array([0.5, 0, 0.7])
+    bottom = numpy.array([1, 1, 0])
+
+    gL_low = func(min_gL)
+    gL_high = func(max_gL)
+
+    gL_relative = (func(gL) - gL_low) / (gL_high - gL_low)
+
+    try:
+        assert (0 <= gL_relative) and (1 >= gL_relative), "Please use a gL in the range [gL_min, gL_max]"
+    
+    except:
+        pdb.set_trace()
+
+    color_value = tuple((gL_relative * top + (1 - gL_relative) * bottom))
+
+    return color_value
+
+
+def plot_Binder(N, g_s, L_s, data_file="MCMC_test.h5", minus_sign_override=False, legend=True):
     fig, ax = plt.subplots()
     ax.set_xlabel(r'$\frac{m^2 - m_c^2}{g^2} x^\frac{1}{\nu}$')
     ax.set_ylabel(r'$B(N, g, L)$')
-    markers = {16: 'v', 32: '<'}
+    markers = {8: 'd', 16: 'v', 32: '<', 48: '^', 64: 's', 96: 'o', 128:'d'}
 
-    with h5py.File("MCMC_test.h5", "r") as f:
+    with h5py.File(data_file, "r") as f:
+        params = get_statistical_errors_central_fit(N)['params_central']
+        alpha = params[0]
+        beta = params[-2]
+        nu = params[-1]
+
         for g in g_s:
+    
+            m_crit = mPT_1loop(g, N) + g ** 2 * (alpha - beta * K1(g, N))
             for L in L_s:
-                params = get_statistical_errors_central_fit(N)['params_central']
-                alpha = params[0]
-                beta = params[-2]
-                nu = params[-1]
-
-                m_crit = mPT_1loop(g, N) + g ** 2 * (alpha - beta * K1(g, N))
-
                 data = f[f'N={N}'][f'g={g:.2f}'][f'L={L}']
 
                 masses = []
                 Binders = []
 
                 for string in data.keys():
-                    m = float(re.findall(r'-\d+\.\d+', string)[0])
+                    try:
+                        m = float(re.findall(r'-\d+\.\d+', string)[0])
+
+                    except:
+                        if minus_sign_override:
+                            m = -float(re.findall(r'\d+\.\d+', string)[0])
+                        else:
+                            print("Mass not found")
+
                     # pdb.set_trace()
                     masses.append(m)
 
-                    mass_data = data[f'msq={m:.8f}']
+                    if minus_sign_override: 
+                        mass_data = data[f'msq={-m:.8f}']
+
+                    else:
+                        mass_data = data[f'msq={m:.8f}']
 
                     M2 = mass_data[0]
                     M4 = mass_data[1]
@@ -47,14 +79,21 @@ def plot_Binder(N, g_s, L_s):
 
                 masses = numpy.array(masses)
 
-                ax.scatter(((masses - m_crit) / g ** 2) * (g * L) ** (1 / nu), Binders, marker=markers[L], label=f'g={g}, L={L}')
+                ax.scatter(((masses - m_crit) / m_crit) * (g * L) ** (1 / nu), Binders, marker=markers[L], label=f'g={g}, L={L}', color=fig3_color(g * L, min_gL=3.1), facecolors='none')
 
-    plt.legend()
+    if legend:
+        plt.legend()
+
     plt.show()
 
 
 g_s = [1, 2, 4, 8, 16, 32]
 L_s = [16]
-N = 4
+N = 2
 
-plot_Binder(N, g_s, L_s)
+# plot_Binder(N, g_s, L_s)
+
+
+g_s = [0.5, 0.6]
+L_s = [32, 48, 64, 96, 128]
+plot_Binder(N, g_s, L_s, data_file="h5data/MCMCdata.h5", minus_sign_override=True, legend=False)
