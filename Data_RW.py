@@ -75,8 +75,8 @@ def get_raw_data(N, L, g, OR=10, sub_dir="cosmhol-hbor"):
     return phi2, m2, m4, num_entries, masses
 
 
-def write_data_to_MCMC(N, L, g, m, phi2, m2, m4, num_entries, rewrite_data=False):
-    with h5py.File("MCMC_test.h5", "a") as f:
+def write_data_to_MCMC(N, L, g, m, phi2, m2, m4, num_entries, rewrite_data=False, filename="MCMC_test.h5"):
+    with h5py.File(filename, "a") as f:
         m2 = numpy.array(m2)
         m4 = numpy.array(m4)
         phi2 = numpy.array(phi2)
