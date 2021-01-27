@@ -73,9 +73,25 @@ def get_raw_data(N, L, g, OR=10, sub_dir="cosmhol-hbor"):
 
 def write_data_to_MCMC(N, L, g, m, phi2, m2, m4, num_entries, rewrite_data=False):
     with h5py.File("MCMC_test.h5", "a") as f:
+        m2 = numpy.array(m2)
+        m4 = numpy.array(m4)
+        phi2 = numpy.array(phi2)
+
         assert len(m2) == num_entries
         assert len(m4) == num_entries
         assert len(phi2) == num_entries
+
+        if m2.shape != (num_entries, ):
+            assert m2.shape == (num_entries, 1)
+            m2.reshape(num_entries)
+
+        if m4.shape != (num_entries, ):
+            assert m4.shape == (num_entries, 1)
+            m4.reshape(num_entries)
+
+        if phi2.shape != (num_entries, ):
+            assert phi2.shape == (num_entries, 1)
+            phi2.reshape(num_entries)
 
         if f"N={N}" not in f.keys():
             N_level = f.create_group(f"N={N}")
@@ -98,17 +114,17 @@ def write_data_to_MCMC(N, L, g, m, phi2, m2, m4, num_entries, rewrite_data=False
             print(f"About to write data for N = {N}, L = {L}, g = {g}, m = {m}")
             data = L_level.create_dataset(f"msq={float(m):.8f}", (3, num_entries), dtype='f')
 
-            data[0] = numpy.array(m2)[:, 0]
-            data[1] = numpy.array(m4)[:, 0]
-            data[2] = numpy.array(phi2)[:, 0]
+            data[0] = m2
+            data[1] = m4
+            data[2] = phi2
 
         elif rewrite_data:
             print(f"About to write data for N = {N}, L = {L}, g = {g}, m = {m}")
             data = L_level.create_dataset(f"msq={float(m):.8f}", (3, num_entries), dtype='f')
 
-            data[0] = numpy.array(m2)[:, 0]
-            data[1] = numpy.array(m4)[:, 0]
-            data[2] = numpy.array(phi2)[:, 0]
+            data[0] = m2
+            data[1] = m4
+            data[2] = phi2
 
         else:
             print("Data aleady in file - continuing without rewrite")
