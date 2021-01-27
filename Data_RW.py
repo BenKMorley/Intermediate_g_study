@@ -59,7 +59,7 @@ def get_raw_data(N, L, g, OR=10, sub_dir="cosmhol-hbor"):
     num_entries = {}
 
     for m in masses:
-        file_prefix = f"cosmhol-hbor-su2_L{L}_g{g}._m2{m}_or{OR}"
+        file_prefix = f"cosmhol-hbor-su{N}_L{L}_g{g}._m2{m}_or{OR}"
         in_dir = f"{base_dir}/m2{m}/mag"
 
         phi2 = numpy.fromfile(f"{in_dir}/{file_prefix}_phi2.0.dat")
