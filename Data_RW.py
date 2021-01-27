@@ -82,7 +82,7 @@ def get_raw_data(N, L, g, OR=10, sub_dir="cosmhol-hbor"):
 
         except:
             print(f"Data File not found: N={N}, g={g}, L={L}")
-            Found = False
+            found[m] = False
 
     return phi2, m2, m4, num_entries, masses, found
 
