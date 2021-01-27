@@ -49,7 +49,7 @@ def get_SQL_data(N, L, g, OR):
             print(f"Data File not found: N={N}, g={g}, L={L}")
             Found = False
 
-    return phi2, m2, m4, num_entries, masses
+    return phi2, m2, m4, num_entries, masses, found
 
 
 def get_raw_data(N, L, g, OR=10, sub_dir="cosmhol-hbor"):
@@ -154,13 +154,14 @@ L_s = [8, 16, 32, 48, 64, 96]
 
 for L in L_s:
     for g in g_s:
-        phi2, m2, m4, num_entries, masses = get_raw_data(N, L, g, OR)
+        phi2, m2, m4, num_entries, masses, found = get_raw_data(N, L, g, OR)
 
         for m in masses:
-            phi2_ = phi2[m]
-            m2_ = m2[m]
-            m4_ = m4[m]
-            num_entries_ = num_entries[m]
-            print(f"Retrieving data for N = {N}, L = {L}, g = {g}, m = {m}")
+            if found[m]:
+                phi2_ = phi2[m]
+                m2_ = m2[m]
+                m4_ = m4[m]
+                num_entries_ = num_entries[m]
+                print(f"Retrieving data for N = {N}, L = {L}, g = {g}, m = {m}")
 
-            write_data_to_MCMC(N, L, g, m, phi2_, m2_, m4_, num_entries_)
+                write_data_to_MCMC(N, L, g, m, phi2_, m2_, m4_, num_entries_)
