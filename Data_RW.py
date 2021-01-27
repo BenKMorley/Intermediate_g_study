@@ -46,7 +46,6 @@ def get_SQL_data(N, L, g, OR):
 
 def get_raw_data(N, L, g, OR=10, sub_dir="cosmhol-hbor"):
     base_dir = f"/rds/project/dirac_vol4/rds-dirac-dp099/{sub_dir}/g{g:.1f}/su{N}/L{L}/"
-    file_prefix = f"cosmhol-hbor-su2_L{L}_g{g}._m2-{m}_or{OR}"
 
     masses = []
     files = os.popen(f'ls {base_dir}')
@@ -60,6 +59,7 @@ def get_raw_data(N, L, g, OR=10, sub_dir="cosmhol-hbor"):
     num_entries = {}
 
     for m in masses:
+        file_prefix = f"cosmhol-hbor-su2_L{L}_g{g}._m2-{m}_or{OR}"
         in_dir = f"{base_dir}/g{g}/su{N}/L{L}/m2-{m}/mag"
 
         phi2 = numpy.fromfile(f"{in_dir}/{file_prefix}_phi2.0.dat")
