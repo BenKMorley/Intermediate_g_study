@@ -49,7 +49,7 @@ def get_raw_data(N, g, L, m, OR=10):
     file_prefix = f"cosmhol-hbor-su2_L{L}_g{g}._m2-{m}_or{OR}"
 
     masses = []
-    files = os.popen(f'ls {directory}')
+    files = os.popen(f'ls {base_dir}')
     for name in files:
         if len(re.findall(r'-\d+\.\d+', name)) != 0:
             masses.append(float(re.findall(r'-\d+\.\d+', name)[0]))
