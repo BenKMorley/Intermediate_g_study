@@ -44,15 +44,31 @@ def get_SQL_data(N, L, g, OR):
     return phi2, m2, m4, num_entries, masses
 
 
-def get_raw_data(N, g, L, m, base_dir="/rds/project/dirac_vol4/rds-dirac-dp099/cosmhol-hbor", OR=10):
-    mass = f"{m:.10f}".rstrip(0)
+def get_raw_data(N, g, L, m, OR=10):
+    base_dir = f"/rds/project/dirac_vol4/rds-dirac-dp099/cosmhol-hbor-dbtest/g{g:.1f}/su{N}/L{L}/"
+    file_prefix = f"cosmhol-hbor-su2_L{L}_g{g}._m2-{m}_or{OR}"
 
-    in_dir = f"{base_dir}/g{g}/su{N}/L{L}/m2-{mass}/mag"
-    file_prefix = f"cosmhol-hbor-su2_L{L}_g{g}._m2-{mass}_or{OR}"
+    masses = []
+    files = os.popen(f'ls {directory}')
+    for name in files:
+        if len(re.findall(r'-\d+\.\d+', name)) != 0:
+            masses.append(float(re.findall(r'-\d+\.\d+', name)[0]))
 
-    phi2 = numpy.fromfile(f"{in_dir}/{file_prefix}_phi2.0.dat")
-    M2 = numpy.fromfile(f"{in_dir}/{file_prefix}_m2.0.dat")
-    M4 = numpy.fromfile(f"{in_dir}/{file_prefix}_m4.0.dat")
+    phi2 = {}
+    m2 = {}
+    m4 = {}
+    num_entries = {}
+
+    for m in masses:
+        in_dir = f"{base_dir}/g{g}/su{N}/L{L}/m2-{m}/mag"
+
+        phi2 = numpy.fromfile(f"{in_dir}/{file_prefix}_phi2.0.dat")
+        M2 = numpy.fromfile(f"{in_dir}/{file_prefix}_m2.0.dat")
+        M4 = numpy.fromfile(f"{in_dir}/{file_prefix}_m4.0.dat")
+
+        num_entries[m] = len(m2[m])
+
+    return phi2, m2, m4, num_entries, masses
 
 
 def write_data_to_MCMC(N, L, g, m, phi2, m2, m4, num_entries, rewrite_data=False):
