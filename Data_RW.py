@@ -46,7 +46,7 @@ def get_SQL_data(N, L, g, OR):
             num_entries[m] = len(m2[m])
 
         except:
-            print(f"Data File not found: N={N}, g={g}, L={L}")
+            print(f"Data File not found: N={N}, g={g}, L={L}, m={m}")
             Found = False
 
     return phi2, m2, m4, num_entries, masses, found
@@ -81,7 +81,7 @@ def get_raw_data(N, L, g, OR=10, sub_dir="cosmhol-hbor"):
             num_entries[m] = len(m2[m])
 
         except:
-            print(f"Data File not found: N={N}, g={g}, L={L}")
+            print(f"Data File not found: N={N}, g={g}, L={L}, m={m}")
             found[m] = False
 
     return phi2, m2, m4, num_entries, masses, found
