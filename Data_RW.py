@@ -62,9 +62,13 @@ def get_raw_data(N, L, g, OR=10, sub_dir="cosmhol-hbor"):
         file_prefix = f"cosmhol-hbor-su{N}_L{L}_g{g}_m2{m}_or{OR}"
         in_dir = f"{base_dir}/m2{m}/mag"
 
-        phi2[m] = numpy.loadtxt(f"{in_dir}/{file_prefix}_phi2.0.dat")
-        m2[m] = numpy.loadtxt(f"{in_dir}/{file_prefix}_m2.0.dat")
-        m4[m] = numpy.loadtxt(f"{in_dir}/{file_prefix}_m4.0.dat")
+        try:
+            phi2[m] = numpy.loadtxt(f"{in_dir}/{file_prefix}_phi2.0.dat")
+            m2[m] = numpy.loadtxt(f"{in_dir}/{file_prefix}_m2.0.dat")
+            m4[m] = numpy.loadtxt(f"{in_dir}/{file_prefix}_m4.0.dat")
+
+        except:
+            print(f"Data File not found: N={N}, g={g}, L={L}")
 
         num_entries[m] = len(m2[m])
 
