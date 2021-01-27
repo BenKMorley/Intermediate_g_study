@@ -45,7 +45,7 @@ def get_SQL_data(N, L, g, OR):
 
 
 def get_raw_data(N, L, g, OR=10, sub_dir="cosmhol-hbor"):
-    base_dir = f"/rds/project/dirac_vol4/rds-dirac-dp099/{sub_dir}/g{g:.1f}/su{N}/L{L}/"
+    base_dir = f"/rds/project/dirac_vol4/rds-dirac-dp099/{sub_dir}/g{g:.1f}/su{N}/L{L}"
 
     masses = []
     files = os.popen(f'ls {base_dir}')
