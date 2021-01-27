@@ -25,6 +25,7 @@ def get_SQL_data(N, L, g, OR):
     m2 = {}
     m4 = {}
     num_entries = {}
+    found = {}
 
     for m in masses:
         file_name = f"cosmhol-scalar-hbor-su{N}_L{L}_g" + f"{g:.1f}".rstrip('0') + f"_m2{float(m):.5f}".rstrip('0') + f"_or{OR}_database.0.db"
@@ -34,12 +35,19 @@ def get_SQL_data(N, L, g, OR):
         cur = conn.execute('select * from Observables')
 
         names = list(map(lambda x: x[0], cur.description))
+        
+        found = True
 
-        phi2[m] = cur.execute('select phi2 from Observables').fetchall()
-        m2[m] = cur.execute('select m2 from Observables').fetchall()
-        m4[m] = cur.execute('select m4 from Observables').fetchall()
+        try:
+            phi2[m] = cur.execute('select phi2 from Observables').fetchall()
+            m2[m] = cur.execute('select m2 from Observables').fetchall()
+            m4[m] = cur.execute('select m4 from Observables').fetchall()
 
-        num_entries[m] = len(m2[m])
+            num_entries[m] = len(m2[m])
+
+        except:
+            print(f"Data File not found: N={N}, g={g}, L={L}")
+            Found = False
 
     return phi2, m2, m4, num_entries, masses
 
@@ -57,10 +65,13 @@ def get_raw_data(N, L, g, OR=10, sub_dir="cosmhol-hbor"):
     m2 = {}
     m4 = {}
     num_entries = {}
+    found = {}
 
     for m in masses:
         file_prefix = f"cosmhol-hbor-su{N}_L{L}_g{g}_m2{m}_or{OR}"
         in_dir = f"{base_dir}/m2{m}/mag"
+
+        found[m] = True
 
         try:
             phi2[m] = numpy.loadtxt(f"{in_dir}/{file_prefix}_phi2.0.dat")
@@ -71,8 +82,9 @@ def get_raw_data(N, L, g, OR=10, sub_dir="cosmhol-hbor"):
 
         except:
             print(f"Data File not found: N={N}, g={g}, L={L}")
+            Found = False
 
-    return phi2, m2, m4, num_entries, masses
+    return phi2, m2, m4, num_entries, masses, found
 
 
 def write_data_to_MCMC(N, L, g, m, phi2, m2, m4, num_entries, rewrite_data=False, filename="MCMC_test.h5"):
