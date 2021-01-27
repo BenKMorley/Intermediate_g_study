@@ -67,10 +67,10 @@ def get_raw_data(N, L, g, OR=10, sub_dir="cosmhol-hbor"):
             m2[m] = numpy.loadtxt(f"{in_dir}/{file_prefix}_m2.0.dat")
             m4[m] = numpy.loadtxt(f"{in_dir}/{file_prefix}_m4.0.dat")
 
-        except:
-            print(f"Data File not found: N={N}, g={g}, L={L}")
+            num_entries[m] = len(m2[m])
 
-        num_entries[m] = len(m2[m])
+        except FileNotFoundError as Warning:
+            print(f"Data File not found: N={N}, g={g}, L={L}")
 
     return phi2, m2, m4, num_entries, masses
 
