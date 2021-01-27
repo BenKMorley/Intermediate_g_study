@@ -69,7 +69,7 @@ def get_raw_data(N, L, g, OR=10, sub_dir="cosmhol-hbor"):
 
             num_entries[m] = len(m2[m])
 
-        except FileNotFoundError as Warning:
+        except:
             print(f"Data File not found: N={N}, g={g}, L={L}")
 
     return phi2, m2, m4, num_entries, masses
