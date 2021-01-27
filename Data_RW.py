@@ -44,8 +44,8 @@ def get_SQL_data(N, L, g, OR):
     return phi2, m2, m4, num_entries, masses
 
 
-def get_raw_data(N, L, g, m, OR=10):
-    base_dir = f"/rds/project/dirac_vol4/rds-dirac-dp099/cosmhol-hbor-dbtest/g{g:.1f}/su{N}/L{L}/"
+def get_raw_data(N, L, g, m, OR=10, sub_dir="cosmhol-hbor"):
+    base_dir = f"/rds/project/dirac_vol4/rds-dirac-dp099/{sub_dir}/g{g:.1f}/su{N}/L{L}/"
     file_prefix = f"cosmhol-hbor-su2_L{L}_g{g}._m2-{m}_or{OR}"
 
     masses = []
