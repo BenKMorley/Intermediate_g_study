@@ -109,4 +109,4 @@ ax = plot_Binder(N, g_s, L_s, data_file="h5data/MCMCdata_flipped_sign.h5", minus
 
 g_s = [1, 2, 4, 8, 16]
 L_s = [16]
-plot_Binder(N, g_s, L_s, data_file="h5data/MCMCdata_flipped_sign.h5", minus_sign_override=False, legend=False, ax=ax, max_gL=257)
+plot_Binder(N, g_s, L_s, data_file="h5data/MCMCdata_flipped_sign.h5", minus_sign_override=False, legend=True, ax=ax, max_gL=257)
