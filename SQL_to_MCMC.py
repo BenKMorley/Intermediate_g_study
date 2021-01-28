@@ -45,7 +45,7 @@ def get_SQL_data(N, L, g, OR):
 
 
 def write_data_to_MCMC(N, L, g, m, phi2, m2, m4, num_entries, datafile="MCMC_test.h5", rewrite_data=False):
-    with h5py.File("MCMC_test.h5", "a") as f:
+    with h5py.File(datafile, "a") as f:
         assert len(m2) == num_entries
         assert len(m4) == num_entries
         assert len(phi2) == num_entries
