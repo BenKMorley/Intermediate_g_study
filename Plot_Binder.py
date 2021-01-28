@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 from publication_results import get_statistical_errors_central_fit
 from model_definitions import K1, mPT_1loop
 
-matplotlib.use('tkagg')
+matplotlib.use('Qt5Agg')
 
 
 def fig3_color(gL, min_gL=0.79, max_gL=76.81, func=numpy.log):
