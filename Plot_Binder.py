@@ -22,7 +22,7 @@ def fig3_color(gL, min_gL=0.79, max_gL=76.81, func=numpy.log):
 
     try:
         assert (0 <= gL_relative) and (1 >= gL_relative), "Please use a gL in the range [gL_min, gL_max]"
-    
+
     except:
         pdb.set_trace()
 
@@ -79,7 +79,11 @@ def plot_Binder(N, g_s, L_s, data_file="MCMC_test.h5", minus_sign_override=False
 
                 masses = numpy.array(masses)
 
-                ax.scatter(((masses - m_crit) / m_crit) * (g * L) ** (1 / nu), Binders, marker=markers[L], label=f'g={g}, L={L}', color=fig3_color(g * L, min_gL=3.1), facecolors='none')
+                if g < 1:
+                    ax.scatter(((masses - m_crit) / m_crit) * (g * L) ** (1 / nu), Binders, marker=markers[L], label=f'g={g}, L={L}', color=fig3_color(g * L, min_gL=3.1), facecolors='none')
+
+                else:
+                    ax.scatter(((masses - m_crit) / m_crit) * (g * L) ** (1 / nu), Binders, marker=markers[L], label=f'g={g}, L={L}', color='g', facecolors='none')
 
     if legend:
         plt.legend()
@@ -94,6 +98,6 @@ N = 2
 # plot_Binder(N, g_s, L_s)
 
 
-g_s = [0.5, 0.6]
-L_s = [32, 48, 64, 96, 128]
+g_s = [0.2, 0.3, 0.5, 0.6, 1, 2, 4, 8, 16, 32]
+L_s = [16]
 plot_Binder(N, g_s, L_s, data_file="h5data/MCMCdata.h5", minus_sign_override=True, legend=False)
