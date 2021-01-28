@@ -82,10 +82,10 @@ def plot_Binder(N, g_s, L_s, data_file="MCMC_test.h5", minus_sign_override=False
                 masses = numpy.array(masses)
 
                 if g < 1:
-                    ax.scatter(((masses - m_crit) / m_crit) * (g * L) ** (1 / nu), Binders, marker=markers[L], label=f'g={g}, L={L}', color=fig3_color(g * L, min_gL=3.1), facecolors='none')
+                    ax.scatter(((masses - m_crit) / g ** 2) * (g * L) ** (1 / nu), Binders, marker=markers[L], label=f'g={g}, L={L}', color=fig3_color(g * L, min_gL=3.1), facecolors='none')
 
                 else:
-                    ax.scatter(((masses - m_crit) / m_crit) * (g * L) ** (1 / nu), Binders, marker=markers[L], label=f'g={g}, L={L}', color='g', facecolors='none')
+                    ax.scatter(((masses - m_crit) / g ** 2) * (g * L) ** (1 / nu), Binders, marker=markers[L], label=f'g={g}, L={L}', color='g', facecolors='none')
 
     if legend:
         plt.legend()
@@ -101,5 +101,5 @@ N = 2
 
 
 g_s = [0.2, 0.3, 0.5, 0.6, 1, 2, 4, 8, 16, 32]
-L_s = [16]
+L_s = [16, 32, 64]
 plot_Binder(N, g_s, L_s, data_file="h5data/MCMCdata_flipped_sign.h5", minus_sign_override=False, legend=False)
