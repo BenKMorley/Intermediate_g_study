@@ -31,10 +31,12 @@ def fig3_color(gL, min_gL=0.79, max_gL=76.81, func=numpy.log):
     return color_value
 
 
-def plot_Binder(N, g_s, L_s, data_file="MCMC_test.h5", minus_sign_override=False, legend=True):
-    fig, ax = plt.subplots()
-    ax.set_xlabel(r'$\frac{m^2 - m_c^2}{g^2} x^\frac{1}{\nu}$')
-    ax.set_ylabel(r'$B(N, g, L)$')
+def plot_Binder(N, g_s, L_s, data_file="MCMC_test.h5", minus_sign_override=False, legend=True, ax=None):
+    if ax is None:
+        fig, ax = plt.subplots()
+        ax.set_xlabel(r'$\frac{m^2 - m_c^2}{g^2} x^\frac{1}{\nu}$')
+        ax.set_ylabel(r'$B(N, g, L)$')
+
     markers = {8: 'd', 16: 'v', 32: '<', 48: '^', 64: 's', 96: 'o', 128:'d'}
 
     with h5py.File(data_file, "r") as f:
@@ -90,7 +92,7 @@ def plot_Binder(N, g_s, L_s, data_file="MCMC_test.h5", minus_sign_override=False
     if legend:
         plt.legend()
 
-    plt.show()
+    return ax
 
 
 g_s = [1, 2, 4, 8, 16, 32]
@@ -100,6 +102,10 @@ N = 2
 # plot_Binder(N, g_s, L_s)
 
 
-g_s = [0.2, 0.3, 0.5, 0.6, 1, 2, 4, 8, 16, 32]
-L_s = [16, 32, 64]
-plot_Binder(N, g_s, L_s, data_file="h5data/MCMCdata_flipped_sign.h5", minus_sign_override=False, legend=False)
+g_s = [0.2, 0.3, 0.5, 0.6]
+L_s = [16, 32, 48, 64, 96, 128]
+ax = plot_Binder(N, g_s, L_s, data_file="h5data/MCMCdata_flipped_sign.h5", minus_sign_override=False, legend=False)
+
+g_s = [1, 2, 4, 8, 16, 32]
+L_s = [16]
+plot_Binder(N, g_s, L_s, data_file="h5data/MCMCdata_flipped_sign.h5", minus_sign_override=False, legend=False, ax=ax)
