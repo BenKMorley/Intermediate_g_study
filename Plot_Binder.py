@@ -34,7 +34,8 @@ def fig3_color(gL, min_gL=0.79, max_gL=76.81, func=numpy.log):
 def plot_Binder(N, g_s, L_s, data_file="MCMC_test.h5", minus_sign_override=False, legend=True, ax=None, min_gL=3.1, max_gL=76.81):
     if ax is None:
         fig, ax = plt.subplots()
-        ax.set_xlabel(r'$\frac{m^2 - m_c^2}{g^2} x^\frac{1}{\nu}$')
+        # ax.set_xlabel(r'$\frac{m^2 - m_c^2}{g^2} x^\frac{1}{\nu}$')
+        ax.set_xlabel(r'$\frac{m_c^2 - m^2}{m_c^2} x^\frac{1}{\nu}$')
         ax.set_ylabel(r'$B(N, g, L)$')
 
     markers = {8: 'd', 16: 'v', 32: '<', 48: '^', 64: 's', 96: 'o', 128:'d'}
@@ -84,10 +85,10 @@ def plot_Binder(N, g_s, L_s, data_file="MCMC_test.h5", minus_sign_override=False
                 masses = numpy.array(masses)
 
                 if g < 100:
-                    ax.scatter(((masses - m_crit) / g ** 2) * (g * L) ** (1 / nu), Binders, marker=markers[L], label=f'g={g}, L={L}', color=fig3_color(g * L, min_gL=min_gL, max_gL=max_gL), facecolors='none')
+                    ax.scatter(((m_crit - masses) / m_crit) * (g * L) ** (1 / nu), Binders, marker=markers[L], label=f'g={g}, L={L}', color=fig3_color(g * L, min_gL=min_gL, max_gL=max_gL), facecolors='none')
 
                 else:
-                    ax.scatter(((masses - m_crit) / g ** 2) * (g * L) ** (1 / nu), Binders, marker=markers[L], label=f'g={g}, L={L}', color='g', facecolors='none')
+                    ax.scatter(((m_crit - masses) / m_crit) * (g * L) ** (1 / nu), Binders, marker=markers[L], label=f'g={g}, L={L}', color='g', facecolors='none')
 
     if legend:
         plt.legend()
