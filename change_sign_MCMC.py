@@ -32,4 +32,4 @@ def change_sign(MCMC_data_file, output_filename):
                             f_new[f'N={N}'][f'g={g:.2f}'][f'L={L}'][f'm={-m:.8f}'] = numpy.array(f[f'N={N}'][f'g={g:.2f}'][f'L={L}'][f'msq={m:.8f}'])
                         
 
-change_sign("h5data/MCMCdata.h5", "h5data/MCMCdata_flipped_sign")
+change_sign("h5data/MCMCdata.h5", "h5data/MCMCdata_flipped_sign.h5")
