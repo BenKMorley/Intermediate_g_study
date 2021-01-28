@@ -44,7 +44,7 @@ def plot_Binder(N, g_s, L_s, data_file="MCMC_test.h5", minus_sign_override=False
         nu = params[-1]
 
         for g in g_s:
-    
+
             m_crit = mPT_1loop(g, N) + g ** 2 * (alpha - beta * K1(g, N))
             for L in L_s:
                 data = f[f'N={N}'][f'g={g:.2f}'][f'L={L}']
@@ -62,14 +62,16 @@ def plot_Binder(N, g_s, L_s, data_file="MCMC_test.h5", minus_sign_override=False
                         else:
                             print("Mass not found")
 
-                    # pdb.set_trace()
                     masses.append(m)
 
                     if minus_sign_override: 
                         mass_data = data[f'msq={-m:.8f}']
 
                     else:
-                        mass_data = data[f'msq={m:.8f}']
+                        try:
+                            mass_data = data[f'msq={m:.8f}']
+                        except:
+                            pdb.set_trace()
 
                     M2 = mass_data[0]
                     M4 = mass_data[1]
@@ -100,4 +102,4 @@ N = 2
 
 g_s = [0.2, 0.3, 0.5, 0.6, 1, 2, 4, 8, 16, 32]
 L_s = [16]
-plot_Binder(N, g_s, L_s, data_file="h5data/MCMCdata.h5", minus_sign_override=True, legend=False)
+plot_Binder(N, g_s, L_s, data_file="h5data/MCMCdata_flipped_sign.h5", minus_sign_override=False, legend=False)
