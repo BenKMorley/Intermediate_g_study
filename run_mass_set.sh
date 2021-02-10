@@ -29,7 +29,7 @@ X=`cat masses_to_run_temp.txt`
 
 rm masses_to_run_temp.txt
 
-cd /rds/project/dirac_vol4/rds-dirac-dp099/cosmhol-hbor-dbtest
+cd /rds/project/dirac_vol4/rds-dirac-dp099/cosmhol-hbor
 
 for m in `echo $X`
 do
