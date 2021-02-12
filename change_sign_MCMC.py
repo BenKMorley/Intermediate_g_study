@@ -5,7 +5,11 @@ import os
 import re
 
 
-def change_sign(MCMC_data_file, output_filename):
+def change_sign(MCMC_data_file, output_filename, pm=True):
+    """
+        If pm is True then change sign from plus to minus, otherwise change the
+        other way
+    """
     with h5py.File(MCMC_data_file, "r") as f:
         with h5py.File(output_filename, "w") as f_new:
             for N_key in f.keys():
@@ -27,9 +31,13 @@ def change_sign(MCMC_data_file, output_filename):
                             f_new[f'N={N}'][f'g={g:.2f}'].create_group(f'L={L}')
 
                         for m_key in f[f'N={N}'][f'g={g:.2f}'][f'L={L}']:
-                            m = float(re.findall(r'\d+\.\d+', m_key)[0])
+                            # pdb.set_trace()
+                            if pm:
+                                m = float(re.findall(r'\d+\.\d+', m_key)[0])
+                            else:
+                                m = -float(re.findall(r'\d+\.\d+', m_key)[0])
 
                             f_new[f'N={N}'][f'g={g:.2f}'][f'L={L}'][f'msq={-m:.8f}'] = numpy.array(f[f'N={N}'][f'g={g:.2f}'][f'L={L}'][f'msq={m:.8f}'])
 
 
-change_sign("h5data/MCMC_olddata.h5", "h5data/MCMCdata_flipped_sign.h5")
+change_sign("h5data/MCMCdata_flipped_sign.h5", "h5data/MCMC_plussign.h5", pm=False)
