@@ -82,7 +82,7 @@ class Critical_analysis():
         """
             Here we allocate some basic variables and seed the RNG
         """
-        np.random.seed(int(N*g*912123))
+        np.random.seed(int(N * g * 912123))
 
         self.N = N
         self.g = g
@@ -178,7 +178,7 @@ class Critical_analysis():
             self.tauint.append(tau_intl)
 
             # set a minimum binsize of Nbin_min, otherwise 4*tau_int
-            if 4*tau_intl <= self.Nbin_min:
+            if 4 * tau_intl <= self.Nbin_min:
                 tau_intl = self.Nbin_min
             else:
                 tau_intl = 4 * tau_intl
@@ -200,7 +200,7 @@ class Critical_analysis():
             # generate boostrap indices for all input masses
             for j in range(len(self.actualm0sqlist)):
                 N = self.phi2[str(j)].shape[0]  # number of trajectories
-                Nbins = int(np.floor(N/self.Nbin_tauint[j]))  # number of bins
+                Nbins = int(np.floor(N / self.Nbin_tauint[j]))  # number of bins
                 L1tmp.append(np.random.randint(0, Nbins, size=(Nbins)))
 
             self.L1_bsindices.append(L1tmp)
@@ -251,16 +251,16 @@ class Critical_analysis():
             # otherwise interpolate/extrapolate <phi2> to simulation point
             if len(above) > 0 and len(below) > 0:  # interpolate
                 alpha = (self.simulated[above[0]] - self.simulated[below[-1]])\
-                            / (self.actualm0sqlist[below[-1]] -
-                               self.actualm0sqlist[above[0]])
+                    / (self.actualm0sqlist[below[-1]] -
+                       self.actualm0sqlist[above[0]])
 
                 res1 = self.simulated[below[-1]] + \
                     alpha * (self.actualm0sqlist[below[-1]] + msq)
 
             elif len(below) == 0 and len(above) > 0:  # extapolate
                 alpha = (self.simulated[above[1]] - self.simulated[above[0]])\
-                            / (self.actualm0sqlist[above[0]] -
-                               self.actualm0sqlist[above[1]])
+                    / (self.actualm0sqlist[above[0]] -
+                       self.actualm0sqlist[above[1]])
 
                 res1 = self.simulated[above[0]] + \
                     alpha * (self.actualm0sqlist[above[0]] + msq)
@@ -268,8 +268,8 @@ class Critical_analysis():
             elif len(below) > 0 and len(above) == 0:  # extrapolate
                 alpha = (self.simulated[below[-1]] -
                          self.simulated[below[-2]]) \
-                             / (self.actualm0sqlist[below[-2]] -
-                                self.actualm0sqlist[below[-1]])
+                    / (self.actualm0sqlist[below[-2]] -
+                       self.actualm0sqlist[below[-1]])
 
                 res1 = self.simulated[below[-1]] +\
                     alpha * (self.actualm0sqlist[below[-1]] + msq)
@@ -342,8 +342,8 @@ class Critical_analysis():
             return np.nan, np.nan
 
         else:
-            dres = np.sqrt(np.real(np.sum((np.array(res_bs)-res)**2, 0))) \
-                    / np.sqrt(self.Nboot)
+            dres = np.sqrt(np.real(np.sum((np.array(res_bs) - res)**2, 0))) \
+                / np.sqrt(self.Nboot)
 
             return res, dres
 
@@ -362,7 +362,7 @@ class Critical_analysis():
         # returned to be dealt with later
         try:
             av = np.mean(x, 0)
-            return av[0]*av[2] / av[1] ** 2
+            return av[0] * av[2] / av[1] ** 2
 
         except Exception:
             return np.nan
@@ -393,7 +393,7 @@ class Critical_analysis():
                                np.array(self.phi2[str(i)]))
 
             except Exception:
-                RWfac = np.nan*np.array(self.phi2[str(i)])
+                RWfac = np.nan * np.array(self.phi2[str(i)])
 
             #
             # binning for reweighting factor, phi^2, M^2 and M^4
@@ -402,21 +402,21 @@ class Critical_analysis():
                 RW_fac_bin = self.RWbinit_N(RWfac, self.Nbin_tauint[i])
 
             except Exception:
-                RW_fac_bin = self.RWbinit_N(np.nan*RWfac, self.Nbin_tauint[i])
+                RW_fac_bin = self.RWbinit_N(np.nan * RWfac, self.Nbin_tauint[i])
 
             try:
-                RW_2_bin = self.RWbinit_N(RWfac*np.array(self.M2[str(i)]),
+                RW_2_bin = self.RWbinit_N(RWfac * np.array(self.M2[str(i)]),
                                           self.Nbin_tauint[i])
 
             except Exception:
-                RW_2_bin = self.RWbinit_N(np.nan*np.array(self.M2[str(i)]),
+                RW_2_bin = self.RWbinit_N(np.nan * np.array(self.M2[str(i)]),
                                           self.Nbin_tauint[i])
 
             try:
-                RW_4_bin = self.RWbinit_N(RWfac*np.array(self.M4[str(i)]),
+                RW_4_bin = self.RWbinit_N(RWfac * np.array(self.M4[str(i)]),
                                           self.Nbin_tauint[i])
             except Exception:
-                RW_4_bin = self.RWbinit_N(np.nan*np.array(self.M4[str(i)]),
+                RW_4_bin = self.RWbinit_N(np.nan * np.array(self.M4[str(i)]),
                                           self.Nbin_tauint[i])
 
             # collate binned quantities into array
@@ -479,7 +479,7 @@ class Critical_analysis():
 
         # Fill list with trivial L1 bootstrap indices (i.e. 0,1,2,3,5,...)
         # for central value and use L0_bsindices for the inner bootstrap
-        self.rng_nest.seed(int(189123*self.L/3 * self.g * self.N))
+        self.rng_nest.seed(int(189123 * self.L / 3 * self.g * self.N))
         L1bs = []
 
         for j in range(len(self.actualm0sqlist)):
@@ -536,7 +536,7 @@ class Critical_analysis():
             store final result and information on underlying data into results
             file
         """
-        f = h5py.File(self.datadir+self.resultsfile, 'a')
+        f = h5py.File(self.datadir + self.resultsfile, 'a')
         key = 'N=%d/g=%.2f/L=%d/Bbar=%.3f' % (self.N, self.g, self.L,
                                               self.Bbar)
 
