@@ -37,11 +37,15 @@ do
 
     echo ./start-run.sh $g $N $L $m $nOR $ALPHA $FREQ $TPJOB $END $NODES
 
-    ./start-run.sh $g $N $L $m $nOR $ALPHA $FREQ $TPJOB $END $NODES
+    #./start-run.sh $g $N $L $m $nOR $ALPHA $FREQ $TPJOB $END $NODES
 
+    cd /home/dc-kitc1/Documents/Intermediate_g_study
+    
     # Add data to new data script
     echo $N,$g,$L,$m >> new_simulations.csv
 
-    sleep 1
+    cd /rds/project/dirac_vol4/rds-dirac-dp099/cosmhol-hbor
+
+    #sleep 1
 done
 
