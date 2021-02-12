@@ -87,6 +87,28 @@ def get_raw_data(N, L, g, OR=10, sub_dir="cosmhol-hbor"):
     return phi2, m2, m4, num_entries, masses, found
 
 
+def get_raw_data_one_m(N, L, g, m, OR=10, sub_dir="cosmhol-hbor"):
+    base_dir = f"/rds/project/dirac_vol4/rds-dirac-dp099/{sub_dir}/g{g:.1f}/su{N}/L{L}/" + f"m2{m:.5f}".rstrip('0')  + "/mag"
+
+    file_prefix = f"cosmhol-hbor-su{N}_L{L}_g{g}_" + f"m2{m:.5f}".rstrip('0') + f"_or{OR}"
+    in_dir = f"{base_dir}/m2{m}/mag"
+
+    found = True
+
+    try:
+        phi2 = numpy.loadtxt(f"{in_dir}/{file_prefix}_phi2.0.dat")
+        m2 = numpy.loadtxt(f"{in_dir}/{file_prefix}_m2.0.dat")
+        m4 = numpy.loadtxt(f"{in_dir}/{file_prefix}_m4.0.dat")
+
+        num_entries = len(m2)
+
+    except:
+        print(f"Data File not found: N={N}, g={g}, L={L}, m={m}")
+        found = False
+
+    return phi2, m2, m4, num_entries, masses, found
+
+
 def write_data_to_MCMC(N, L, g, m, phi2, m2, m4, num_entries, rewrite_data=False, filename="MCMC_test.h5"):
     with h5py.File(filename, "a") as f:
         m2 = numpy.array(m2)
