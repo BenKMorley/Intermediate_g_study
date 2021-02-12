@@ -38,6 +38,10 @@ do
     echo ./start-run.sh $g $N $L $m $nOR $ALPHA $FREQ $TPJOB $END $NODES
 
     ./start-run.sh $g $N $L $m $nOR $ALPHA $FREQ $TPJOB $END $NODES
+
+    # Add data to new data script
+    echo $N,$g,$L,$m >> new_simulations.csv
+
     sleep 1
 done
 
