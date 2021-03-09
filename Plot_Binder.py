@@ -110,14 +110,14 @@ def plot_Binder(N, g_s, L_s, data_file="MCMC_test.h5", minus_sign_override=False
                 # System.plot_tr_phi2_distributions()
                 # plt.show()
 
-                # for i, m in tqdm(enumerate(mass_range)):
-                #     Binder_bit = System.reweight_Binder(m, L1bs, L0bs)
+                for i, m in tqdm(enumerate(mass_range)):
+                    Binder_bit = System.reweight_Binder(m, L1bs, L0bs)
 
-                #     results.append(Binder_bit)
+                    results.append(Binder_bit)
 
-                # results = numpy.array(results)
+                results = numpy.array(results)
 
-                # plt.plot(((mass_range - m_crit) / g ** 2) * (g * L) ** (1 / nu), results + System.Bbar)
+                plt.plot(((mass_range - m_crit) / g ** 2) * (g * L) ** (1 / nu), results + System.Bbar)
 
     if legend:
         plt.legend()
@@ -127,8 +127,8 @@ def plot_Binder(N, g_s, L_s, data_file="MCMC_test.h5", minus_sign_override=False
 
 N = 2
 g_s = [0.1, 0.2, 0.3, 0.5, 0.6, 1, 2, 4, 8, 16]
-g_s = [8, 16]
+g_s = [1]
 L_s = [16]
 ax = plot_Binder(N, g_s, L_s, data_file="h5data/MCMC_plussign.h5", minus_sign_override=True, legend=False, min_gL=0.79, max_gL=16 * 16 + 1)
-plt.savefig('graphs/new_and_old_L16.png', dpi=500)
+# plt.savefig('graphs/new_and_old_L16.png', dpi=500)
 plt.show()
