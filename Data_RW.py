@@ -52,6 +52,117 @@ def get_SQL_data(N, L, g, OR):
     return phi2, m2, m4, num_entries, masses, found
 
 
+def get_raw_data_flexible(N_s=None, g_s=None, L_s=None, m_s=None, OR=10, base_dir=f"/rds/project/dirac_vol4/rds-dirac-dp099/cosmhol-hbor", change_sign=False):
+    ensemble_dict = {}
+
+    if g_s is None:
+        files = os.popen(f'ls {base_dir}')
+        for name in files:
+            if len(re.findall(r'g\d+.\d+', name)) != 0:
+                value = float(re.findall(r'\d+.\d+', name)[0])
+                ensemble_dict[f"g{value:.1f}"] = {}
+
+    else:
+        for g in g_s:
+            ensemble_dict[f"g{g:.1f}"] = {}
+
+    # Figure out which configurations we need to extract
+    for g in ensemble_dict.keys():
+        sub_dict = ensemble_dict[g]
+        sub_dir = f"{base_dir}/{g}"
+
+        if N_s is None:
+            files = os.popen(f'ls {sub_dir}')
+            for name in files:
+                if len(re.findall(r'\d+', name)) != 0:
+                    value = int(re.findall(r'\d+', name)[0])
+                    sub_dict[f"N{value}"] = {}
+
+        else:
+            for N in N_s:
+                sub_dict[f"su{N}"] = {}
+
+        for N in sub_dict.keys():
+            sub_dict2 = sub_dict[N]
+            sub_dir2 = sub_dir + "/" + N
+
+            if L_s is None:
+                try:
+                    files = os.popen(f'ls {sub_dir2}')
+
+                except Exception:
+                    files = []
+
+                for name in files:
+                    if len(re.findall(r'\d+', name)) != 0:
+                        value = int(re.findall(r'\d+', name)[0])
+                        sub_dict2[f"L{value}"] = {}
+
+            else:
+                for L in L_s:
+                    sub_dict2[f"L{L}"] = {}
+
+            for L in sub_dict2.keys():
+                sub_dict3 = sub_dict2[L]
+                sub_dir3 = sub_dir2 + "/" + L
+
+                if m_s is None:
+                    try:
+                        files = os.popen(f'ls {sub_dir3}')
+
+                    except Exception:
+                        files = []
+
+                    for name in files:
+                        if len(re.findall(r'm2-\d+.\d+', name)) != 0:
+                            if change_sign == False:
+                                value = float(re.findall(r'm2-\d+.\d+', name)[0])
+                                sub_dict3[f"m2{value:.5f}"] = {}
+
+                            else:
+                                value = -float(re.findall(r'm2-\d+.\d+', name)[0])
+                                sub_dict3[f"m2{value:.5f}"] = {}
+
+                        elif len(re.findall(r'm2\d+.\d+', name)) != 0:
+                            if change_sign == False:
+                                value = float(re.findall(r'm2\d+.\d+', name)[0])
+                                sub_dict3[f"m2{value:.5f}"] = {}
+
+                            else:
+                                value = -float(re.findall(r'm2\d+.\d+', name)[0])
+                                sub_dict3[f"m2{value:.5f}"] = {}
+
+                else:
+                    for m in m_s:
+                        sub_dict3[f"m2{m:.5f}"] = {}
+
+    # Extract the configurations
+    for g in ensemble_dict.keys():
+        dict1 = ensemble_dict[g]
+
+        for N in dict1.keys():
+            dict2 = dict1[N]
+
+            for L in dict2.keys():
+                dict3 = dict2[L]
+
+                for m in dict3.keys():
+                    dict4 = dict3[m]
+                    file_root = f"{base_dir}/{g}/{N}/{L}/" + m.rstrip('0') + f"/mag/cosmhol-hbor-{N}_{L}_{g}_{m}".rstrip('0') + f"_or{OR}"
+
+                    print("Loading in data from: " + file_root)
+
+                    try:
+                        dict4['phi2'] = numpy.loadtxt(file_root + "_phi2.0.dat")
+                        dict4['m2'] = numpy.loadtxt(file_root + "_m2.0.dat")
+                        dict4['m4'] = numpy.loadtxt(file_root + "_m4.0.dat")
+
+                    except Exception:
+                        print("FILES NOT FOUND!")
+
+    return ensemble_dict
+
+
 def get_raw_data(N, L, g, OR=10, sub_dir="cosmhol-hbor"):
     base_dir = f"/rds/project/dirac_vol4/rds-dirac-dp099/{sub_dir}/g{g:.1f}/su{N}/L{L}"
 
