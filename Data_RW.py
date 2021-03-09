@@ -114,22 +114,22 @@ def get_raw_data_flexible(N_s=None, g_s=None, L_s=None, m_s=None, OR=10, base_di
                         files = []
 
                     for name in files:
-                        if len(re.findall(r'm2-\d+.\d+', name)) != 0:
+                        if len(re.findall(r'm2-\d+\.\d+', name)) != 0:
                             if change_sign == False:
-                                value = float(re.findall(r'm2-\d+.\d+', name)[0])
+                                value = -float(re.findall(r'\d+\.\d+', name)[0])
                                 sub_dict3[f"m2{value:.5f}"] = {}
 
                             else:
-                                value = -float(re.findall(r'm2-\d+.\d+', name)[0])
+                                value = float(re.findall(r'\d+\.\d+', name)[0])
                                 sub_dict3[f"m2{value:.5f}"] = {}
 
-                        elif len(re.findall(r'm2\d+.\d+', name)) != 0:
+                        elif len(re.findall(r'm2\d+\.\d+', name)) != 0:
                             if change_sign == False:
-                                value = float(re.findall(r'm2\d+.\d+', name)[0])
+                                value = float(re.findall(r'\d+\.\d+', name)[0])
                                 sub_dict3[f"m2{value:.5f}"] = {}
 
                             else:
-                                value = -float(re.findall(r'm2\d+.\d+', name)[0])
+                                value = -float(re.findall(r'\d+\.\d+', name)[0])
                                 sub_dict3[f"m2{value:.5f}"] = {}
 
                 else:
@@ -146,7 +146,9 @@ def get_raw_data_flexible(N_s=None, g_s=None, L_s=None, m_s=None, OR=10, base_di
             for L in dict2.keys():
                 dict3 = dict2[L]
 
-                for m in dict3.keys():
+                keys = list(dict3.keys())
+
+                for m in keys:
                     dict4 = dict3[m]
                     file_root = f"{base_dir}/{g}/{N}/{L}/" + m.rstrip('0') + f"/mag/cosmhol-hbor-{N}_{L}_{g}_{m}".rstrip('0') + f"_or{OR}"
 
@@ -159,6 +161,7 @@ def get_raw_data_flexible(N_s=None, g_s=None, L_s=None, m_s=None, OR=10, base_di
 
                     except Exception:
                         print("FILES NOT FOUND!")
+                        del dict3[m]
 
     return ensemble_dict
 
@@ -277,24 +280,3 @@ def write_data_to_MCMC(N, L, g, m, phi2, m2, m4, num_entries, rewrite_data=False
 
         else:
             print("Data aleady in file - continuing without rewrite")
-
-
-N = 3
-# g_s = [1, 2, 4, 8, 16, 32]
-g_s = [0.1, 0.2, 0.3, 0.5, 0.6]
-OR = 10
-L_s = [8, 16, 32, 48, 64, 96]
-
-for L in L_s:
-    for g in g_s:
-        phi2, m2, m4, num_entries, masses, found = get_raw_data(N, L, g, OR)
-
-        for m in masses:
-            if found[m]:
-                phi2_ = phi2[m]
-                m2_ = m2[m]
-                m4_ = m4[m]
-                num_entries_ = num_entries[m]
-                print(f"Retrieving data for N = {N}, L = {L}, g = {g}, m = {m}")
-
-                write_data_to_MCMC(N, L, g, m, phi2_, m2_, m4_, num_entries_)
