@@ -2,3 +2,8 @@ graphs/*
 __pycache__/*
 launch.json
 h5data/*
+MCMC_study.py
+MISC.py
+new_simulations.csv
+parameters.py
+
