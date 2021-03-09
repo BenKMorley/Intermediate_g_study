@@ -4,6 +4,9 @@ import pdb
 import numpy
 import os
 import re
+import sys
+
+sys.path.append("/home/dc-kitc1/Documents/Intermediate_g_study/")
 
 from mass_array import get_masses
 
@@ -223,7 +226,7 @@ def get_raw_data_one_m(N, L, g, m, OR=10, sub_dir="cosmhol-hbor"):
     return phi2, m2, m4, num_entries, masses, found
 
 
-def write_data_to_MCMC(N, L, g, m, phi2, m2, m4, num_entries, rewrite_data=False, filename="MCMC_test.h5"):
+def write_data_to_MCMC(N, L, g, m, phi2, m2, m4, num_entries, rewrite_data=False, filename="MCMC_test.h5", change_sign=False):
     with h5py.File(filename, "a") as f:
         m2 = numpy.array(m2)
         m4 = numpy.array(m4)
@@ -245,21 +248,20 @@ def write_data_to_MCMC(N, L, g, m, phi2, m2, m4, num_entries, rewrite_data=False
             assert phi2.shape == (num_entries, 1)
             phi2.reshape(num_entries)
 
-        if f"N={N}" not in f.keys():
-            N_level = f.create_group(f"N={N}")
+        if f'N={N}' not in f.keys():
+            N_level = f.create_group(f'N={N}')
         else:
-            N_level = f[f"N={N}"]
+            N_level = f[f'N={N}']
 
-        if f"g={g:.2f}" not in N_level.keys():
-            g_level = N_level.create_group(f"g={g:.2f}")
+        if f'g={g:.2f}' not in N_level.keys():
+            g_level = N_level.create_group(f'g={g:.2f}')
         else:
-            g_level = N_level[f"g={g:.2f}"]
+            g_level = N_level[f'g={g:.2f}']
 
-        if f"L={L}" not in g_level.keys():
-            L_level = g_level.create_group(f"L={L}")
+        if f'L={L}' not in g_level.keys():
+            L_level = g_level.create_group(f'L={L}')
         else:
-            L_level = g_level[f"L={L}"]
-
+            L_level = g_level[f'L={L}']
 
         # If this key is present then the data has already been written in
         if f"msq={float(m):.8f}" not in L_level.keys():
