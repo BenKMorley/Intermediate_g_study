@@ -26,7 +26,7 @@
 # list of available volumes
 Ls = [8, 16, 32, 48, 64, 96, 128]
 gs = [0.1, 0.2, 0.3, 0.5, 0.6, 1.0]
-Ns = [2, 4]
+Ns = [2, 3, 4]
 
 # interval on which solver should iterate, in case of emptly list solver will
 # run between smallest and largest simulated mass. For each dictionary entry

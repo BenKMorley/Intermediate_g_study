@@ -104,8 +104,8 @@ class Critical_analysis():
         self.msq_final = 0.
         self.dmsq_final = 0.
         self.datadir = 'h5data/'
-        self.MCMCdatafile = 'MCMC_plussign.h5'
-        self.resultsfile = 'Bindercrossings_test.h5'
+        self.MCMCdatafile = 'MCMC_plussign_N3.h5'
+        self.resultsfile = 'Bindercrossings_N3.h5'
 
     def h5load_data(self):
         """
