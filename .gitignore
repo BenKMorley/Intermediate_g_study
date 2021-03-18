@@ -14,4 +14,4 @@ ensemble_data/*
 read_write/change_sign_MCMC.py
 run_loop_binder.sh
 run_Plot_Binder.py
-*.ods
+*.ods*
