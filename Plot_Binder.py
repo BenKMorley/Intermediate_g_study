@@ -123,12 +123,3 @@ def plot_Binder(N, g_s, L_s, data_file="MCMC_test.h5", minus_sign_override=False
         plt.legend()
 
     return ax
-
-
-N = 2
-g_s = [0.1, 0.2, 0.3, 0.5, 0.6, 1, 2, 4, 8, 16]
-g_s = [1]
-L_s = [16]
-ax = plot_Binder(N, g_s, L_s, data_file="h5data/MCMC_plussign.h5", minus_sign_override=True, legend=False, min_gL=0.79, max_gL=16 * 16 + 1)
-# plt.savefig('graphs/new_and_old_L16.png', dpi=500)
-plt.show()
