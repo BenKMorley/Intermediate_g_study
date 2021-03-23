@@ -5,6 +5,7 @@ import numpy
 import matplotlib
 import matplotlib.pyplot as plt
 from tqdm import tqdm
+from model_definitions import mPT_1loop
 
 from publication_results import get_statistical_errors_central_fit
 from model_definitions import K1, mPT_1loop
@@ -33,26 +34,28 @@ def fig3_color(gL, min_gL=0.79, max_gL=76.81, func=numpy.log):
     return color_value
 
 
-def plot_Binder(N, g_s, L_s, data_file="MCMC_test.h5", minus_sign_override=False, legend=True, ax=None, min_gL=3.1, max_gL=76.81, reweight=True):
+def plot_Binder(N, g_s, L_s, data_file="MCMC_test.h5", form="g2", minus_sign_override=False, legend=True, ax=None, min_gL=3.1, max_gL=76.81, reweight=True, params=None):
     if ax is None:
         fig, ax = plt.subplots()
         ax.set_xlabel(r'$\frac{m^2 - m_c^2}{g^2} x^\frac{1}{\nu}$')
         # ax.set_xlabel(r'$\frac{m_c^2 - m^2}{m_c^2} x^\frac{1}{\nu}$')
         ax.set_ylabel(r'$B(N, g, L)$')
 
-    markers = {8: 'd', 16: 'v', 32: '<', 48: '^', 64: 's', 96: 'p', 128:'d'}
+    markers = {8: 'd', 16: 'v', 32: '<', 48: '^', 64: 's', 96: 'o', 128:'d'}
 
     with h5py.File(data_file, "r") as f:
-        # params = get_statistical_errors_central_fit(N)['params_central']
-        # alpha = params[0]
-        # beta = params[-2]
-        # nu = params[-1]
+        if params is None:
+            params = get_statistical_errors_central_fit(N)['params_central']
+
+        alpha = params[0]
+        beta = params[-2]
+        nu = params[-1]
         # nu = 0.65
         # beta = 1.21
         # pdb.set_trace()
 
         for g in g_s:
-            # m_crit = mPT_1loop(g, N) + g ** 2 * (alpha - beta * K1(g, N))
+            m_crit = mPT_1loop(g, N) + g ** 2 * (alpha - beta * K1(g, N))
             for L in L_s:
                 data = f[f'N={N}'][f'g={g:.2f}'][f'L={L}']
 
@@ -61,6 +64,9 @@ def plot_Binder(N, g_s, L_s, data_file="MCMC_test.h5", minus_sign_override=False
                 Binder_sigmas = []
 
                 System = Critical_analysis(N, g, L)
+                System.MCMCdatafile = data_file
+                System.datadir = ''
+
                 System.h5load_data()
 
                 bootstrap_success = True
@@ -103,8 +109,13 @@ def plot_Binder(N, g_s, L_s, data_file="MCMC_test.h5", minus_sign_override=False
 
                     # Sort the data into bins
                     if bootstrap_success:
-                        M4_binned = M4[:-(len(M4) % bin_size)]
-                        M2_binned = M2[:-(len(M2) % bin_size)]
+                        if len(M4) % bin_size != 0:
+                            M4_binned = M4[:-(len(M4) % bin_size)]
+                            M2_binned = M2[:-(len(M2) % bin_size)]
+                        else:
+                            M4_binned = M4
+                            M2_binned = M2
+
                         no_bins = len(M4_binned) // bin_size
 
                         M4_binned = M4_binned.reshape((no_bins, bin_size))
@@ -118,19 +129,61 @@ def plot_Binder(N, g_s, L_s, data_file="MCMC_test.h5", minus_sign_override=False
                         for i in range(no_samples):
                             M4_sample = M4_binned[boot_indices[i]]
                             M2_sample = M2_binned[boot_indices[i]]
-                            Binder_boot[i] = 1 - (N / 3) * numpy.mean(M4_sample) / (numpy.mean(M2_sample) ** 2)
+                            
+                            try:
+                                Binder_boot[i] = 1 - (N / 3) * numpy.mean(M4_sample) / (numpy.mean(M2_sample) ** 2)
+                            except:
+                                pdb.set_trace()
 
                         Binder_sigmas.append(numpy.std(Binder_boot))
 
                     Binders.append(Binder)
 
-                # pdb.set_trace()
+                pdb.set_trace()
 
                 masses = numpy.array(masses)
-                if bootstrap_success:
-                    ax.errorbar(masses, Binders, Binder_sigmas, marker=markers[L], label=f'g={g}, L={L}', color=fig3_color(g * L, min_gL=min_gL, max_gL=max_gL), ls='', fillstyle='none')
-                else:
-                    ax.scatter(masses, Binders, marker=markers[L], label=f'g={g}, L={L}', color=fig3_color(g * L, min_gL=min_gL, max_gL=max_gL), facecolors=None)
+
+                if form == "g2":
+                    if bootstrap_success:
+                        ax.errorbar(((m_crit - masses) / g ** 2) * (g * L) ** (1 / nu), Binders, Binder_sigmas, marker=markers[L], label=f'g={g}, L={L}', color=fig3_color(g * L, min_gL=min_gL, max_gL=max_gL), ls='', fillstyle='none')
+                    else:
+                        ax.scatter(((m_crit - masses) / g ** 2) * (g * L) ** (1 / nu), Binders, marker=markers[L], label=f'g={g}, L={L}', color=fig3_color(g * L, min_gL=min_gL, max_gL=max_gL), facecolors=None)
+
+                if form == "m2":
+                    if bootstrap_success:
+                        ax.errorbar(((m_crit - masses) / m_crit) * (g * L) ** (1 / nu), Binders, Binder_sigmas, marker=markers[L], label=f'g={g}, L={L}', color=fig3_color(g * L, min_gL=min_gL, max_gL=max_gL), ls='', fillstyle='none')
+                    else:
+                        ax.scatter(((m_crit - masses) / m_crit) * (g * L) ** (1 / nu), Binders, marker=markers[L], label=f'g={g}, L={L}', color=fig3_color(g * L, min_gL=min_gL, max_gL=max_gL), facecolors=None)
+
+                if form == "m4":
+                    if bootstrap_success:
+                        ax.errorbar(((m_crit - masses) / m_crit ** 2) * (g * L) ** (1 / nu), Binders, Binder_sigmas, marker=markers[L], label=f'g={g}, L={L}', color=fig3_color(g * L, min_gL=min_gL, max_gL=max_gL), ls='', fillstyle='none')
+                    else:
+                        ax.scatter(((m_crit - masses) / m_crit ** 2) * (g * L) ** (1 / nu), Binders, marker=markers[L], label=f'g={g}, L={L}', color=fig3_color(g * L, min_gL=min_gL, max_gL=max_gL), facecolors=None)
+
+                if form == "square_num_g2":
+                    if bootstrap_success:
+                        ax.errorbar(((m_crit ** 2 - masses ** 2) / g ** 2) * (g * L) ** (1 / nu), Binders, Binder_sigmas, marker=markers[L], label=f'g={g}, L={L}', color=fig3_color(g * L, min_gL=min_gL, max_gL=max_gL), ls='', fillstyle='none')
+                    else:
+                        ax.scatter(((m_crit ** 2 - masses ** 2) / g ** 2) * (g * L) ** (1 / nu), Binders, marker=markers[L], label=f'g={g}, L={L}', color=fig3_color(g * L, min_gL=min_gL, max_gL=max_gL), facecolors=None)
+
+                if form == "square_num_m4":
+                    if bootstrap_success:
+                        ax.errorbar(((m_crit ** 2 - masses ** 2) / m_crit ** 2) * (g * L) ** (1 / nu), Binders, Binder_sigmas, marker=markers[L], label=f'g={g}, L={L}', color=fig3_color(g * L, min_gL=min_gL, max_gL=max_gL), ls='', fillstyle='none')
+                    else:
+                        ax.scatter(((m_crit ** 2 - masses ** 2) / m_crit ** 2) * (g * L) ** (1 / nu), Binders, marker=markers[L], label=f'g={g}, L={L}', color=fig3_color(g * L, min_gL=min_gL, max_gL=max_gL), facecolors=None)
+
+                if form == "square_num_m2":
+                    if bootstrap_success:
+                        ax.errorbar(((m_crit ** 2 - masses ** 2) / m_crit) * (g * L) ** (1 / nu), Binders, Binder_sigmas, marker=markers[L], label=f'g={g}, L={L}', color=fig3_color(g * L, min_gL=min_gL, max_gL=max_gL), ls='', fillstyle='none')
+                    else:
+                        ax.scatter(((m_crit ** 2 - masses ** 2) / m_crit) * (g * L) ** (1 / nu), Binders, marker=markers[L], label=f'g={g}, L={L}', color=fig3_color(g * L, min_gL=min_gL, max_gL=max_gL), facecolors=None)
+
+                if form == "mPT":
+                    if bootstrap_success:
+                        ax.errorbar(((m_crit - masses) / mPT_1loop(g, N) ** 2) * (g * L) ** (1 / nu), Binders, Binder_sigmas, marker=markers[L], label=f'g={g}, L={L}', color=fig3_color(g * L, min_gL=min_gL, max_gL=max_gL), ls='', fillstyle='none')
+                    else:
+                        ax.scatter(((m_crit - masses) / mPT_1loop(g, N) ** 2) * (g * L) ** (1 / nu), Binders, marker=markers[L], label=f'g={g}, L={L}', color=fig3_color(g * L, min_gL=min_gL, max_gL=max_gL), facecolors=None)
 
                 # ax.scatter(((masses - m_crit) / g ** 2) * (g * L) ** (1 / nu), Binders, marker=markers[L], label=f'g={g}, L={L}', color=fig3_color(g * L, min_gL=min_gL, max_gL=max_gL), facecolors='none')
 
@@ -162,8 +215,8 @@ def plot_Binder(N, g_s, L_s, data_file="MCMC_test.h5", minus_sign_override=False
 
                   results = numpy.array(results)
 
-                  plt.plot(((mass_range - m_crit) / g ** 2) * (g * L) ** (1 / nu), results + System.Bbar)
-                  plt.plot(mass_range, results + System.Bbar)
+                  ax.plot(((mass_range - m_crit) / g ** 2) * (g * L) ** (1 / nu), results + System.Bbar)
+                  ax.plot(mass_range, results + System.Bbar)
 
 
     if legend:
