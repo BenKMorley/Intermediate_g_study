@@ -40,7 +40,7 @@ def plot_Binder(N, g_s, L_s, data_file="MCMC_test.h5", minus_sign_override=False
         # ax.set_xlabel(r'$\frac{m_c^2 - m^2}{m_c^2} x^\frac{1}{\nu}$')
         ax.set_ylabel(r'$B(N, g, L)$')
 
-    markers = {8: 'd', 16: 'v', 32: '<', 48: '^', 64: 's', 96: 'o', 128:'d'}
+    markers = {8: 'd', 16: 'v', 32: '<', 48: '^', 64: 's', 96: 'p', 128:'d'}
 
     with h5py.File(data_file, "r") as f:
         # params = get_statistical_errors_central_fit(N)['params_central']
@@ -58,8 +58,24 @@ def plot_Binder(N, g_s, L_s, data_file="MCMC_test.h5", minus_sign_override=False
 
                 masses = []
                 Binders = []
+                Binder_sigmas = []
 
-                for string in data.keys():
+                System = Critical_analysis(N, g, L)
+                System.h5load_data()
+
+                bootstrap_success = True
+                try:
+                    System.compute_tauint_and_bootstrap_indices()
+                except Exception:
+                    bootstrap_success = False
+
+                for i, string in enumerate(data.keys()):
+                    # I'm going to assume the tauint is in the same order as
+                    # the masses in data.keys since they're both from the same
+                    # h5file accessed in the same way
+                    if bootstrap_success:
+                        bin_size = System.Nbin_tauint[i]
+
                     try:
                         m = float(re.findall(r'-\d+\.\d+', string)[0])
 
@@ -82,15 +98,40 @@ def plot_Binder(N, g_s, L_s, data_file="MCMC_test.h5", minus_sign_override=False
 
                     M2 = mass_data[0]
                     M4 = mass_data[1]
+
                     Binder = 1 - (N / 3) * numpy.mean(M4) / (numpy.mean(M2) ** 2)
 
-                    pdb.set_trace()
+                    # Sort the data into bins
+                    if bootstrap_success:
+                        M4_binned = M4[:-(len(M4) % bin_size)]
+                        M2_binned = M2[:-(len(M2) % bin_size)]
+                        no_bins = len(M4_binned) // bin_size
+
+                        M4_binned = M4_binned.reshape((no_bins, bin_size))
+                        M2_binned = M2_binned.reshape((no_bins, bin_size))
+
+                        # Do a bootstrapping procedure
+                        no_samples = 500
+                        boot_indices = numpy.random.randint(no_bins, size=(no_samples, no_bins))
+                        Binder_boot = numpy.zeros(no_samples)
+
+                        for i in range(no_samples):
+                            M4_sample = M4_binned[boot_indices[i]]
+                            M2_sample = M2_binned[boot_indices[i]]
+                            Binder_boot[i] = 1 - (N / 3) * numpy.mean(M4_sample) / (numpy.mean(M2_sample) ** 2)
+
+                        Binder_sigmas.append(numpy.std(Binder_boot))
 
                     Binders.append(Binder)
 
-                masses = numpy.array(masses)
+                # pdb.set_trace()
 
-                ax.scatter(masses, Binders, marker=markers[L], label=f'g={g}, L={L}', color=fig3_color(g * L, min_gL=min_gL, max_gL=max_gL), facecolors='none')
+                masses = numpy.array(masses)
+                if bootstrap_success:
+                    ax.errorbar(masses, Binders, Binder_sigmas, marker=markers[L], label=f'g={g}, L={L}', color=fig3_color(g * L, min_gL=min_gL, max_gL=max_gL), ls='', fillstyle='none')
+                else:
+                    ax.scatter(masses, Binders, marker=markers[L], label=f'g={g}, L={L}', color=fig3_color(g * L, min_gL=min_gL, max_gL=max_gL), facecolors=None)
+
                 # ax.scatter(((masses - m_crit) / g ** 2) * (g * L) ** (1 / nu), Binders, marker=markers[L], label=f'g={g}, L={L}', color=fig3_color(g * L, min_gL=min_gL, max_gL=max_gL), facecolors='none')
 
                 if reweight:
