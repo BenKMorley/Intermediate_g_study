@@ -56,170 +56,169 @@ def plot_Binder(N, g_s, L_s, data_file="MCMC_test.h5", form="g2", minus_sign_ove
 
         for g in g_s:
             m_crit = mPT_1loop(g, N) + g ** 2 * (alpha - beta * K1(g, N))
+
             for L in L_s:
-                data = f[f'N={N}'][f'g={g:.2f}'][f'L={L}']
+                if (g * L) > 12.7:
+                    data = f[f'N={N}'][f'g={g:.2f}'][f'L={L}']
 
-                masses = []
-                Binders = []
-                Binder_sigmas = []
+                    masses = []
+                    Binders = []
+                    Binder_sigmas = []
 
-                System = Critical_analysis(N, g, L)
-                System.MCMCdatafile = data_file
-                System.datadir = ''
+                    System = Critical_analysis(N, g, L)
+                    System.MCMCdatafile = data_file
+                    System.datadir = ''
 
-                System.h5load_data()
+                    System.h5load_data()
 
-                bootstrap_success = True
-                try:
-                    System.compute_tauint_and_bootstrap_indices()
-                except Exception:
-                    bootstrap_success = False
-
-                for i, string in enumerate(data.keys()):
-                    # I'm going to assume the tauint is in the same order as
-                    # the masses in data.keys since they're both from the same
-                    # h5file accessed in the same way
-                    if bootstrap_success:
-                        bin_size = System.Nbin_tauint[i]
-
+                    bootstrap_success = True
                     try:
-                        m = float(re.findall(r'-\d+\.\d+', string)[0])
+                        System.compute_tauint_and_bootstrap_indices()
+                    except Exception:
+                        bootstrap_success = False
 
-                    except:
-                        if minus_sign_override:
-                            m = -float(re.findall(r'\d+\.\d+', string)[0])
-                        else:
-                            print("Mass not found")
+                    for i, string in enumerate(data.keys()):
+                        # I'm going to assume the tauint is in the same order as
+                        # the masses in data.keys since they're both from the same
+                        # h5file accessed in the same way
+                        if bootstrap_success:
+                            bin_size = System.Nbin_tauint[i]
 
-                    masses.append(m)
-
-                    if minus_sign_override: 
-                        mass_data = data[f'msq={-m:.8f}']
-
-                    else:
                         try:
-                            mass_data = data[f'msq={m:.8f}']
+                            m = float(re.findall(r'-\d+\.\d+', string)[0])
+
                         except:
-                            pdb.set_trace()
+                            if minus_sign_override:
+                                m = -float(re.findall(r'\d+\.\d+', string)[0])
+                            else:
+                                print("Mass not found")
 
-                    M2 = mass_data[0]
-                    M4 = mass_data[1]
+                        masses.append(m)
 
-                    Binder = 1 - (N / 3) * numpy.mean(M4) / (numpy.mean(M2) ** 2)
+                        if minus_sign_override: 
+                            mass_data = data[f'msq={-m:.8f}']
 
-                    # Sort the data into bins
-                    if bootstrap_success:
-                        if len(M4) % bin_size != 0:
-                            M4_binned = M4[:-(len(M4) % bin_size)]
-                            M2_binned = M2[:-(len(M2) % bin_size)]
                         else:
-                            M4_binned = M4
-                            M2_binned = M2
-
-                        no_bins = len(M4_binned) // bin_size
-
-                        M4_binned = M4_binned.reshape((no_bins, bin_size))
-                        M2_binned = M2_binned.reshape((no_bins, bin_size))
-
-                        # Do a bootstrapping procedure
-                        no_samples = 500
-                        boot_indices = numpy.random.randint(no_bins, size=(no_samples, no_bins))
-                        Binder_boot = numpy.zeros(no_samples)
-
-                        for i in range(no_samples):
-                            M4_sample = M4_binned[boot_indices[i]]
-                            M2_sample = M2_binned[boot_indices[i]]
-                            
                             try:
-                                Binder_boot[i] = 1 - (N / 3) * numpy.mean(M4_sample) / (numpy.mean(M2_sample) ** 2)
+                                mass_data = data[f'msq={m:.8f}']
                             except:
                                 pdb.set_trace()
 
-                        Binder_sigmas.append(numpy.std(Binder_boot))
+                        M2 = mass_data[0]
+                        M4 = mass_data[1]
 
-                    Binders.append(Binder)
+                        Binder = 1 - (N / 3) * numpy.mean(M4) / (numpy.mean(M2) ** 2)
 
-                pdb.set_trace()
+                        # Sort the data into bins
+                        if bootstrap_success:
+                            if len(M4) % bin_size != 0:
+                                M4_binned = M4[:-(len(M4) % bin_size)]
+                                M2_binned = M2[:-(len(M2) % bin_size)]
+                            else:
+                                M4_binned = M4
+                                M2_binned = M2
 
-                masses = numpy.array(masses)
+                            no_bins = len(M4_binned) // bin_size
 
-                if form == "g2":
-                    if bootstrap_success:
-                        ax.errorbar(((m_crit - masses) / g ** 2) * (g * L) ** (1 / nu), Binders, Binder_sigmas, marker=markers[L], label=f'g={g}, L={L}', color=fig3_color(g * L, min_gL=min_gL, max_gL=max_gL), ls='', fillstyle='none')
-                    else:
-                        ax.scatter(((m_crit - masses) / g ** 2) * (g * L) ** (1 / nu), Binders, marker=markers[L], label=f'g={g}, L={L}', color=fig3_color(g * L, min_gL=min_gL, max_gL=max_gL), facecolors=None)
+                            M4_binned = M4_binned.reshape((no_bins, bin_size))
+                            M2_binned = M2_binned.reshape((no_bins, bin_size))
 
-                if form == "m2":
-                    if bootstrap_success:
-                        ax.errorbar(((m_crit - masses) / m_crit) * (g * L) ** (1 / nu), Binders, Binder_sigmas, marker=markers[L], label=f'g={g}, L={L}', color=fig3_color(g * L, min_gL=min_gL, max_gL=max_gL), ls='', fillstyle='none')
-                    else:
-                        ax.scatter(((m_crit - masses) / m_crit) * (g * L) ** (1 / nu), Binders, marker=markers[L], label=f'g={g}, L={L}', color=fig3_color(g * L, min_gL=min_gL, max_gL=max_gL), facecolors=None)
+                            # Do a bootstrapping procedure
+                            no_samples = 500
+                            boot_indices = numpy.random.randint(no_bins, size=(no_samples, no_bins))
+                            Binder_boot = numpy.zeros(no_samples)
 
-                if form == "m4":
-                    if bootstrap_success:
-                        ax.errorbar(((m_crit - masses) / m_crit ** 2) * (g * L) ** (1 / nu), Binders, Binder_sigmas, marker=markers[L], label=f'g={g}, L={L}', color=fig3_color(g * L, min_gL=min_gL, max_gL=max_gL), ls='', fillstyle='none')
-                    else:
-                        ax.scatter(((m_crit - masses) / m_crit ** 2) * (g * L) ** (1 / nu), Binders, marker=markers[L], label=f'g={g}, L={L}', color=fig3_color(g * L, min_gL=min_gL, max_gL=max_gL), facecolors=None)
+                            for i in range(no_samples):
+                                M4_sample = M4_binned[boot_indices[i]]
+                                M2_sample = M2_binned[boot_indices[i]]
+                                
+                                try:
+                                    Binder_boot[i] = 1 - (N / 3) * numpy.mean(M4_sample) / (numpy.mean(M2_sample) ** 2)
+                                except:
+                                    pdb.set_trace()
 
-                if form == "square_num_g2":
-                    if bootstrap_success:
-                        ax.errorbar(((m_crit ** 2 - masses ** 2) / g ** 2) * (g * L) ** (1 / nu), Binders, Binder_sigmas, marker=markers[L], label=f'g={g}, L={L}', color=fig3_color(g * L, min_gL=min_gL, max_gL=max_gL), ls='', fillstyle='none')
-                    else:
-                        ax.scatter(((m_crit ** 2 - masses ** 2) / g ** 2) * (g * L) ** (1 / nu), Binders, marker=markers[L], label=f'g={g}, L={L}', color=fig3_color(g * L, min_gL=min_gL, max_gL=max_gL), facecolors=None)
+                            Binder_sigmas.append(numpy.std(Binder_boot))
 
-                if form == "square_num_m4":
-                    if bootstrap_success:
-                        ax.errorbar(((m_crit ** 2 - masses ** 2) / m_crit ** 2) * (g * L) ** (1 / nu), Binders, Binder_sigmas, marker=markers[L], label=f'g={g}, L={L}', color=fig3_color(g * L, min_gL=min_gL, max_gL=max_gL), ls='', fillstyle='none')
-                    else:
-                        ax.scatter(((m_crit ** 2 - masses ** 2) / m_crit ** 2) * (g * L) ** (1 / nu), Binders, marker=markers[L], label=f'g={g}, L={L}', color=fig3_color(g * L, min_gL=min_gL, max_gL=max_gL), facecolors=None)
+                        Binders.append(Binder)
 
-                if form == "square_num_m2":
-                    if bootstrap_success:
-                        ax.errorbar(((m_crit ** 2 - masses ** 2) / m_crit) * (g * L) ** (1 / nu), Binders, Binder_sigmas, marker=markers[L], label=f'g={g}, L={L}', color=fig3_color(g * L, min_gL=min_gL, max_gL=max_gL), ls='', fillstyle='none')
-                    else:
-                        ax.scatter(((m_crit ** 2 - masses ** 2) / m_crit) * (g * L) ** (1 / nu), Binders, marker=markers[L], label=f'g={g}, L={L}', color=fig3_color(g * L, min_gL=min_gL, max_gL=max_gL), facecolors=None)
+                    masses = numpy.array(masses)
 
-                if form == "mPT":
-                    if bootstrap_success:
-                        ax.errorbar(((m_crit - masses) / mPT_1loop(g, N) ** 2) * (g * L) ** (1 / nu), Binders, Binder_sigmas, marker=markers[L], label=f'g={g}, L={L}', color=fig3_color(g * L, min_gL=min_gL, max_gL=max_gL), ls='', fillstyle='none')
-                    else:
-                        ax.scatter(((m_crit - masses) / mPT_1loop(g, N) ** 2) * (g * L) ** (1 / nu), Binders, marker=markers[L], label=f'g={g}, L={L}', color=fig3_color(g * L, min_gL=min_gL, max_gL=max_gL), facecolors=None)
+                    if form == "g2":
+                        if bootstrap_success:
+                            ax.errorbar(((masses - m_crit) / g ** 2) * (g * L) ** (1 / nu), Binders, Binder_sigmas, marker=markers[L], label=f'g={g}, L={L}', color=fig3_color(g * L, min_gL=min_gL, max_gL=max_gL), ls='', fillstyle='none')
+                        else:
+                            ax.scatter(((masses - m_crit) / g ** 2) * (g * L) ** (1 / nu), Binders, marker=markers[L], label=f'g={g}, L={L}', color=fig3_color(g * L, min_gL=min_gL, max_gL=max_gL), facecolors=None)
 
-                # ax.scatter(((masses - m_crit) / g ** 2) * (g * L) ** (1 / nu), Binders, marker=markers[L], label=f'g={g}, L={L}', color=fig3_color(g * L, min_gL=min_gL, max_gL=max_gL), facecolors='none')
+                    if form == "m2":
+                        if bootstrap_success:
+                            ax.errorbar(((m_crit - masses) / (m_crit * g)) * (g * L) ** (1 / nu), Binders, Binder_sigmas, marker=markers[L], label=f'g={g}, L={L}', color=fig3_color(g * L, min_gL=min_gL, max_gL=max_gL), ls='', fillstyle='none')
+                        else:
+                            ax.scatter(((m_crit - masses) / (m_crit * g)) * (g * L) ** (1 / nu), Binders, marker=markers[L], label=f'g={g}, L={L}', color=fig3_color(g * L, min_gL=min_gL, max_gL=max_gL), facecolors=None)
 
-                if reweight:
-                  # Use Andreas's Critical Analysis Class to do the reweighting
-                  min_m, max_m = min(masses), max(masses)
+                    if form == "m4":
+                        if bootstrap_success:
+                            ax.errorbar(((m_crit - masses) / m_crit ** 2) * (g * L) ** (1 / nu), Binders, Binder_sigmas, marker=markers[L], label=f'g={g}, L={L}', color=fig3_color(g * L, min_gL=min_gL, max_gL=max_gL), ls='', fillstyle='none')
+                        else:
+                            ax.scatter(((m_crit - masses) / m_crit ** 2) * (g * L) ** (1 / nu), Binders, marker=markers[L], label=f'g={g}, L={L}', color=fig3_color(g * L, min_gL=min_gL, max_gL=max_gL), facecolors=None)
 
-                  System = Critical_analysis(N, g, L)
-                  System.h5load_data()
-                  System.compute_tauint_and_bootstrap_indices()
-                  System.Bbar = 0.5
-                  L0bs = System.refresh_L0_bsindices()
-                  L1bs = []
+                    if form == "square_num_g2":
+                        if bootstrap_success:
+                            ax.errorbar(((m_crit ** 2 - masses ** 2) / g ** 2) * (g * L) ** (1 / nu), Binders, Binder_sigmas, marker=markers[L], label=f'g={g}, L={L}', color=fig3_color(g * L, min_gL=min_gL, max_gL=max_gL), ls='', fillstyle='none')
+                        else:
+                            ax.scatter(((m_crit ** 2 - masses ** 2) / g ** 2) * (g * L) ** (1 / nu), Binders, marker=markers[L], label=f'g={g}, L={L}', color=fig3_color(g * L, min_gL=min_gL, max_gL=max_gL), facecolors=None)
 
-                  for j in range(len(System.actualm0sqlist)):
-                      N_ = System.phi2[str(j)].shape[0]
-                      L1bs.append(numpy.arange(int(numpy.floor(N_ / System.Nbin_tauint[j]))))
+                    if form == "square_num_m4":
+                        if bootstrap_success:
+                            ax.errorbar(((m_crit ** 2 - masses ** 2) / m_crit ** 2) * (g * L) ** (1 / nu), Binders, Binder_sigmas, marker=markers[L], label=f'g={g}, L={L}', color=fig3_color(g * L, min_gL=min_gL, max_gL=max_gL), ls='', fillstyle='none')
+                        else:
+                            ax.scatter(((m_crit ** 2 - masses ** 2) / m_crit ** 2) * (g * L) ** (1 / nu), Binders, marker=markers[L], label=f'g={g}, L={L}', color=fig3_color(g * L, min_gL=min_gL, max_gL=max_gL), facecolors=None)
 
-                  mass_range = numpy.linspace(min_m, max_m, 100)
-                  results = []
+                    if form == "square_num_m2":
+                        if bootstrap_success:
+                            ax.errorbar(((m_crit ** 2 - masses ** 2) / m_crit) * (g * L) ** (1 / nu), Binders, Binder_sigmas, marker=markers[L], label=f'g={g}, L={L}', color=fig3_color(g * L, min_gL=min_gL, max_gL=max_gL), ls='', fillstyle='none')
+                        else:
+                            ax.scatter(((m_crit ** 2 - masses ** 2) / m_crit) * (g * L) ** (1 / nu), Binders, marker=markers[L], label=f'g={g}, L={L}', color=fig3_color(g * L, min_gL=min_gL, max_gL=max_gL), facecolors=None)
 
-                  # System.plot_tr_phi2_distributions()
-                  # plt.show()
+                    if form == "mPT":
+                        if bootstrap_success:
+                            ax.errorbar(((m_crit - masses) / mPT_1loop(g, N) ** 2) * (g * L) ** (1 / nu), Binders, Binder_sigmas, marker=markers[L], label=f'g={g}, L={L}', color=fig3_color(g * L, min_gL=min_gL, max_gL=max_gL), ls='', fillstyle='none')
+                        else:
+                            ax.scatter(((m_crit - masses) / mPT_1loop(g, N) ** 2) * (g * L) ** (1 / nu), Binders, marker=markers[L], label=f'g={g}, L={L}', color=fig3_color(g * L, min_gL=min_gL, max_gL=max_gL), facecolors=None)
 
-                  for i, m in tqdm(enumerate(mass_range)):
-                      Binder_bit = System.reweight_Binder(m, L1bs, L0bs)
+                    # ax.scatter(((masses - m_crit) / g ** 2) * (g * L) ** (1 / nu), Binders, marker=markers[L], label=f'g={g}, L={L}', color=fig3_color(g * L, min_gL=min_gL, max_gL=max_gL), facecolors='none')
 
-                      results.append(Binder_bit)
+                    if reweight:
+                        # Use Andreas's Critical Analysis Class to do the reweighting
+                        min_m, max_m = min(masses), max(masses)
 
-                  results = numpy.array(results)
+                        System = Critical_analysis(N, g, L)
+                        System.h5load_data()
+                        System.compute_tauint_and_bootstrap_indices()
+                        System.Bbar = 0.5
+                        L0bs = System.refresh_L0_bsindices()
+                        L1bs = []
 
-                  ax.plot(((mass_range - m_crit) / g ** 2) * (g * L) ** (1 / nu), results + System.Bbar)
-                  ax.plot(mass_range, results + System.Bbar)
+                        for j in range(len(System.actualm0sqlist)):
+                            N_ = System.phi2[str(j)].shape[0]
+                            L1bs.append(numpy.arange(int(numpy.floor(N_ / System.Nbin_tauint[j]))))
 
+                        mass_range = numpy.linspace(min_m, max_m, 100)
+                        results = []
+
+                        # System.plot_tr_phi2_distributions()
+                        # plt.show()
+
+                        for i, m in tqdm(enumerate(mass_range)):
+                            Binder_bit = System.reweight_Binder(m, L1bs, L0bs)
+
+                            results.append(Binder_bit)
+
+                        results = numpy.array(results)
+
+                        ax.plot(((mass_range - m_crit) / g ** 2) * (g * L) ** (1 / nu), results + System.Bbar)
+                        ax.plot(mass_range, results + System.Bbar)
 
     if legend:
         plt.legend()
 
-    return ax
+    return ax, [alpha, beta, nu, m_crit]
