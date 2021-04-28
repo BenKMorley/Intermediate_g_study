@@ -96,7 +96,7 @@ class Critical_analysis():
         self.Ntraj = []
 
         # time std of phi^2 distribution to include in reweighting
-        self.frac_of_dist = 1
+        self.frac_of_dist = 1 / 2
         self.Nbin_tauint = []
         self.tauint = []
         self.Nbin_min = 50
@@ -214,7 +214,9 @@ class Critical_analysis():
         fig, ax = plt.subplots()
 
         for i in range(self.actualNm0sq):
-            ax.hist(self.phi2[str(i)], bins=20)
+            ax.hist(self.phi2[str(i)], bins=20, label=rf"m^2 = m{self.actualm0sqlist[i]}", alpha=0.4)
+
+        plt.legend()
 
         return fig, ax
 
@@ -282,6 +284,8 @@ class Critical_analysis():
         dx = np.array(self.dsimulated)
         ind = np.where((res1 < x + self.frac_of_dist * dx) &
                        (res1 > x - self.frac_of_dist * dx))[0]
+
+        pdb.set_trace()
 
         return ind
 

@@ -34,7 +34,7 @@ def fig3_color(gL, min_gL=0.79, max_gL=76.81, func=numpy.log):
     return color_value
 
 
-def plot_Binder(N, g_s, L_s, data_file="MCMC_test.h5", form="g2", minus_sign_override=False, legend=True, ax=None, min_gL=3.1, max_gL=76.81, reweight=True, params=None):
+def plot_Binder(N, g_s, L_s, data_file="MCMC_test.h5", minus_sign_override=False, legend=True, ax=None, min_gL=3.1, max_gL=76.81, reweight=True, params=None, GL_lim=12.7):
     if ax is None:
         fig, ax = plt.subplots()
         ax.set_xlabel(r'$\frac{m^2 - m_c^2}{g^2} x^\frac{1}{\nu}$')
@@ -44,21 +44,28 @@ def plot_Binder(N, g_s, L_s, data_file="MCMC_test.h5", form="g2", minus_sign_ove
     markers = {8: 'd', 16: 'v', 32: '<', 48: '^', 64: 's', 96: 'o', 128:'d'}
 
     with h5py.File(data_file, "r") as f:
-        if params is None:
-            params = get_statistical_errors_central_fit(N)['params_central']
+        critical_found = True
 
-        alpha = params[0]
-        beta = params[-2]
-        nu = params[-1]
-        # nu = 0.65
-        # beta = 1.21
-        # pdb.set_trace()
+        if params is None:
+            try:
+                params = get_statistical_errors_central_fit(N)['params_central']
+
+                alpha = params[0]
+                beta = params[-2]
+                nu = params[-1]
+        
+            except:
+                critical_found = False
 
         for g in g_s:
-            m_crit = mPT_1loop(g, N) + g ** 2 * (alpha - beta * K1(g, N))
+            try:
+                m_crit = mPT_1loop(g, N) + g ** 2 * (alpha - beta * K1(g, N))
+            
+            except:
+                critical_found = False
 
             for L in L_s:
-                if (g * L) > 12.7:
+                if (g * L) > GL_lim:
                     data = f[f'N={N}'][f'g={g:.2f}'][f'L={L}']
 
                     masses = []
@@ -72,8 +79,10 @@ def plot_Binder(N, g_s, L_s, data_file="MCMC_test.h5", form="g2", minus_sign_ove
                     System.h5load_data()
 
                     bootstrap_success = True
+
                     try:
                         System.compute_tauint_and_bootstrap_indices()
+
                     except Exception:
                         bootstrap_success = False
 
@@ -83,6 +92,8 @@ def plot_Binder(N, g_s, L_s, data_file="MCMC_test.h5", form="g2", minus_sign_ove
                         # h5file accessed in the same way
                         if bootstrap_success:
                             bin_size = System.Nbin_tauint[i]
+
+                        # pdb.set_trace()
 
                         try:
                             m = float(re.findall(r'-\d+\.\d+', string)[0])
@@ -95,12 +106,13 @@ def plot_Binder(N, g_s, L_s, data_file="MCMC_test.h5", form="g2", minus_sign_ove
 
                         masses.append(m)
 
-                        if minus_sign_override: 
+                        if minus_sign_override:
                             mass_data = data[f'msq={-m:.8f}']
 
                         else:
                             try:
                                 mass_data = data[f'msq={m:.8f}']
+
                             except:
                                 pdb.set_trace()
 
@@ -131,9 +143,10 @@ def plot_Binder(N, g_s, L_s, data_file="MCMC_test.h5", form="g2", minus_sign_ove
                             for i in range(no_samples):
                                 M4_sample = M4_binned[boot_indices[i]]
                                 M2_sample = M2_binned[boot_indices[i]]
-                                
+
                                 try:
                                     Binder_boot[i] = 1 - (N / 3) * numpy.mean(M4_sample) / (numpy.mean(M2_sample) ** 2)
+
                                 except:
                                     pdb.set_trace()
 
@@ -142,58 +155,24 @@ def plot_Binder(N, g_s, L_s, data_file="MCMC_test.h5", form="g2", minus_sign_ove
                         Binders.append(Binder)
 
                     masses = numpy.array(masses)
+                    critical_found = False
 
-                    if form == "g2":
+                    if critical_found:
                         if bootstrap_success:
                             ax.errorbar(((masses - m_crit) / g ** 2) * (g * L) ** (1 / nu), Binders, Binder_sigmas, marker=markers[L], label=f'g={g}, L={L}', color=fig3_color(g * L, min_gL=min_gL, max_gL=max_gL), ls='', fillstyle='none')
                         else:
                             ax.scatter(((masses - m_crit) / g ** 2) * (g * L) ** (1 / nu), Binders, marker=markers[L], label=f'g={g}, L={L}', color=fig3_color(g * L, min_gL=min_gL, max_gL=max_gL), facecolors=None)
 
-                    if form == "m2":
+                    else:
                         if bootstrap_success:
-                            ax.errorbar(((m_crit - masses) / (m_crit * g)) * (g * L) ** (1 / nu), Binders, Binder_sigmas, marker=markers[L], label=f'g={g}, L={L}', color=fig3_color(g * L, min_gL=min_gL, max_gL=max_gL), ls='', fillstyle='none')
+                            ax.errorbar(masses, Binders, Binder_sigmas, marker=markers[L], label=f'g={g}, L={L}', color=fig3_color(g * L, min_gL=min_gL, max_gL=max_gL), ls='', fillstyle='none')
                         else:
-                            ax.scatter(((m_crit - masses) / (m_crit * g)) * (g * L) ** (1 / nu), Binders, marker=markers[L], label=f'g={g}, L={L}', color=fig3_color(g * L, min_gL=min_gL, max_gL=max_gL), facecolors=None)
-
-                    if form == "m4":
-                        if bootstrap_success:
-                            ax.errorbar(((m_crit - masses) / m_crit ** 2) * (g * L) ** (1 / nu), Binders, Binder_sigmas, marker=markers[L], label=f'g={g}, L={L}', color=fig3_color(g * L, min_gL=min_gL, max_gL=max_gL), ls='', fillstyle='none')
-                        else:
-                            ax.scatter(((m_crit - masses) / m_crit ** 2) * (g * L) ** (1 / nu), Binders, marker=markers[L], label=f'g={g}, L={L}', color=fig3_color(g * L, min_gL=min_gL, max_gL=max_gL), facecolors=None)
-
-                    if form == "square_num_g2":
-                        if bootstrap_success:
-                            ax.errorbar(((m_crit ** 2 - masses ** 2) / g ** 2) * (g * L) ** (1 / nu), Binders, Binder_sigmas, marker=markers[L], label=f'g={g}, L={L}', color=fig3_color(g * L, min_gL=min_gL, max_gL=max_gL), ls='', fillstyle='none')
-                        else:
-                            ax.scatter(((m_crit ** 2 - masses ** 2) / g ** 2) * (g * L) ** (1 / nu), Binders, marker=markers[L], label=f'g={g}, L={L}', color=fig3_color(g * L, min_gL=min_gL, max_gL=max_gL), facecolors=None)
-
-                    if form == "square_num_m4":
-                        if bootstrap_success:
-                            ax.errorbar(((m_crit ** 2 - masses ** 2) / m_crit ** 2) * (g * L) ** (1 / nu), Binders, Binder_sigmas, marker=markers[L], label=f'g={g}, L={L}', color=fig3_color(g * L, min_gL=min_gL, max_gL=max_gL), ls='', fillstyle='none')
-                        else:
-                            ax.scatter(((m_crit ** 2 - masses ** 2) / m_crit ** 2) * (g * L) ** (1 / nu), Binders, marker=markers[L], label=f'g={g}, L={L}', color=fig3_color(g * L, min_gL=min_gL, max_gL=max_gL), facecolors=None)
-
-                    if form == "square_num_m2":
-                        if bootstrap_success:
-                            ax.errorbar(((m_crit ** 2 - masses ** 2) / m_crit) * (g * L) ** (1 / nu), Binders, Binder_sigmas, marker=markers[L], label=f'g={g}, L={L}', color=fig3_color(g * L, min_gL=min_gL, max_gL=max_gL), ls='', fillstyle='none')
-                        else:
-                            ax.scatter(((m_crit ** 2 - masses ** 2) / m_crit) * (g * L) ** (1 / nu), Binders, marker=markers[L], label=f'g={g}, L={L}', color=fig3_color(g * L, min_gL=min_gL, max_gL=max_gL), facecolors=None)
-
-                    if form == "mPT":
-                        if bootstrap_success:
-                            ax.errorbar(((m_crit - masses) / mPT_1loop(g, N) ** 2) * (g * L) ** (1 / nu), Binders, Binder_sigmas, marker=markers[L], label=f'g={g}, L={L}', color=fig3_color(g * L, min_gL=min_gL, max_gL=max_gL), ls='', fillstyle='none')
-                        else:
-                            ax.scatter(((m_crit - masses) / mPT_1loop(g, N) ** 2) * (g * L) ** (1 / nu), Binders, marker=markers[L], label=f'g={g}, L={L}', color=fig3_color(g * L, min_gL=min_gL, max_gL=max_gL), facecolors=None)
-
-                    # ax.scatter(((masses - m_crit) / g ** 2) * (g * L) ** (1 / nu), Binders, marker=markers[L], label=f'g={g}, L={L}', color=fig3_color(g * L, min_gL=min_gL, max_gL=max_gL), facecolors='none')
+                            ax.scatter(masses, Binders, marker=markers[L], label=f'g={g}, L={L}', color=fig3_color(g * L, min_gL=min_gL, max_gL=max_gL), facecolors=None)
 
                     if reweight:
                         # Use Andreas's Critical Analysis Class to do the reweighting
                         min_m, max_m = min(masses), max(masses)
 
-                        System = Critical_analysis(N, g, L)
-                        System.h5load_data()
-                        System.compute_tauint_and_bootstrap_indices()
                         System.Bbar = 0.5
                         L0bs = System.refresh_L0_bsindices()
                         L1bs = []
@@ -202,23 +181,29 @@ def plot_Binder(N, g_s, L_s, data_file="MCMC_test.h5", form="g2", minus_sign_ove
                             N_ = System.phi2[str(j)].shape[0]
                             L1bs.append(numpy.arange(int(numpy.floor(N_ / System.Nbin_tauint[j]))))
 
-                        mass_range = numpy.linspace(min_m, max_m, 100)
-                        results = []
+                        no_reweight_samples = 100
+                        mass_range = numpy.linspace(min_m, max_m, no_reweight_samples)
+                        results = numpy.zeros(no_reweight_samples)
 
                         # System.plot_tr_phi2_distributions()
                         # plt.show()
 
                         for i, m in tqdm(enumerate(mass_range)):
-                            Binder_bit = System.reweight_Binder(m, L1bs, L0bs)
+                            try:
+                                Binder_bit = System.reweight_Binder(m, L1bs, L0bs)
 
-                            results.append(Binder_bit)
+                            except Exception:
+                                continue
 
-                        results = numpy.array(results)
+                            results[i] = Binder_bit
 
-                        ax.plot(((mass_range - m_crit) / g ** 2) * (g * L) ** (1 / nu), results + System.Bbar)
-                        ax.plot(mass_range, results + System.Bbar)
+                        if critical_found:
+                            ax.plot(((mass_range - m_crit) / g ** 2) * (g * L) ** (1 / nu), results + System.Bbar)
+
+                        else:
+                            ax.plot(mass_range, results + System.Bbar)
 
     if legend:
         plt.legend()
 
-    return ax, [alpha, beta, nu, m_crit]
+    return ax, critical_found
