@@ -108,6 +108,7 @@ class Critical_analysis():
         self.datadir = 'h5data/'
         self.MCMCdatafile = 'MCMC_plussign_N3.h5'
         self.resultsfile = 'Bindercrossings_N3.h5'
+        self.therm = 10000  # Configurations to remove due to thermalization
 
     def h5load_data(self):
         """
@@ -145,6 +146,11 @@ class Critical_analysis():
             self.M2[str(ii)], self.M4[str(ii)], self.phi2[str(ii)] = \
                 f.get('N=%d/g=%.2f/L=%d/msq=%.8f' % (self.N, self.g, self.L,
                                                      self.actualm0sqlist[ii]))
+
+            # Remove thermalization steps
+            self.M2[str(ii)] = self.M2[str(ii)][self.therm:]
+            self.M4[str(ii)] = self.M4[str(ii)][self.therm:]
+            self.phi2[str(ii)] = self.phi2[str(ii)][self.therm:]
 
             self.Ntraj.append(len(self.M2[str(ii)]))
 
@@ -423,6 +429,11 @@ class Critical_analysis():
             except Exception:
                 RWfac = np.nan * np.array(self.phi2[str(i)])
 
+            # Flag contributions where the exponent is so negative the exponent
+            # goes to 0, or so large it goes to infinity.
+            if min(RWfac == 0) or max(RWfac == np.inf):
+                RWfac = np.nan * np.array(self.phi2[str(i)])
+
             #
             # binning for reweighting factor, phi^2, M^2 and M^4
             #
@@ -486,14 +497,10 @@ class Critical_analysis():
 
         except Warning:
             pdb.set_trace()
-        # pdb.set_trace()
-
-        print(np.sqrt((1 / denom)) * self.N / 3)
-            # np.sqrt((1 / denom)) * self.N / 3
-
 
         # The denominator gives the estimate of the bootstrap variance
-        return B - self.Bbar, np.sqrt((1 / denom)) * self.N / 3
+        return B - self.Bbar
+        # return B - self.Bbar, np.sqrt((1 / denom)) * self.N / 3
 
     def find_Binder_crossing(self, mmax, mmin):
         """
@@ -650,6 +657,7 @@ def compute_Bindercrossing(N, g, Bbar, Lin):
 
 
 if __name__ == "__main__":
+    compute_Bindercrossing(3, 0.1, 0.44, 48)
     if len(sys.argv) != 5:
         print("")
         print("Usage: python Binderanalysis.py <N> <ag> <Bbar> <L/a>")
@@ -663,3 +671,4 @@ if __name__ == "__main__":
                            float(sys.argv[3]),  # Bbar
                            int(sys.argv[4]))    # L / a
     ###########################################################################
+

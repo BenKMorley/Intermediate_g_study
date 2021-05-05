@@ -190,9 +190,9 @@ def plot_Binder(N, g_s, L_s, data_file="MCMC_test.h5", minus_sign_override=False
                             N_ = trphi2[j].shape[0]
                             L1bs.append(numpy.arange(int(numpy.floor(N_ / System.Nbin_tauint[j]))))
 
-                        no_reweight_samples = 1
-                        min_m = -0.044454545454545455
-                        min_m = -0.044454545454545455
+                        no_reweight_samples = 100
+                        # min_m = -0.044454545454545455
+                        # min_m = -0.044454545454545455
 
                         mass_range = numpy.linspace(min_m, max_m, no_reweight_samples)
                         results = numpy.zeros(no_reweight_samples)
@@ -201,14 +201,19 @@ def plot_Binder(N, g_s, L_s, data_file="MCMC_test.h5", minus_sign_override=False
                         # System.plot_tr_phi2_distributions()
                         # plt.show()
 
-                        lower_extreme_sigma = (numpy.mean(trphi2[j]) - min(trphi2)) / numpy.std(trphi2[j])
-
                         for i, m in tqdm(enumerate(mass_range)):
-                            try:
-                                Binder_bit, sigma = System.reweight_Binder(m, L1bs, L0bs)
+                            # try:
+                            Binder_bit, sigma = System.reweight_Binder(m, L1bs, L0bs)
 
-                            except Exception:
-                                continue
+                            # except Exception:
+                            #     continue
+
+                            print(Binder_bit, sigma)
+
+                            if abs(Binder_bit) < 10 ** -10:
+                                x = 2
+                                print("hello?")
+                                x = 3
 
                             results[i] = Binder_bit
                             sigmas[i] = sigma
@@ -218,8 +223,6 @@ def plot_Binder(N, g_s, L_s, data_file="MCMC_test.h5", minus_sign_override=False
 
                         else:
                             ax.fill_between(mass_range, results + System.Bbar - sigmas, results + System.Bbar + sigmas)
-
-                            pdb.set_trace()
 
     if legend:
         plt.legend()
