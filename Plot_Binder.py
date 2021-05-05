@@ -176,32 +176,50 @@ def plot_Binder(N, g_s, L_s, data_file="MCMC_test.h5", minus_sign_override=False
                         System.Bbar = 0.5
                         L0bs = System.refresh_L0_bsindices()
                         L1bs = []
+                        trphi2 = []
+                        print("mass     lower sigma     upper sigma")
 
                         for j in range(len(System.actualm0sqlist)):
-                            N_ = System.phi2[str(j)].shape[0]
+                            trphi2.append(System.phi2[str(j)])
+                            lower_extreme_sigma = (numpy.mean(trphi2[j]) - min(trphi2[j])) / numpy.std(trphi2[j])
+                            upper_extreme_sigma = (max(trphi2[j]) - numpy.mean(trphi2[j])) / numpy.std(trphi2[j])
+                            print(f"{System.actualm0sqlist[j]:.3f}        ", end="")
+                            print(f"{lower_extreme_sigma:.2f}       ", end="")
+                            print(f"{upper_extreme_sigma:.2f}")
+
+                            N_ = trphi2[j].shape[0]
                             L1bs.append(numpy.arange(int(numpy.floor(N_ / System.Nbin_tauint[j]))))
 
-                        no_reweight_samples = 100
+                        no_reweight_samples = 1
+                        min_m = -0.044454545454545455
+                        min_m = -0.044454545454545455
+
                         mass_range = numpy.linspace(min_m, max_m, no_reweight_samples)
                         results = numpy.zeros(no_reweight_samples)
+                        sigmas = numpy.zeros(no_reweight_samples)
 
                         # System.plot_tr_phi2_distributions()
                         # plt.show()
 
+                        lower_extreme_sigma = (numpy.mean(trphi2[j]) - min(trphi2)) / numpy.std(trphi2[j])
+
                         for i, m in tqdm(enumerate(mass_range)):
                             try:
-                                Binder_bit = System.reweight_Binder(m, L1bs, L0bs)
+                                Binder_bit, sigma = System.reweight_Binder(m, L1bs, L0bs)
 
                             except Exception:
                                 continue
 
                             results[i] = Binder_bit
+                            sigmas[i] = sigma
 
                         if critical_found:
-                            ax.plot(((mass_range - m_crit) / g ** 2) * (g * L) ** (1 / nu), results + System.Bbar)
+                            ax.fill_between(((mass_range - m_crit) / g ** 2) * (g * L) ** (1 / nu), results + System.Bbar - sigmas, results + System.Bbar + sigmas)
 
                         else:
-                            ax.plot(mass_range, results + System.Bbar)
+                            ax.fill_between(mass_range, results + System.Bbar - sigmas, results + System.Bbar + sigmas)
+
+                            pdb.set_trace()
 
     if legend:
         plt.legend()

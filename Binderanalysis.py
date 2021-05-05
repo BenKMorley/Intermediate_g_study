@@ -40,6 +40,7 @@ import warnings
 import matplotlib.pyplot as plt
 
 # strict: raise exceptions in case of warnings
+np.seterr(all='warn')
 warnings.filterwarnings('error')
 
 
@@ -96,7 +97,7 @@ class Critical_analysis():
         self.Ntraj = []
 
         # time std of phi^2 distribution to include in reweighting
-        self.frac_of_dist = 1 / 2
+        self.frac_of_dist = 1
         self.Nbin_tauint = []
         self.tauint = []
         self.Nbin_min = 50
@@ -285,8 +286,6 @@ class Critical_analysis():
         ind = np.where((res1 < x + self.frac_of_dist * dx) &
                        (res1 > x - self.frac_of_dist * dx))[0]
 
-        pdb.set_trace()
-
         return ind
 
     def RWbinit_N(self, dat, Nbinl):
@@ -326,7 +325,7 @@ class Critical_analysis():
 
         return rn
 
-    def bootit(self, f, dat, bsindices):
+    def bootit(self, f, dat, bsindices, *args, **kwargs):
         """
             A simple boostrap routine, takes function f and applies dat
             - f is function
@@ -337,10 +336,20 @@ class Critical_analysis():
         res = f(dat)
         res_bs = np.array([])
         N = dat.shape[0]
+        av0s = np.zeros(self.Nboot)
+        av1s = np.zeros(self.Nboot)
+        av2s = np.zeros(self.Nboot)
 
         for i in range(self.Nboot):
             wol = bsindices[:, i]
-            resl = f(dat[wol, :])
+            kwargs = {'return_extra': True}
+
+            resl, av0, av1, av2 = f(dat[wol, :], *args, **kwargs)
+
+            av0s[i] = av0
+            av1s[i] = av1
+            av2s[i] = av2
+
             res_bs = np.r_[res_bs, np.array([resl])]
 
         if res == np.nan:
@@ -352,7 +361,7 @@ class Critical_analysis():
 
             return res, dres
 
-    def B(self, x):
+    def B(self, x, return_extra=False):
         """
             Helper function: Compute the ratio in the Binder cumulant including
             reweighting
@@ -361,16 +370,30 @@ class Critical_analysis():
                 2nd column <M2> reweighted
                 3rd column <M5> reweighted
         """
-
         # the reweighting factor can get huge and require arithmetics beyond
         # double precision fpa in this case an exception is raised adn np.nan
         # returned to be dealt with later
-        try:
-            av = np.mean(x, 0)
-            return av[0] * av[2] / av[1] ** 2
+        if return_extra:
+            try:
+                av = np.mean(x, 0)
 
-        except Exception:
-            return np.nan
+                B = av[0] * av[2] / av[1] ** 2
+
+                if B > 1:
+                    print("Hello")
+
+                return B, av[0], av[1], av[2]
+
+            except Exception:
+                return np.nan
+
+        else:
+            try:
+                av = np.mean(x, 0)
+                return av[0] * av[2] / av[1] ** 2
+
+            except Exception:
+                return np.nan
 
     def reweight_Binder(self, msq, L1bs, L0bs):
         """
@@ -458,9 +481,19 @@ class Critical_analysis():
             denom = np.sum(1. / np.array(dres) ** 2)
             numer = np.sum(np.array(res) / np.array(dres) ** 2)
 
-        B = 1 - self.N * 1. / 3 * numer / denom
+        try:
+            B = 1 - self.N * 1. / 3 * numer / denom
 
-        return B - self.Bbar
+        except Warning:
+            pdb.set_trace()
+        # pdb.set_trace()
+
+        print(np.sqrt((1 / denom)) * self.N / 3)
+            # np.sqrt((1 / denom)) * self.N / 3
+
+
+        # The denominator gives the estimate of the bootstrap variance
+        return B - self.Bbar, np.sqrt((1 / denom)) * self.N / 3
 
     def find_Binder_crossing(self, mmax, mmin):
         """
