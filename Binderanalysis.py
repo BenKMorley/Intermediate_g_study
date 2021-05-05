@@ -34,11 +34,13 @@ import random
 import h5py
 import os
 import sys
+import pdb
 from parse import parse
 import warnings
 import matplotlib.pyplot as plt
 
 # strict: raise exceptions in case of warnings
+np.seterr(all='warn')
 warnings.filterwarnings('error')
 
 
@@ -106,6 +108,7 @@ class Critical_analysis():
         self.datadir = 'h5data/'
         self.MCMCdatafile = 'MCMC_plussign_N3.h5'
         self.resultsfile = 'Bindercrossings_N3.h5'
+        self.therm = 10000  # Configurations to remove due to thermalization
 
     def h5load_data(self):
         """
@@ -143,6 +146,11 @@ class Critical_analysis():
             self.M2[str(ii)], self.M4[str(ii)], self.phi2[str(ii)] = \
                 f.get('N=%d/g=%.2f/L=%d/msq=%.8f' % (self.N, self.g, self.L,
                                                      self.actualm0sqlist[ii]))
+
+            # Remove thermalization steps
+            self.M2[str(ii)] = self.M2[str(ii)][self.therm:]
+            self.M4[str(ii)] = self.M4[str(ii)][self.therm:]
+            self.phi2[str(ii)] = self.phi2[str(ii)][self.therm:]
 
             self.Ntraj.append(len(self.M2[str(ii)]))
 
@@ -213,7 +221,9 @@ class Critical_analysis():
         fig, ax = plt.subplots()
 
         for i in range(self.actualNm0sq):
-            ax.hist(self.phi2[str(i)], bins=20)
+            ax.hist(self.phi2[str(i)], bins=20, label=rf"m^2 = m{self.actualm0sqlist[i]}", alpha=0.4)
+
+        plt.legend()
 
         return fig, ax
 
@@ -321,7 +331,7 @@ class Critical_analysis():
 
         return rn
 
-    def bootit(self, f, dat, bsindices):
+    def bootit(self, f, dat, bsindices, *args, **kwargs):
         """
             A simple boostrap routine, takes function f and applies dat
             - f is function
@@ -332,10 +342,20 @@ class Critical_analysis():
         res = f(dat)
         res_bs = np.array([])
         N = dat.shape[0]
+        av0s = np.zeros(self.Nboot)
+        av1s = np.zeros(self.Nboot)
+        av2s = np.zeros(self.Nboot)
 
         for i in range(self.Nboot):
             wol = bsindices[:, i]
-            resl = f(dat[wol, :])
+            kwargs = {'return_extra': True}
+
+            resl, av0, av1, av2 = f(dat[wol, :], *args, **kwargs)
+
+            av0s[i] = av0
+            av1s[i] = av1
+            av2s[i] = av2
+
             res_bs = np.r_[res_bs, np.array([resl])]
 
         if res == np.nan:
@@ -347,7 +367,7 @@ class Critical_analysis():
 
             return res, dres
 
-    def B(self, x):
+    def B(self, x, return_extra=False):
         """
             Helper function: Compute the ratio in the Binder cumulant including
             reweighting
@@ -356,16 +376,30 @@ class Critical_analysis():
                 2nd column <M2> reweighted
                 3rd column <M5> reweighted
         """
-
         # the reweighting factor can get huge and require arithmetics beyond
         # double precision fpa in this case an exception is raised adn np.nan
         # returned to be dealt with later
-        try:
-            av = np.mean(x, 0)
-            return av[0] * av[2] / av[1] ** 2
+        if return_extra:
+            try:
+                av = np.mean(x, 0)
 
-        except Exception:
-            return np.nan
+                B = av[0] * av[2] / av[1] ** 2
+
+                if B > 1:
+                    print("Hello")
+
+                return B, av[0], av[1], av[2]
+
+            except Exception:
+                return np.nan
+
+        else:
+            try:
+                av = np.mean(x, 0)
+                return av[0] * av[2] / av[1] ** 2
+
+            except Exception:
+                return np.nan
 
     def reweight_Binder(self, msq, L1bs, L0bs):
         """
@@ -393,6 +427,11 @@ class Critical_analysis():
                                np.array(self.phi2[str(i)]))
 
             except Exception:
+                RWfac = np.nan * np.array(self.phi2[str(i)])
+
+            # Flag contributions where the exponent is so negative the exponent
+            # goes to 0, or so large it goes to infinity.
+            if min(RWfac == 0) or max(RWfac == np.inf):
                 RWfac = np.nan * np.array(self.phi2[str(i)])
 
             #
@@ -453,9 +492,15 @@ class Critical_analysis():
             denom = np.sum(1. / np.array(dres) ** 2)
             numer = np.sum(np.array(res) / np.array(dres) ** 2)
 
-        B = 1 - self.N * 1. / 3 * numer / denom
+        try:
+            B = 1 - self.N * 1. / 3 * numer / denom
 
+        except Warning:
+            pdb.set_trace()
+
+        # The denominator gives the estimate of the bootstrap variance
         return B - self.Bbar
+        # return B - self.Bbar, np.sqrt((1 / denom)) * self.N / 3
 
     def find_Binder_crossing(self, mmax, mmin):
         """
@@ -612,6 +657,7 @@ def compute_Bindercrossing(N, g, Bbar, Lin):
 
 
 if __name__ == "__main__":
+    compute_Bindercrossing(3, 0.1, 0.44, 48)
     if len(sys.argv) != 5:
         print("")
         print("Usage: python Binderanalysis.py <N> <ag> <Bbar> <L/a>")
@@ -625,3 +671,4 @@ if __name__ == "__main__":
                            float(sys.argv[3]),  # Bbar
                            int(sys.argv[4]))    # L / a
     ###########################################################################
+

@@ -1,3 +1,4 @@
+runs_to_do*
 graphs/*
 __pycache__/*
 launch.json
