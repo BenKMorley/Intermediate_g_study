@@ -493,8 +493,8 @@ class Critical_analysis():
             numer = np.sum(np.array(res) / np.array(dres) ** 2)
 
         if len(iinclude) == 0:
-            B = numpy.nan
-            simga = numpy.nan
+            B = np.nan
+            simga = np.nan
 
         else:
             B = 1 - self.N * 1. / 3 * numer / denom
