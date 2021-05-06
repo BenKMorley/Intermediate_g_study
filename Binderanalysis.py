@@ -499,11 +499,11 @@ class Critical_analysis():
         else:
             B = 1 - self.N * 1. / 3 * numer / denom
 
-        # The denominator gives the estimate of the bootstrap variance
-        if sigma:
-            if len(iinclude) != 0:
+            if sigma:
                 sigma = np.sqrt((1 / denom)) * self.N / 3
 
+        # The denominator gives the estimate of the bootstrap variance
+        if sigma:
             return B - self.Bbar, sigma
 
         else:
