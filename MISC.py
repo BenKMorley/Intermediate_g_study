@@ -111,7 +111,13 @@ class UWerr():
             delta = np.dot((self.Data - v), D)
 
         Gamma = np.zeros(int(np.floor(1. * self.N / 2)))
-        Gamma[0] = np.mean(delta ** 2)
+
+        try:
+            Gamma[0] = np.mean(delta ** 2)
+
+        except RuntimeWarning:
+            print("Overflow: Gamma[0] = inf")
+            Gamma[0] = np.inf
 
         if Gamma[0] == 0:
             print("UWerr: data contains no no fluctuations: Gamma[0]=0")
