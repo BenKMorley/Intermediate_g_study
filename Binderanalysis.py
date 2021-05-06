@@ -401,7 +401,7 @@ class Critical_analysis():
             except Exception:
                 return np.nan
 
-    def reweight_Binder(self, msq, L1bs, L0bs):
+    def reweight_Binder(self, msq, L1bs, L0bs, sigma=False):
         """
             This function computes the reweighted Binder cumulant
             - msq is target bare mass squared for for reweighting
@@ -492,15 +492,14 @@ class Critical_analysis():
             denom = np.sum(1. / np.array(dres) ** 2)
             numer = np.sum(np.array(res) / np.array(dres) ** 2)
 
-        try:
-            B = 1 - self.N * 1. / 3 * numer / denom
-
-        except Warning:
-            pdb.set_trace()
+        B = 1 - self.N * 1. / 3 * numer / denom
 
         # The denominator gives the estimate of the bootstrap variance
-        return B - self.Bbar
-        # return B - self.Bbar, np.sqrt((1 / denom)) * self.N / 3
+        if sigma:
+            return B - self.Bbar, np.sqrt((1 / denom)) * self.N / 3
+
+        else:
+            return B - self.Bbar
 
     def find_Binder_crossing(self, mmax, mmin):
         """
@@ -657,7 +656,6 @@ def compute_Bindercrossing(N, g, Bbar, Lin):
 
 
 if __name__ == "__main__":
-    compute_Bindercrossing(3, 0.1, 0.44, 48)
     if len(sys.argv) != 5:
         print("")
         print("Usage: python Binderanalysis.py <N> <ag> <Bbar> <L/a>")

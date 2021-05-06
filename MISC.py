@@ -24,6 +24,7 @@
 ###############################################################################
 import numpy as np
 import sys
+import pdb
 from parameters import *
 
 separator = "##########################################################"
@@ -107,7 +108,7 @@ class UWerr():
                     dum[i] = np.array(v[i])
                     D[i] = D[i] / (2. * h[i])
 
-            delta = np.dot((self.Data-v), D)
+            delta = np.dot((self.Data - v), D)
 
         Gamma = np.zeros(int(np.floor(1. * self.N / 2)))
         Gamma[0] = np.mean(delta ** 2)
@@ -139,7 +140,17 @@ class UWerr():
                 else:
                     tauW = self.Stau / (np.log((Gint + 1.) / Gint))
 
-                gW = np.exp(-1. * t / tauW) - tauW / np.sqrt(t * self.N)
+                try:
+                    gW = np.exp(-1. * t / tauW) - tauW / np.sqrt(t * self.N)
+
+                except RuntimeWarning:
+                    # Underflow
+                    if tauW < 1:
+                        gW = -1
+
+                    # Overflow
+                    else:
+                        gW = 1
 
                 if gW < 0:
                     Wopt = t
