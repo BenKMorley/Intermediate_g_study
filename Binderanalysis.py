@@ -41,7 +41,7 @@ import matplotlib.pyplot as plt
 
 # strict: raise exceptions in case of warnings
 np.seterr(all='warn')
-warnings.filterwarnings('error')
+# warnings.filterwarnings('error')
 
 
 # begin class definition ######################################################
@@ -102,7 +102,7 @@ class Critical_analysis():
         self.tauint = []
         self.Nbin_min = 50
         self.rng_nest = np.random.RandomState()
-        self.Nboot = 500
+        self.Nboot = 20
         self.msq_final = 0.
         self.dmsq_final = 0.
         self.datadir = 'h5data/'
@@ -348,13 +348,15 @@ class Critical_analysis():
 
         for i in range(self.Nboot):
             wol = bsindices[:, i]
-            kwargs = {'return_extra': True}
+            # kwargs = {'return_extra': True}
+            kwargs = {}
 
-            resl, av0, av1, av2 = f(dat[wol, :], *args, **kwargs)
+            resl  = f(dat[wol, :], *args, **kwargs)
+            # resl, av0, av1, av2 = f(dat[wol, :], *args, **kwargs)
 
-            av0s[i] = av0
-            av1s[i] = av1
-            av2s[i] = av2
+            # av0s[i] = av0
+            # av1s[i] = av1
+            # av2s[i] = av2
 
             res_bs = np.r_[res_bs, np.array([resl])]
 
