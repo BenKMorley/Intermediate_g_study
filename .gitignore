@@ -1,3 +1,4 @@
+run_simulatation_csv.sh
 runs_to_do*
 graphs/*
 __pycache__/*
