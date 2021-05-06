@@ -41,7 +41,7 @@ import matplotlib.pyplot as plt
 
 # strict: raise exceptions in case of warnings
 np.seterr(all='warn')
-# warnings.filterwarnings('error')
+warnings.filterwarnings('error')
 
 
 # begin class definition ######################################################
@@ -436,9 +436,7 @@ class Critical_analysis():
             if min(RWfac == 0) or max(RWfac == np.inf):
                 RWfac = np.nan * np.array(self.phi2[str(i)])
 
-            #
             # binning for reweighting factor, phi^2, M^2 and M^4
-            #
             try:
                 RW_fac_bin = self.RWbinit_N(RWfac, self.Nbin_tauint[i])
 
@@ -494,11 +492,19 @@ class Critical_analysis():
             denom = np.sum(1. / np.array(dres) ** 2)
             numer = np.sum(np.array(res) / np.array(dres) ** 2)
 
-        B = 1 - self.N * 1. / 3 * numer / denom
+        if len(iinclude) == 0:
+            B = numpy.nan
+            simga = numpy.nan
+
+        else:
+            B = 1 - self.N * 1. / 3 * numer / denom
 
         # The denominator gives the estimate of the bootstrap variance
         if sigma:
-            return B - self.Bbar, np.sqrt((1 / denom)) * self.N / 3
+            if len(iinclude) != 0:
+                sigma = np.sqrt((1 / denom)) * self.N / 3
+
+            return B - self.Bbar, sigma
 
         else:
             return B - self.Bbar
