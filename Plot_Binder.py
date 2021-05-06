@@ -53,7 +53,7 @@ def plot_Binder(N, g_s, L_s, data_file="MCMC_test.h5", minus_sign_override=False
                 alpha = params[0]
                 beta = params[-2]
                 nu = params[-1]
-        
+
             except:
                 critical_found = False
 
@@ -203,7 +203,7 @@ def plot_Binder(N, g_s, L_s, data_file="MCMC_test.h5", minus_sign_override=False
 
                         for i, m in tqdm(enumerate(mass_range)):
                             # try:
-                            Binder_bit, sigma = System.reweight_Binder(m, L1bs, L0bs)
+                            Binder_bit, sigma = System.reweight_Binder(m, L1bs, L0bs, sigma=True)
 
                             # except Exception:
                             #     continue
