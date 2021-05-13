@@ -137,7 +137,11 @@ class UWerr():
         t = 1
 
         while t <= tmax:
-            Gamma[t] = np.sum(delta[0: -(t)] * delta[t:]) / (self.N - t)
+            try:
+                Gamma[t] = np.sum(delta[0: -(t)] * delta[t:]) / (self.N - t)
+            except RuntimeWarning:
+                Gamma[t] = np.inf
+
             if doGamma == 1:
                 Gint = Gint + Gamma[t] / Gamma[0]
                 if Gint <= 0:

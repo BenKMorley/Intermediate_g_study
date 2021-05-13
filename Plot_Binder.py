@@ -80,11 +80,11 @@ def plot_Binder(N, g_s, L_s, data_file="MCMC_test.h5", minus_sign_override=False
 
                     bootstrap_success = True
 
-                    try:
-                        System.compute_tauint_and_bootstrap_indices()
+                    # try:
+                    System.compute_tauint_and_bootstrap_indices()
 
-                    except Exception:
-                        bootstrap_success = False
+                    # except Exception:
+                    #     bootstrap_success = False
 
                     for i, string in enumerate(data.keys()):
                         # I'm going to assume the tauint is in the same order as
