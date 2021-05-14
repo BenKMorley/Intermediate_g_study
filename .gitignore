@@ -2,7 +2,7 @@ settings.json
 run_simulation_csv.sh
 runs_to_do*
 Local/graphs/*
-__pycache__/*
+*__pycache__*
 launch.json
 h5data/*
 h5data
