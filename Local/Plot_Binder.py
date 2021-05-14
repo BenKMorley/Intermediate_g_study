@@ -26,7 +26,7 @@ def fig3_color(gL, min_gL=0.79, max_gL=76.81, func=numpy.log):
     try:
         assert (0 <= gL_relative) and (1 >= gL_relative), "Please use a gL in the range [gL_min, gL_max]"
 
-    except:
+    except Exception:
         pdb.set_trace()
 
     color_value = tuple((gL_relative * top + (1 - gL_relative) * bottom))
@@ -34,7 +34,7 @@ def fig3_color(gL, min_gL=0.79, max_gL=76.81, func=numpy.log):
     return color_value
 
 
-def plot_Binder(N, g_s, L_s, data_file="MCMC_test.h5", minus_sign_override=False, legend=True, ax=None, min_gL=3.1, max_gL=76.81, reweight=True, params=None, GL_lim=12.7):
+def plot_Binder(N, g_s, L_s, data_file="../h5data/MCMC_data_full.h5", minus_sign_override=False, legend=True, ax=None, min_gL=3.1, max_gL=76.81, reweight=True, params=None, GL_lim=12.7):
     if ax is None:
         fig, ax = plt.subplots()
         ax.set_xlabel(r'$\frac{m^2 - m_c^2}{g^2} x^\frac{1}{\nu}$')
@@ -54,14 +54,14 @@ def plot_Binder(N, g_s, L_s, data_file="MCMC_test.h5", minus_sign_override=False
                 beta = params[-2]
                 nu = params[-1]
 
-            except:
+            except Exception:
                 critical_found = False
 
         for g in g_s:
             try:
                 m_crit = mPT_1loop(g, N) + g ** 2 * (alpha - beta * K1(g, N))
-            
-            except:
+
+            except Exception:
                 critical_found = False
 
             for L in L_s:
@@ -98,7 +98,7 @@ def plot_Binder(N, g_s, L_s, data_file="MCMC_test.h5", minus_sign_override=False
                         try:
                             m = float(re.findall(r'-\d+\.\d+', string)[0])
 
-                        except:
+                        except Exception:
                             if minus_sign_override:
                                 m = -float(re.findall(r'\d+\.\d+', string)[0])
                             else:
@@ -113,7 +113,7 @@ def plot_Binder(N, g_s, L_s, data_file="MCMC_test.h5", minus_sign_override=False
                             try:
                                 mass_data = data[f'msq={m:.8f}']
 
-                            except:
+                            except Exception:
                                 pdb.set_trace()
 
                         M2 = mass_data[0]
@@ -147,7 +147,7 @@ def plot_Binder(N, g_s, L_s, data_file="MCMC_test.h5", minus_sign_override=False
                                 try:
                                     Binder_boot[i] = 1 - (N / 3) * numpy.mean(M4_sample) / (numpy.mean(M2_sample) ** 2)
 
-                                except:
+                                except Exception:
                                     pdb.set_trace()
 
                             Binder_sigmas.append(numpy.std(Binder_boot))

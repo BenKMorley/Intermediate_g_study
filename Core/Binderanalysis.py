@@ -105,7 +105,7 @@ class Critical_analysis():
         self.Nboot = 20
         self.msq_final = 0.
         self.dmsq_final = 0.
-        self.datadir = 'h5data/'
+        self.datadir = ''
         self.MCMCdatafile = 'MCMC_plussign_N3.h5'
         self.resultsfile = 'Bindercrossings_N3.h5'
         self.therm = 10000  # Configurations to remove due to thermalization
