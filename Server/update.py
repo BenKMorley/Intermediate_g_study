@@ -16,6 +16,18 @@ def GRID_convention_m(m):
 def MCMC_convention_m(m):
     return f"msq={-m:.8f}"
 
+def GRID_convention_N(N):
+    return f"su{N}"
+
+def MCMC_convention_N(N):
+    return f"N={N}"
+
+def GRID_convention_L(L):
+    return f"L{L}"
+
+def MCMC_convention_L(L):
+    return f"L={L}"
+
 def GRID_convention_g(g):
     return f"g{g}".rstrip('0').rstrip('.')
 
@@ -25,7 +37,7 @@ def MCMC_convention_g(g):
 def update(filename, N_s=None, g_s=None, L_s=None, m_s=None, OR=10, base_dir=f"/rds/project/dirac_vol4/rds-dirac-dp099/cosmhol-hbor"):
     if os.path.isfile(filename):
         old_data = h5py.File(filename, "a")
-    
+
     else:
         old_data = h5py.File(filename, "w")
 
@@ -56,18 +68,18 @@ def update(filename, N_s=None, g_s=None, L_s=None, m_s=None, OR=10, base_dir=f"/
                 if len(re.findall(r'\d+', name)) != 0:
                     value = int(re.findall(r'\d+', name)[0])
 
-                    if f"N{value}" not in sub_dict:
-                        sub_dict[f"N{value}"] = {}
+                    if N not in sub_dict:
+                        sub_dict[N] = {}
 
         else:
             for N in N_s:
                 for name in files:
                     if len(re.findall(rf'{N}', name)) != 0:
-                        sub_dict[f"su{N}"] = {}
+                        sub_dict[N] = {}
 
         for N in sub_dict.keys():
             sub_dict2 = sub_dict[N]
-            sub_dir2 = sub_dir + "/" + N
+            sub_dir2 = sub_dir + "/" + GRID_convention_N(N)
 
             if L_s is None:
                 try:
@@ -80,17 +92,17 @@ def update(filename, N_s=None, g_s=None, L_s=None, m_s=None, OR=10, base_dir=f"/
                     if len(re.findall(r'\d+', name)) != 0:
                         value = int(re.findall(r'\d+', name)[0])
 
-                        if f"L{value}" not in sub_dict2:
-                            sub_dict2[f"L{value}"] = {}
+                        if value not in sub_dict2:
+                            sub_dict2[value] = {}
 
             else:
                 for L in L_s:
-                    if f"L{L}" not in sub_dict2:
-                        sub_dict2[f"L{L}"] = {}
+                    if L not in sub_dict2:
+                        sub_dict2[L] = {}
 
             for L in sub_dict2.keys():
                 sub_dict3 = sub_dict2[L]
-                sub_dir3 = sub_dir2 + "/" + L
+                sub_dir3 = sub_dir2 + "/" + GRID_convention_L(L)
 
                 if m_s is None:
                     try:
@@ -128,38 +140,38 @@ def update(filename, N_s=None, g_s=None, L_s=None, m_s=None, OR=10, base_dir=f"/
 
                 for m in keys:
                     dict4 = dict3[m]
-                    file_root = f"{base_dir}/{GRID_convention_g(g)}/{N}/{L}/{GRID_convention_m(m)}/mag/cosmhol-hbor-{N}_{L}_{GRID_convention_g(g)}_{GRID_convention_m(m)}_or{OR}"
+                    file_root = f"{base_dir}/{GRID_convention_g(g)}/{GRID_convention_N(N)}/{GRID_convention_L(L)}/{GRID_convention_m(m)}/mag/cosmhol-hbor-{GRID_convention_N(N)}_{GRID_convention_L(L)}_{GRID_convention_g(g)}_{GRID_convention_m(m)}_or{OR}"
 
                     #pdb.set_trace()
-                    if N not in old_data.keys():
-                        old_data.create_group(N)
+                    if MCMC_convention_N(N) not in old_data.keys():
+                        old_data.create_group(MCMC_convention_N(N))
 
                     #pdb.set_trace()
-                    if MCMC_convention_g(g) not in list(old_data[N].keys()):
-                        old_data[N].create_group(MCMC_convention_g(g))
+                    if MCMC_convention_g(g) not in list(old_data[MCMC_convention_N(N)].keys()):
+                        old_data[MCMC_convention_N(N)].create_group(MCMC_convention_g(g))
 
                     #pdb.set_trace()
-                    if L not in old_data[N][MCMC_convention_g(g)].keys():
-                        old_data[N][MCMC_convention_g(g)].create_group(L)
+                    if MCMC_convention_L(L) not in list(old_data[MCMC_convention_N(N)][MCMC_convention_g(g)].keys()):
+                        old_data[MCMC_convention_N(N)][MCMC_convention_g(g)].create_group(MCMC_convention_L(L))
 
                     #pdb.set_trace()
-                    if MCMC_convention_m(m) not in list(old_data[N][MCMC_convention_g(g)][L].keys()):
-                        old_data[N][MCMC_convention_g(g)][L].create_group(MCMC_convention_m(m))
+                    if MCMC_convention_m(m) not in list(old_data[MCMC_convention_N(N)][MCMC_convention_g(g)][MCMC_convention_L(L)].keys()):
+                        old_data[MCMC_convention_N(N)][MCMC_convention_g(g)][MCMC_convention_L(L)].create_group(MCMC_convention_m(m))
 
                         print(f"found new data for {N}, {g}, {L}, {m}")
                         #pdb.set_trace()
 
                         try:
-                            old_data[N][MCMC_convention_g(g)][L][MCMC_convention_m(m)]['phi2'] = numpy.loadtxt(file_root + "_phi2.0.dat")
-                            old_data[N][MCMC_convention_g(g)][L][MCMC_convention_m(m)]['m2'] = numpy.loadtxt(file_root + "_m2.0.dat")
-                            old_data[N][MCMC_convention_g(g)][L][MCMC_convention_m(m)]['m4'] = numpy.loadtxt(file_root + "_m4.0.dat")
+                            old_data[MCMC_convention_N(N)][MCMC_convention_g(g)][MCMC_convention_L(L)][MCMC_convention_m(m)]['phi2'] = numpy.loadtxt(file_root + "_phi2.0.dat")
+                            old_data[MCMC_convention_N(N)][MCMC_convention_g(g)][MCMC_convention_L(L)][MCMC_convention_m(m)]['m2'] = numpy.loadtxt(file_root + "_m2.0.dat")
+                            old_data[MCMC_convention_N(N)][MCMC_convention_g(g)][MCMC_convention_L(L)][MCMC_convention_m(m)]['m4'] = numpy.loadtxt(file_root + "_m4.0.dat")
 
                         except Exception:
                             print("FILES NOT FOUND!")
-                            del old_data[N][MCMC_convention_g(g)][L][MCMC_convention_m(m)]
+                            del old_data[MCMC_convention_N(N)][MCMC_convention_g(g)][MCMC_convention_L(L)][MCMC_convention_m(m)]
                     
                     else:
-                        print(f"{N}, {MCMC_convention_g(g)}, {L}, {MCMC_convention_m(m)} data already present")
+                        print(f"{MCMC_convention_N(N)}, {MCMC_convention_g(g)}, {MCMC_convention_L(L)}, {MCMC_convention_m(m)} data already present")
 
     return old_data
 
