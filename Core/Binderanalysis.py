@@ -664,12 +664,6 @@ def compute_Bindercrossing(N, g, Bbar, Lin, direc="h5data/", filename="MCMC_data
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 5:
-        print("")
-        print("Usage: python Binderanalysis.py <N> <ag> <Bbar> <L/a>")
-        print("")
-        exit()
-
     ###########################################################################
     # call main routine
     compute_Bindercrossing(int(sys.argv[1]),    # N
