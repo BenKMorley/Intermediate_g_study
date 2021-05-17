@@ -156,19 +156,21 @@ def update(filename, N_s=None, g_s=None, L_s=None, m_s=None, OR=10, base_dir=f"/
 
                     #pdb.set_trace()
                     if MCMC_convention_m(m) not in list(old_data[MCMC_convention_N(N)][MCMC_convention_g(g)][MCMC_convention_L(L)].keys()):
-                        old_data[MCMC_convention_N(N)][MCMC_convention_g(g)][MCMC_convention_L(L)].create_group(MCMC_convention_m(m))
-
                         print(f"found new data for {N}, {g}, {L}, {m}")
-                        #pdb.set_trace()
 
                         try:
-                            old_data[MCMC_convention_N(N)][MCMC_convention_g(g)][MCMC_convention_L(L)][MCMC_convention_m(m)]['phi2'] = numpy.loadtxt(file_root + "_phi2.0.dat")
-                            old_data[MCMC_convention_N(N)][MCMC_convention_g(g)][MCMC_convention_L(L)][MCMC_convention_m(m)]['m2'] = numpy.loadtxt(file_root + "_m2.0.dat")
-                            old_data[MCMC_convention_N(N)][MCMC_convention_g(g)][MCMC_convention_L(L)][MCMC_convention_m(m)]['m4'] = numpy.loadtxt(file_root + "_m4.0.dat")
+                            phi2 = numpy.loadtxt(file_root + "_phi2.0.dat")
+                            m2 = numpy.loadtxt(file_root + "_m2.0.dat")
+                            m4 = numpy.loadtxt(file_root + "_m4.0.dat")
+
+                            old_data[MCMC_convention_N(N)][MCMC_convention_g(g)][MCMC_convention_L(L)].create_dataset(MCMC_convention_m(m), (3, len(phi2)), dtype='<f8')
+
+                            old_data[MCMC_convention_N(N)][MCMC_convention_g(g)][MCMC_convention_L(L)][MCMC_convention_m(m)][0] = m2
+                            old_data[MCMC_convention_N(N)][MCMC_convention_g(g)][MCMC_convention_L(L)][MCMC_convention_m(m)][1] = m4
+                            old_data[MCMC_convention_N(N)][MCMC_convention_g(g)][MCMC_convention_L(L)][MCMC_convention_m(m)][2] = phi2
 
                         except Exception:
                             print("FILES NOT FOUND!")
-                            del old_data[MCMC_convention_N(N)][MCMC_convention_g(g)][MCMC_convention_L(L)][MCMC_convention_m(m)]
 
                     else:
                         print(f"{MCMC_convention_N(N)}, {MCMC_convention_g(g)}, {MCMC_convention_L(L)}, {MCMC_convention_m(m)} data already present")
