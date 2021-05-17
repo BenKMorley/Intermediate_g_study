@@ -7,7 +7,6 @@ launch.json
 h5data/*
 h5data
 MCMC_study.py
-MISC.py
 new_simulations.csv
 su3_runs.ods
 read_write/MCMC_test.h5
