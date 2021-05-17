@@ -666,11 +666,11 @@ def compute_Bindercrossing(N, g, Bbar, Lin, direc="h5data/", filename="MCMC_data
 if __name__ == "__main__":
     ###########################################################################
     # call main routine
-    compute_Bindercrossing(int(sys.argv[1]),      # N
-                           float(sys.argv[2]),    # ag
-                           float(sys.argv[3]),    # Bbar
-                           int(sys.argv[4]),      # L / a
-                           direc=sys.argv[5],     # Directory
-                           filename=sys.argv[6],  # Filename
-                           Nboot=sys.argv[7])     # Number of boot samples
+    compute_Bindercrossing(int(sys.argv[1]),            # N
+                           float(sys.argv[2]),          # ag
+                           float(sys.argv[3]),          # Bbar
+                           int(sys.argv[4]),            # L / a
+                           direc=sys.argv[5],           # Directory
+                           filename=sys.argv[6],        # Filename
+                           Nboot=int(sys.argv[7]))      # No. of boot samples
     ###########################################################################
