@@ -1,16 +1,18 @@
 #!/bin/sh
 
+NAME=Core/Binderanalysis.py
+DIR=h5data/
+FILENAME=MCMC_data_full.h5
+NBOOT=500
+
 NUM_THREADS=60
-NAME=Binderanalysis.py
 END_TASK_NO=1
 ID=0
 N=3
 
-cd ../Core
-
 G_S=(0.1 0.2 0.3 0.5 0.6)
 L_S=(8 16 32 48 64 96)
-B_S=(0.40 0.41 0.42 0.43 0.44 0.45 0.46)
+B_S=(0.40 0.41 0.42 0.43 0.44 0.45 0.46 0.47 0.48)
 
 LEN_G=${#G_S[@]}
 LEN_L=${#L_S[@]}
@@ -18,6 +20,9 @@ LEN_B=${#B_S[@]}
 END=$(( $LEN_G * $LEN_L * $LEN_B ))
 G_SIZE=$(( $END / $LEN_G ))
 M=$(( $LEN_G * $LEN_L ))
+
+# Run from inside photon directory
+cd ..
 
 
 while [ $ID -le $END ]; do
@@ -33,7 +38,7 @@ while [ $ID -le $END ]; do
 
     echo about to run with ID=$ID G=$G L=$L B=$B
 
-    python3 $NAME $N $G $B $L &
+    python3 $NAME $N $G $B $L $DIR $FILENAME $NBOOT &
   fi
 
   RUNNING_PROCESSES=$(ps -ef | grep $NAME | wc -l)
