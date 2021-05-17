@@ -5,11 +5,20 @@ import numpy
 import matplotlib
 import matplotlib.pyplot as plt
 from tqdm import tqdm
-from model_definitions import mPT_1loop
+import sys
+import os
 
-from publication_results import get_statistical_errors_central_fit
-from model_definitions import K1, mPT_1loop
-from Binderanalysis import Critical_analysis
+
+# Import from the Core directory
+sys.path.append(os.getcwd() + '/..')
+sys.path.append(os.getcwd() + '/../Core')
+sys.path.append(os.getcwd())
+sys.path.append(os.getcwd() + '/Core')
+
+
+from Core.model_definitions import mPT_1loop, K1
+from Core.publication_results import get_statistical_errors_central_fit
+from Core.Binderanalysis import Critical_analysis
 
 # matplotlib.use('Qt5Agg')
 
@@ -41,7 +50,7 @@ def plot_Binder(N, g_s, L_s, data_file="../h5data/MCMC_data_full.h5", minus_sign
         # ax.set_xlabel(r'$\frac{m_c^2 - m^2}{m_c^2} x^\frac{1}{\nu}$')
         ax.set_ylabel(r'$B(N, g, L)$')
 
-    markers = {8: 'd', 16: 'v', 32: '<', 48: '^', 64: 's', 96: 'o', 128:'d'}
+    markers = {8: 'd', 16: 'v', 32: '<', 48: '^', 64: 's', 96: 'o', 128: 'd'}
 
     with h5py.File(data_file, "r") as f:
         critical_found = True
