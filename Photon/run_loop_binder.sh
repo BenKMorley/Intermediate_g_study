@@ -39,13 +39,15 @@ while [ $ID -le $END ]; do
     echo about to run with ID=$ID G=$G L=$L B=$B
 
     python3 $NAME $N $G $B $L $DIR $FILENAME $NBOOT &
+
+    ID=$(($ID + 1))
   fi
 
   RUNNING_PROCESSES=$(ps -ef | grep $NAME | wc -l)
+
+  sleep 0.5
   
   echo RUNNING_PROCESSES : $RUNNING_PROCESSES
-
-  ID=$(($ID + 1))
 done
 
 
