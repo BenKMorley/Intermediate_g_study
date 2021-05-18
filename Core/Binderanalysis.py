@@ -80,7 +80,7 @@ class Critical_analysis():
         * h5store_results(self): Writes result to hdf5 file
     """
 
-    def __init__(self, N, g, L):
+    def __init__(self, N, g, L, direc='h5data/', filename='MCMC_data_full.h5', Nboot=500):
         """
             Here we allocate some basic variables and seed the RNG
         """
@@ -102,12 +102,12 @@ class Critical_analysis():
         self.tauint = []
         self.Nbin_min = 50
         self.rng_nest = np.random.RandomState()
-        self.Nboot = 20
+        self.Nboot = Nboot
         self.msq_final = 0.
         self.dmsq_final = 0.
-        self.datadir = ''
-        self.MCMCdatafile = 'MCMC_plussign_N3.h5'
-        self.resultsfile = 'Bindercrossings_N3.h5'
+        self.datadir = direc
+        self.MCMCdatafile = filename
+        self.resultsfile = 'Bindercrossings.h5'
         self.therm = 10000  # Configurations to remove due to thermalization
 
     def h5load_data(self):
@@ -604,10 +604,10 @@ class Critical_analysis():
         g.attrs['tauint'] = self.tauint
 
         f.close()
-# end class definition ######################################################
+# end class definition ########################################################
 
 
-def compute_Bindercrossing(N, g, Bbar, Lin):
+def compute_Bindercrossing(N, g, Bbar, Lin, direc="h5data/", filename="MCMC_data_full.h5", Nboot=500):
     """
         ######################################################################
         # Main routine for computing crossing of reweighted Binder cumulant  #
@@ -630,7 +630,7 @@ def compute_Bindercrossing(N, g, Bbar, Lin):
     iLin = np.where(np.array(Ls) == int(Lin))[0][0]
 
     # instantiate analysis class
-    run1 = Critical_analysis(N, g, Ls[iLin])
+    run1 = Critical_analysis(N, g, Ls[iLin], direc=direc, filename=filename, Nboot=Nboot)
 
     # choose Bbar
     run1.Bbar = Bbar
@@ -664,17 +664,13 @@ def compute_Bindercrossing(N, g, Bbar, Lin):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 5:
-        print("")
-        print("Usage: python Binderanalysis.py <N> <ag> <Bbar> <L/a>")
-        print("")
-        exit()
-
     ###########################################################################
     # call main routine
-    compute_Bindercrossing(int(sys.argv[1]),    # N
-                           float(sys.argv[2]),  # ag
-                           float(sys.argv[3]),  # Bbar
-                           int(sys.argv[4]))    # L / a
+    compute_Bindercrossing(int(sys.argv[1]),            # N
+                           float(sys.argv[2]),          # ag
+                           float(sys.argv[3]),          # Bbar
+                           int(sys.argv[4]),            # L / a
+                           direc=sys.argv[5],           # Directory
+                           filename=sys.argv[6],        # Filename
+                           Nboot=int(sys.argv[7]))      # No. of boot samples
     ###########################################################################
-
