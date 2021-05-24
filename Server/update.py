@@ -7,6 +7,7 @@ import numpy
 
 N_s = [3]
 g_s = [0.1, 0.2, 0.3, 0.5, 0.6]
+L_s = [128]
 filename = f"../h5data/MCMC_data_full.h5"
 
 
@@ -178,4 +179,4 @@ def update(filename, N_s=None, g_s=None, L_s=None, m_s=None, OR=10, base_dir=f"/
     return old_data
 
 
-update(filename, N_s=N_s, g_s=g_s)
+update(filename, N_s=N_s, g_s=g_s, L_s=L_s)
