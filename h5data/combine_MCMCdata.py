@@ -1,43 +1,34 @@
+from os import name
 import h5py
 import sys
+import pdb
+import re
 
-file1 = sys.argv[0]
-file2 = sys.argv[1]
+file1 = sys.argv[1]
+file2 = sys.argv[2]
 
-with h5py.File(file1) as f1:
-    with h5py.File(file2) as f2:
-        for N_key in f2.keys():
-            N = int(re.findall(r'\d+', N_key)[0])
+# file1 = "h5data/Bindercrossings.h5"
+# file2 = "h5data/Bindercrossings_N3.h5"
 
-            if f"N={N}" not in f1.keys():
-                N_level1 = f1.create_group(f"N={N}")
-            else:
-                N_level1 = f1[f"N={N}"]
 
-            N_level2 = f2[f"N={N}"]
+def copy_data(group1, group2):
+    for key in group2.keys():
+        if type(group2[key]) == h5py._hl.group.Group:
 
-            for g_key in N_level2.keys():
-                g = float(re.findall(r'\d+\.\d+', g_key)[0])
+            if key not in group1.keys():
+                group1.create_group(key)
 
-                if f"g={g:.2f}" not in N_level2.keys():
-                    g_level1 = N_level1.create_group(f"g={g:.2f}")
-                else:
-                    g_level1 = N_level1[f"g={g:.2f}"]
+            copy_data(group1[key], group2[key])
 
-                g_level2 = N_level2[f"g={g:.2f}"]
+        elif type(group2[key]) == h5py._hl.dataset.Dataset:
+            if key in group1.keys():
+                del group1[key]
 
-                for L_key in g_level2:
-                    L = int(re.findall(r'\d+', L_key)[0])
+            group1.create_dataset(key, group2[key].shape, dtype=group2[key].dtype)
 
-                    if f"L={L}" not in g_level1.keys():
-                        L_level1 = g_level1.create_group(f"L={L}")
-                    else:
-                        L_level1 = g_level1[f"L={L}"]
+            group1[key][()] = group2[key][()]
 
-                    L_level2 = g_level2[f"L={L}"]
 
-                    for m_key in L_level2:
-                        m = float(re.findall(r'\d+\.\d+', m_key)[0])
-
-                        if f'msq={m:.8f}' not in L_level1.keys():
-                            L_level1[f'msq={m:.8f}'] = L_level2[f'msq={m:.8f}']
+with h5py.File(file1, "r+") as f1:
+    with h5py.File(file2, "r") as f2:
+        copy_data(f1, f2)
