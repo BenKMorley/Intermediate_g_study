@@ -4,8 +4,7 @@ runs_to_do*
 Local/graphs/*
 *__pycache__*
 launch.json
-h5data/*
-h5data
+h5data/*.h5
 MCMC_study.py
 new_simulations.csv
 su3_runs.ods
