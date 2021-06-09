@@ -166,6 +166,27 @@ def get_statistical_errors_central_fit(N, model_name="model1", GL_min_in=None,
         param_names = ["alpha", "f0", "f1", "beta", "nu"]
         x0 = [0, 0.5431, -0.03586, 1, 2 / 3]  # EFT values
 
+    if N == 3:
+        if model_name == "model1":
+            model = model1_1a
+            GL_min = 12.8
+            Bbar_s = [0.43, 0.44]
+
+        if model_name == "model2":
+            model = model2_1a
+            GL_min = 32.0
+            Bbar_s = [0.43, 0.44]
+
+        g_s = [0.1, 0.2, 0.3, 0.6]
+
+        param_names = ["alpha", "f0", "f1", "beta", "nu"]
+        L_s = [16, 32, 48, 64, 96]
+
+        N = 3
+        N_s = [N]
+        param_names = ["alpha", "f0", "f1", "beta", "nu"]
+        x0 = [0, 0.5, -0.03, 1, 2 / 3]  # EFT values
+
     if N == 4:
         if model_name == "model1":
             model = model1_2a
@@ -234,7 +255,7 @@ def get_statistical_errors_central_fit(N, model_name="model1", GL_min_in=None,
 
         print(f"m_c_error = {m_c_error}")
 
-    if N == 2:
+    if N == 2 or N == 3:
         results = {}
         results["params_central"] = params_central
         results["params_std"] = sigmas
@@ -330,6 +351,23 @@ def get_systematic_errors(N, model_name="model1"):
         x0 = [0, 0.5431, -0.03586, 1, 2 / 3]  # EFT values
         param_names = ["alpha", "f0", "f1", "beta", "nu"]
 
+    if N == 3:
+        if model_name == "model1":
+            model = model1_1a
+
+        if model_name == "model2":
+            model = model2_1a
+
+        N_s = [3]
+        Bbar_s = [0.43, 0.44]
+        x0 = [0, 0.5, -0.03, 1, 2 / 3]  # EFT values
+        g_s = [0.1, 0.2, 0.3, 0.6]
+
+        param_names = ["alpha", "f0", "f1", "beta", "nu"]
+        L_s = [16, 32, 48, 64, 96]
+        GL_mins = numpy.array([0.8, 1.6, 2.4, 3.2, 4, 4.8, 6.4, 8, 9.6, 12.8, 14.4,
+                               16, 19.2, 24, 25.6])
+
     if N == 4:
         if model_name == "model1":
             model = model1_2a
@@ -343,7 +381,7 @@ def get_systematic_errors(N, model_name="model1"):
         param_names = ["alpha1", "alpha2", "f0", "f1", "beta", "nu"]
 
     # The minimum number of degrees of freedom needed to consider a fit valid
-    min_dof = 15
+    min_dof = 5
 
     n_params = len(param_names)
 
@@ -442,7 +480,7 @@ def get_systematic_errors(N, model_name="model1"):
         m_c_error = max(m_c - minimum_m, maximum_m - m_c)
         print(f"m_c_error = {m_c_error}")
 
-    if N == 2:
+    if N == 2 or N == 3:
         results = {}
         results["params_central"] = params_central
         results["params_std"] = sys_sigmas
@@ -498,3 +536,63 @@ def get_systematic_errors(N, model_name="model1"):
     results["param_names"] = param_names
 
     return results
+
+
+def Plot_fit(N):
+    def colors(g):
+        if g == 0.1:
+            return 'g'
+        if g == 0.2:
+            return 'r'
+        if g == 0.3:
+            return 'k'
+        if g == 0.5:
+            return 'y'
+        if g == 0.6:
+            return 'b'
+
+    if N == 3:
+        model = model1_1a
+        Bbar_s = numpy.array([0.43, 0.44])
+
+        g_s_in = [0.1, 0.2, 0.3, 0.6]
+        L_s_in = [16, 32, 48, 64, 96]
+        N_s_in = [N]
+        Bbar_s_in = [0.43, 0.44]
+        GL_min = 12.8
+        GL_max = 76.8
+
+    results = get_statistical_errors_central_fit(N)
+    central_values = results["params_central"]
+
+    samples, g_s, L_s, Bbar_s, m_s = load_h5_data(h5_data_file, N_s_in, g_s_in, L_s_in, Bbar_s_in, GL_min, GL_max)
+
+    gL_space = numpy.linspace(min(g_s * L_s), max(g_s * L_s), 1000)
+
+    for g in set(g_s):
+        for i, Bbar in enumerate(set(Bbar_s)):
+            sub_ind = numpy.argwhere(numpy.logical_and(g_s == g, Bbar_s == Bbar))
+
+            if N == 2 or N == 3:
+                if i == 0:
+                    plt.plot(gL_space, model(N, g, gL_space / g, Bbar, *central_values) / g, label=f'g = {g}', color=colors(g))
+
+                if i == 1:
+                    plt.plot(gL_space, model(N, g, gL_space / g, Bbar, *central_values) / g, color=colors(g))
+
+            if N == 4:
+                if i == 0:
+                    plt.plot(gL_space, model_Bbar_list(list(set(Bbar_s)), N, g, gL_space / g, Bbar, *central_values) / g, label=f'g = {g}', color=colors(g))
+
+                if i == 1:
+                    plt.plot(gL_space, model_Bbar_list(list(set(Bbar_s)), N, g, gL_space / g, Bbar, *central_values) / g, color=colors(g))
+
+            plt.scatter(g * L_s[sub_ind], m_s[sub_ind] / g, color=colors(g))
+
+    plt.xlabel("x")
+    plt.ylabel("m[B = Bbar] / g")
+    plt.legend()
+    plt.show()
+
+
+Plot_fit(3)
