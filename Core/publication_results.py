@@ -593,6 +593,3 @@ def Plot_fit(N):
     plt.ylabel("m[B = Bbar] / g")
     plt.legend()
     plt.show()
-
-
-Plot_fit(3)
