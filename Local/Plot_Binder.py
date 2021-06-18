@@ -95,7 +95,7 @@ def plot_Binder(N, g_s, L_s, data_file="../h5data/MCMC_data_full.h5", minus_sign
                     # except Exception:
                     #     bootstrap_success = False
 
-                    for i, string in enumerate(data.keys()):
+                    for i, m in enumerate(System.actualm0sqlist):
                         # I'm going to assume the tauint is in the same order as
                         # the masses in data.keys since they're both from the same
                         # h5file accessed in the same way
@@ -104,14 +104,12 @@ def plot_Binder(N, g_s, L_s, data_file="../h5data/MCMC_data_full.h5", minus_sign
 
                         # pdb.set_trace()
 
-                        try:
-                            m = float(re.findall(r'-\d+\.\d+', string)[0])
+                        # try:
+                        #     m = float(re.findall(r'-\d+\.\d+', string)[0])
 
-                        except Exception:
-                            if minus_sign_override:
-                                m = -float(re.findall(r'\d+\.\d+', string)[0])
-                            else:
-                                print("Mass not found")
+                        # except Exception:
+                        if minus_sign_override:
+                            m = -m
 
                         masses.append(m)
 

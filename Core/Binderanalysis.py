@@ -132,15 +132,29 @@ class Critical_analysis():
         # get hdf5 group and determine available simulated masses
         dat = f.get('N=%d/g=%.2f/L=%d' % (self.N, self.g, self.L))
 
-        # number of masses
-        self.actualNm0sq = len(dat)
+        # Only extract data points in the range we're interested in
+        sn = 'su%d_%g' % (self.N, self.g)
+        iLin = np.where(np.array(Ls) == int(self.L))[0][0]
+        if sn in mlims:
+            if mlims[sn][iLin]:
+                xmin = -mlims[sn][iLin][1]
+                xmax = -mlims[sn][iLin][0]
+
+        else:
+            xmin = - np.inf
+            xmax = + np.inf
 
         # list of input bare masses
-        self.actualm0sqlist = [float(parse('msq={}', i)[0]) for i in dat]
+        self.actualm0sqlist = [float(parse('msq={}', i)[0]) for i in dat if
+                               float(parse('msq={}', i)[0]) < xmax and
+                               float(parse('msq={}', i)[0]) > xmin]
+
+        # number of masses
+        self.actualNm0sq = len(self.actualm0sqlist)
 
         # now loop over available masses and, in each case, assign values for
         # M^2, M^4 and phi^2 measurements to class variables
-        print("Found %d msq values:" % (len(dat)))
+        print("Found %d msq values:" % (len(self.actualm0sqlist)))
 
         for ii in range(self.actualNm0sq):
             self.M2[str(ii)], self.M4[str(ii)], self.phi2[str(ii)] = \
