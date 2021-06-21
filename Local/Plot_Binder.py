@@ -43,7 +43,7 @@ def fig3_color(gL, min_gL=0.79, max_gL=76.81, func=numpy.log):
     return color_value
 
 
-def plot_Binder(N, g_s, L_s, data_file="../h5data/MCMC_data_full.h5", minus_sign_override=False, legend=True, ax=None, min_gL=3.1, max_gL=76.81, reweight=True, params=None, GL_lim=12.7):
+def plot_Binder(N, g_s, L_s, data_file="../h5data/MCMC_data_full.h5", minus_sign_override=False, legend=True, ax=None, min_gL=3.1, max_gL=76.81, reweight=True, params=None, GL_lim=12.7, mlims=None):
     if ax is None:
         fig, ax = plt.subplots()
         ax.set_xlabel(r'$\frac{m^2 - m_c^2}{g^2} x^\frac{1}{\nu}$')
@@ -178,7 +178,10 @@ def plot_Binder(N, g_s, L_s, data_file="../h5data/MCMC_data_full.h5", minus_sign
 
                     if reweight:
                         # Use Andreas's Critical Analysis Class to do the reweighting
-                        min_m, max_m = min(masses), max(masses)
+                        if mlims is None:
+                            min_m, max_m = min(masses), max(masses)
+                        else:
+                            min_m, max_m = mlims
 
                         System.Bbar = 0.5
                         L0bs = System.refresh_L0_bsindices()

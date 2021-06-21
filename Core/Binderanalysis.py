@@ -140,6 +140,10 @@ class Critical_analysis():
                 xmin = -mlims[sn][iLin][1]
                 xmax = -mlims[sn][iLin][0]
 
+            else:
+                xmin = - np.inf
+                xmax = + np.inf
+
         else:
             xmin = - np.inf
             xmax = + np.inf
@@ -492,29 +496,26 @@ class Critical_analysis():
 
         # filter out occurences of NaNs and produce weighted average over
         # reweighted results for Binder cumulant
-        if len(res) > 1:  # filter out nan if at least two entries to
-            dres0 = [dx for x, dx in zip(res, dres) if
-                     ((not np.isnan(x)) and (dx != 0.))]
 
-            res0 = [x for x, dx in zip(res, dres) if
+        ## Always filter out Nan!
+        dres0 = [dx for x, dx in zip(res, dres) if
                     ((not np.isnan(x)) and (dx != 0.))]
 
+        res0 = [x for x, dx in zip(res, dres) if
+                ((not np.isnan(x)) and (dx != 0.))]
+
+        if len(res0) > 0 and len(dres0) > 0:
             denom = np.sum(1. / np.array(dres0) ** 2)
             numer = np.sum(np.array(res0) / np.array(dres0) ** 2)
 
-        else:
-            denom = np.sum(1. / np.array(dres) ** 2)
-            numer = np.sum(np.array(res) / np.array(dres) ** 2)
-
-        if len(iinclude) == 0:
-            B = np.nan
-            simga = np.nan
-
-        else:
             B = 1 - self.N * 1. / 3 * numer / denom
 
             if sigma:
                 sigma = np.sqrt((1 / denom)) * self.N / 3
+
+        else:
+            B = np.nan
+            simga = np.nan
 
         # The denominator gives the estimate of the bootstrap variance
         if sigma:
