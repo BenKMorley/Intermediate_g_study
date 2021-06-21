@@ -237,4 +237,6 @@ def plot_Binder(N, g_s, L_s, data_file="../h5data/MCMC_data_full.h5", minus_sign
     if legend:
         plt.legend()
 
+    ax.set_xlim(min(mass_range), max(mass_range))
+
     return ax, critical_found

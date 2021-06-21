@@ -81,7 +81,7 @@ class Critical_analysis():
         * h5store_results(self): Writes result to hdf5 file
     """
 
-    def __init__(self, N, g, L, direc='h5data/', filename='MCMC_data_full.h5', Nboot=500):
+    def __init__(self, N, g, L, direc='h5data/', filename='MCMC_data_full.h5', Nboot=500, therm=10000, restrict=False):
         """
             Here we allocate some basic variables and seed the RNG
         """
@@ -109,7 +109,8 @@ class Critical_analysis():
         self.datadir = direc
         self.MCMCdatafile = filename
         self.resultsfile = 'Bindercrossings.h5'
-        self.therm = 10000  # Configurations to remove due to thermalization
+        self.therm = therm  # Configurations to remove due to thermalization
+        self.restrict = restrict
 
     def h5load_data(self):
         """
@@ -150,9 +151,13 @@ class Critical_analysis():
             xmax = + np.inf
 
         # list of input bare masses
-        self.actualm0sqlist = [float(parse('msq={}', i)[0]) for i in dat if
-                               float(parse('msq={}', i)[0]) < xmax and
-                               float(parse('msq={}', i)[0]) > xmin]
+        if self.restrict:
+            self.actualm0sqlist = [float(parse('msq={}', i)[0]) for i in dat if
+                                   float(parse('msq={}', i)[0]) < xmax and
+                                   float(parse('msq={}', i)[0]) > xmin]
+
+        else:
+            self.actualm0sqlist = [float(parse('msq={}', i)[0]) for i in dat]
 
         # number of masses
         self.actualNm0sq = len(self.actualm0sqlist)
