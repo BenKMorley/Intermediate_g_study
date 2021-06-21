@@ -38,6 +38,7 @@ import pdb
 from parse import parse
 import warnings
 import matplotlib.pyplot as plt
+import argparse
 
 # strict: raise exceptions in case of warnings
 np.seterr(all='warn')
@@ -622,7 +623,7 @@ class Critical_analysis():
 # end class definition ########################################################
 
 
-def compute_Bindercrossing(N, g, Bbar, Lin, direc="h5data/", filename="MCMC_data_full.h5", Nboot=500):
+def compute_Bindercrossing(N, g, Bbar, Lin, **kwargs):
     """
         ######################################################################
         # Main routine for computing crossing of reweighted Binder cumulant  #
@@ -645,7 +646,7 @@ def compute_Bindercrossing(N, g, Bbar, Lin, direc="h5data/", filename="MCMC_data
     iLin = np.where(np.array(Ls) == int(Lin))[0][0]
 
     # instantiate analysis class
-    run1 = Critical_analysis(N, g, Ls[iLin], direc=direc, filename=filename, Nboot=Nboot)
+    run1 = Critical_analysis(N, g, Ls[iLin], **kwargs)
 
     # choose Bbar
     run1.Bbar = Bbar
