@@ -679,13 +679,33 @@ def compute_Bindercrossing(N, g, Bbar, Lin, direc="h5data/", filename="MCMC_data
 
 
 if __name__ == "__main__":
+    # For passing in arguments from the command line
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument('N', metavar="N", type=int)
+    parser.add_argument('g', metavar="ag", type=float)
+    parser.add_argument('Bbar', metavar="Bbar", type=float)
+    parser.add_argument('L', metavar="L / a", type=int)
+
+    parser.add_argument('-therm', metavar="No. therm steps", type=int, default=argparse.SUPPRESS)       # No. of thermalization steps
+    parser.add_argument('-Nboot', metavar="No. boot samples", type=int, default=argparse.SUPPRESS)      # No. of boot samples
+    parser.add_argument('-direc', metavar="Directory", type=str, default=argparse.SUPPRESS)             # Directory
+    parser.add_argument('-filename', metavar="Filename", type=str, default=argparse.SUPPRESS)               # Filename
+
+    args = parser.parse_args()
+
+    # Extract any optional arguments
+    kwargs = vars(parser.parse_args())
+    del kwargs['N']
+    del kwargs['g']
+    del kwargs['Bbar']
+    del kwargs['L']
+
     ###########################################################################
     # call main routine
-    compute_Bindercrossing(int(sys.argv[1]),            # N
-                           float(sys.argv[2]),          # ag
-                           float(sys.argv[3]),          # Bbar
-                           int(sys.argv[4]),            # L / a
-                           direc=sys.argv[5],           # Directory
-                           filename=sys.argv[6],        # Filename
-                           Nboot=int(sys.argv[7]))      # No. of boot samples
+    compute_Bindercrossing(args.N,              # N
+                           args.g,              # ag
+                           args.Bbar,           # Bbar
+                           args.L,              # L / a
+                           **kwargs)            # If not using defaults
     ###########################################################################
