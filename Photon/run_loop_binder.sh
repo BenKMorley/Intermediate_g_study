@@ -2,13 +2,15 @@
 
 NAME=Core/Binderanalysis.py
 DIR=h5data/
-FILENAME=MCMC_data_full.h5
-NBOOT=500
+FILENAME=MCMCdata.h5
+THERM=0
+# NBOOT=500
 
-NUM_THREADS=60
+
+NUM_THREADS=30
 END_TASK_NO=1
 ID=0
-N=3
+N=4
 
 G_S=(0.1 0.2 0.3 0.5 0.6)
 L_S=(8 16 32 48 64 96)
@@ -38,7 +40,7 @@ while [ $ID -le $END ]; do
 
     echo about to run with ID=$ID G=$G L=$L B=$B
 
-    python3 $NAME $N $G $B $L $DIR $FILENAME $NBOOT &
+    python3 $NAME $N $G $B $L -therm=$THERM -filename=$FILENAME &
 
     ID=$(($ID + 1))
   fi
