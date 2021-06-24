@@ -3,25 +3,41 @@
 NAME=Core/Binderanalysis.py
 DIR=h5data/
 FILENAME=MCMCdata.h5
-THERM=0
-# NBOOT=500
 
 
-NUM_THREADS=30
+NUM_THREADS=60
 END_TASK_NO=1
 ID=0
-N=4
 
 G_S=(0.1 0.2 0.3 0.5 0.6)
 L_S=(8 16 32 48 64 96)
-B_S=(0.40 0.41 0.42 0.43 0.44 0.45 0.46 0.47 0.48)
+N=$1
+
+if [ $(( $N )) == 2 ]
+then
+    B_S=(0.51 0.52 0.53 0.54 0.55 0.56 0.57 0.58 0.59)
+    THERM=0
+    FILENAME=MCMCdata.h5
+fi
+
+if [ $(( $N )) == 3 ]
+then
+    B_S=(0.40 0.41 0.42 0.43 0.44 0.45 0.46 0.47 0.48)
+    THERM=10000
+    FILENAME=MCMC_data_full.h5
+fi
+
+if [ $(( $N )) == 4 ]
+then
+    B_S=(0.42 0.43 0.44 0.45 0.46 0.47)
+    THERM=0FILENAME=MCMCdata.h5
+    FILENAME=MCMCdata.h5
+fi
 
 LEN_G=${#G_S[@]}
 LEN_L=${#L_S[@]}
 LEN_B=${#B_S[@]}
-END=$(( $LEN_G * $LEN_L * $LEN_B ))
-G_SIZE=$(( $END / $LEN_G ))
-M=$(( $LEN_G * $LEN_L ))
+END=$(( $LEN_G * $LEN_L * $LEN_B))
 
 # Run from inside photon directory
 cd ..
@@ -38,7 +54,7 @@ while [ $ID -le $END ]; do
     L=${L_S[$L_INDEX]}
     B=${B_S[$B_INDEX]}
 
-    echo about to run with ID=$ID G=$G L=$L B=$B
+    echo about to run with N=$N ID=$ID G=$G L=$L B=$B
 
     python3 $NAME $N $G $B $L -therm=$THERM -filename=$FILENAME &
 
@@ -47,7 +63,7 @@ while [ $ID -le $END ]; do
 
   RUNNING_PROCESSES=$(ps -ef | grep $NAME | wc -l)
 
-  sleep 0.5
+  sleep 0.01
   
   echo RUNNING_PROCESSES : $RUNNING_PROCESSES
 done
