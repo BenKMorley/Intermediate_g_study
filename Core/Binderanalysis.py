@@ -35,10 +35,12 @@ import h5py
 import os
 import sys
 import pdb
-from parse import parse
 import warnings
 import matplotlib.pyplot as plt
 import argparse
+
+sys.path.append('/home/bkm1n18/.local/lib/python3.9/site-packages')
+from parse import parse
 
 # strict: raise exceptions in case of warnings
 np.seterr(all='warn')
