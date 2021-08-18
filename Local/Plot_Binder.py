@@ -84,6 +84,7 @@ def plot_Binder(N, g_s, L_s, data_file="../h5data/MCMC_data_full.h5", minus_sign
                     System = Critical_analysis(N, g, L)
                     System.MCMCdatafile = data_file
                     System.datadir = ''
+                    System.min_traj = 100001
 
                     System.h5load_data()
 

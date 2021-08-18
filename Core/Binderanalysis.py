@@ -113,6 +113,8 @@ class Critical_analysis():
         self.resultsfile = 'Bindercrossings.h5'
         self.therm = therm  # Configurations to remove due to thermalization
         self.restrict = restrict
+        self.min_traj = 0  # Minimum number of tradjectories to have in 
+                                # data
 
     def h5load_data(self):
         """
@@ -155,11 +157,13 @@ class Critical_analysis():
         # list of input bare masses
         if self.restrict:
             self.actualm0sqlist = [float(parse('msq={}', i)[0]) for i in dat if
-                                   float(parse('msq={}', i)[0]) < xmax and
-                                   float(parse('msq={}', i)[0]) > xmin]
+                                   (float(parse('msq={}', i)[0]) < xmax and
+                                   float(parse('msq={}', i)[0]) > xmin) and
+                                   dat[i].shape[1] >= self.min_traj]
 
         else:
-            self.actualm0sqlist = [float(parse('msq={}', i)[0]) for i in dat]
+            self.actualm0sqlist = [float(parse('msq={}', i)[0]) for i in dat if
+                                   dat[i].shape[1] >= self.min_traj]
 
         # number of masses
         self.actualNm0sq = len(self.actualm0sqlist)
