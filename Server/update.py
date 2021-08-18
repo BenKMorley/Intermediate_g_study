@@ -7,8 +7,11 @@ import numpy
 
 N_s = [3]
 g_s = [0.1, 0.2, 0.3, 0.5, 0.6]
-L_s = [128]
-filename = f"../h5data/MCMC_data_full.h5"
+L_s = [8, 16, 32, 48, 64, 96, 128]
+
+# L_s = [128]
+# g_s = [0.5]
+filename = f"h5data/MCMC_data_full2.h5"
 
 
 def GRID_convention_m(m):
@@ -155,14 +158,48 @@ def update(filename, N_s=None, g_s=None, L_s=None, m_s=None, OR=10, base_dir=f"/
                     if MCMC_convention_L(L) not in list(old_data[MCMC_convention_N(N)][MCMC_convention_g(g)].keys()):
                         old_data[MCMC_convention_N(N)][MCMC_convention_g(g)].create_group(MCMC_convention_L(L))
 
-                    #pdb.set_trace()
                     if MCMC_convention_m(m) not in list(old_data[MCMC_convention_N(N)][MCMC_convention_g(g)][MCMC_convention_L(L)].keys()):
                         print(f"found new data for {N}, {g}, {L}, {m}")
 
                         try:
-                            phi2 = numpy.loadtxt(file_root + "_phi2.0.dat")
-                            m2 = numpy.loadtxt(file_root + "_m2.0.dat")
-                            m4 = numpy.loadtxt(file_root + "_m4.0.dat")
+                            ## Find all .dat files for a given run
+                            start_configs = []
+                            files = os.popen(f'ls {file_root}_phi2.*.dat')
+                            for f in files:
+                                start_configs.append(int(re.findall(r'\d+.dat', f)[0][:-4]))
+
+                            prev_length = -1
+
+                            # Subtract 1 for each section due to overlapp,
+                            # however for first contribution there is no
+                            # overlapp so start at 1
+                            lengths = []
+                            data_pieces = []
+
+                            for start in start_configs:
+                                new_data_piece = numpy.loadtxt(file_root + f"_phi2.{start}.dat")
+                                current_length = new_data_piece.shape[0]
+                                data_pieces.append(new_data_piece)
+                                lengths.append(current_length)
+
+                                if prev_length != -1:
+                                    # Check that the boundaries match
+                                    assert new_data_piece[0] == old_data_piece[-1]
+
+                                prev_length = current_length
+                                old_data_piece = new_data_piece
+                            
+                            # Repeated values at the boundaries
+                            total_length = sum(lengths) - (len(lengths) - 1)
+
+                            phi2 = numpy.zeros(total_length)
+                            m2 = numpy.zeros(total_length)
+                            m4 = numpy.zeros(total_length)
+
+                            for i, start in enumerate(start_configs):
+                                phi2[start: start + lengths[i]] = numpy.loadtxt(file_root + f"_phi2.{start}.dat")
+                                m2[start: start + lengths[i]] = numpy.loadtxt(file_root + f"_m2.{start}.dat")
+                                m4[start: start + lengths[i]] = numpy.loadtxt(file_root + f"_m4.{start}.dat")
 
                             old_data[MCMC_convention_N(N)][MCMC_convention_g(g)][MCMC_convention_L(L)].create_dataset(MCMC_convention_m(m), (3, len(phi2)), dtype='<f8')
 
