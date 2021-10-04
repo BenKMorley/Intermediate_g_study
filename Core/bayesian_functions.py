@@ -55,7 +55,7 @@ def likelihood_maker(n_params, cov_inv, model, res_function):
     """
     def loglike(cube, ndim, nparams):
         params = []
-        for i in range(n_params):
+        for i in range(nparams):
             params.append(cube[i])
 
         chisq = chisq_calc(params, cov_inv, model, res_function)
