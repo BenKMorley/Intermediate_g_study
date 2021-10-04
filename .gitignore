@@ -1,3 +1,4 @@
+Server/run*
 Data/*
 settings.json
 run_simulation_csv.sh
