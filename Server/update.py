@@ -5,6 +5,12 @@ import pdb
 import numpy
 
 
+N_s = [3]
+g_s = [0.1, 0.2, 0.3, 0.5, 0.6]
+L_s = [8, 16, 32, 48, 64, 96, 128]
+
+# L_s = [128]
+# g_s = [0.5]
 filename = f"h5data/MCMC_data_full2.h5"
 
 
@@ -208,3 +214,6 @@ def update(filename, N_s=None, g_s=None, L_s=None, m_s=None, OR=10, base_dir=f"/
                         print(f"{MCMC_convention_N(N)}, {MCMC_convention_g(g)}, {MCMC_convention_L(L)}, {MCMC_convention_m(m)} data already present")
 
     return old_data
+
+
+update(filename, N_s=N_s, g_s=g_s, L_s=L_s)
