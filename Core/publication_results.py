@@ -650,9 +650,6 @@ def get_Bayes_factors(N, points=5000):
     return Bayes_factors
 
 
-get_Bayes_factors(2, points=500)
-
-
 def Plot_fit(N):
     def colors(g):
         if g == 0.1:
