@@ -1,7 +1,6 @@
 import h5py
 import os
 import re
-import pdb
 import numpy
 
 
@@ -51,7 +50,7 @@ def update(filename, N_s=None, g_s=None, L_s=None, m_s=None, OR=10, base_dir=f"/
         files = os.popen(f'ls {base_dir}')
         for name in files:
             if len(re.findall(r'g\d+.\d+', name)) != 0:
-                value = float(re.findall(r'\d+.\d+', name)[0])
+                g = float(re.findall(r'\d+.\d+', name)[0])
 
                 if g not in available_data.keys():
                     available_data[g] = {}
@@ -122,7 +121,7 @@ def update(filename, N_s=None, g_s=None, L_s=None, m_s=None, OR=10, base_dir=f"/
                             sub_dict3[value] = {}
 
                         elif len(re.findall(r'm2\d+\.\d+', name)) != 0:
-                            value = float(re.findall(r'\d+\.\d+', name)[0])
+                            value = float(re.findall(r'\d+\.\d+', name.lstrip('m2'))[0])
 
                             sub_dict3[value] = {}
 
@@ -146,19 +145,16 @@ def update(filename, N_s=None, g_s=None, L_s=None, m_s=None, OR=10, base_dir=f"/
                     dict4 = dict3[m]
                     file_root = f"{base_dir}/{GRID_convention_g(g)}/{GRID_convention_N(N)}/{GRID_convention_L(L)}/{GRID_convention_m(m)}/mag/cosmhol-hbor-{GRID_convention_N(N)}_{GRID_convention_L(L)}_{GRID_convention_g(g)}_{GRID_convention_m(m)}_or{OR}"
 
-                    #pdb.set_trace()
                     if MCMC_convention_N(N) not in old_data.keys():
                         old_data.create_group(MCMC_convention_N(N))
 
-                    #pdb.set_trace()
                     if MCMC_convention_g(g) not in list(old_data[MCMC_convention_N(N)].keys()):
                         old_data[MCMC_convention_N(N)].create_group(MCMC_convention_g(g))
 
-                    #pdb.set_trace()
                     if MCMC_convention_L(L) not in list(old_data[MCMC_convention_N(N)][MCMC_convention_g(g)].keys()):
                         old_data[MCMC_convention_N(N)][MCMC_convention_g(g)].create_group(MCMC_convention_L(L))
 
-                    wrong_size = False
+                    too_small = False
                     data_not_found = False
                     if MCMC_convention_m(m) in list(old_data[MCMC_convention_N(N)][MCMC_convention_g(g)][MCMC_convention_L(L)].keys()):
                         print(f"{MCMC_convention_N(N)}, {MCMC_convention_g(g)}, {MCMC_convention_L(L)}, {MCMC_convention_m(m)} data already present")
@@ -166,16 +162,16 @@ def update(filename, N_s=None, g_s=None, L_s=None, m_s=None, OR=10, base_dir=f"/
                         # Make sure the data contains the desired number of configs
                         data_size = old_data[MCMC_convention_N(N)][MCMC_convention_g(g)][MCMC_convention_L(L)][MCMC_convention_m(m)].shape[1]
         
-                        if size != data_size:
-                            print(f"Data present wrong size: Expected {size} got {data_size}")
+                        if data_size < size:
+                            print(f"Exisiting data present too small: Expected {size} got {data_size}")
                             print(f"Deleting entry")
                             del old_data[MCMC_convention_N(N)][MCMC_convention_g(g)][MCMC_convention_L(L)][MCMC_convention_m(m)]
-                            wrong_size = True
+                            too_small = True
                         
                     else:
                         data_not_found = True
 
-                    if data_not_found | wrong_size:
+                    if data_not_found | too_small:
                         print(f"found new data for {N}, {g}, {L}, {m}")
 
                         ## Find all .dat files for a given run
@@ -227,8 +223,8 @@ def update(filename, N_s=None, g_s=None, L_s=None, m_s=None, OR=10, base_dir=f"/
                             # Repeated values at the boundaries
                             total_length = sum(lengths) - (len(lengths) - 1)
 
-                            if total_length != size:
-                                print(f"Wrong data size: Expected {size}, got {total_length}")
+                            if total_length < size:
+                                print(f"Not enough data to read in: Expected {size}, got {total_length}")
 
                             # If the data is consistant and of the expected size then read it in
                             elif not inconsistant_data:
