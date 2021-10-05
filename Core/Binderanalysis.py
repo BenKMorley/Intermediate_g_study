@@ -113,8 +113,7 @@ class Critical_analysis():
         self.resultsfile = 'Bindercrossings.h5'
         self.therm = therm  # Configurations to remove due to thermalization
         self.restrict = restrict
-        self.min_traj = 0  # Minimum number of tradjectories to have in 
-                                # data
+        self.min_traj = 0  # Minimum number of tradjectories to have in data
 
     def h5load_data(self):
         """
@@ -199,17 +198,21 @@ class Critical_analysis():
         print("Computing max. tauint of M^2, M^4, phi^4: ")
 
         for i in range(self.actualNm0sq):
-            # compute tau_int for M^2
-            uwfn = UWerr(np.array(self.M2[str(i)]).T, 1.5, '')
-            uwres_M2 = uwfn.doit()
+            try:
+                # compute tau_int for M^2
+                uwfn = UWerr(np.array(self.M2[str(i)]).T, 1.5, '')
+                uwres_M2 = uwfn.doit()
 
-            # compute tau_int for M^4
-            uwfn = UWerr(np.array(self.M4[str(i)]).T, 1.5, '')
-            uwres_M4 = uwfn.doit()
+                # compute tau_int for M^4
+                uwfn = UWerr(np.array(self.M4[str(i)]).T, 1.5, '')
+                uwres_M4 = uwfn.doit()
 
-            # compute tau_int for phi^2
-            uwfn = UWerr(np.array(self.phi2[str(i)]).T, 1.5, '')
-            uwres_phi2 = uwfn.doit()
+                # compute tau_int for phi^2
+                uwfn = UWerr(np.array(self.phi2[str(i)]).T, 1.5, '')
+                uwres_phi2 = uwfn.doit()
+
+            except ValueError:
+                return self.actualm0sqlist[i]
 
             # compute largest tau_int
             tau_intl = int(np.max([uwres_M2[3], uwres_M4[3], uwres_phi2[3]]))
@@ -381,7 +384,7 @@ class Critical_analysis():
             # kwargs = {'return_extra': True}
             kwargs = {}
 
-            resl  = f(dat[wol, :], *args, **kwargs)
+            resl = f(dat[wol, :], *args, **kwargs)
             # resl, av0, av1, av2 = f(dat[wol, :], *args, **kwargs)
 
             # av0s[i] = av0

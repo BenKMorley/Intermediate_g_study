@@ -34,6 +34,39 @@ separator = "##########################################################"
 eps = sys.float_info.epsilon
 
 
+# Naming conventions
+def GRID_convention_m(m):
+    return f"m2{m}".rstrip('0')
+
+
+def MCMC_convention_m(m):
+    return f"msq={-m:.8f}"
+
+
+def GRID_convention_N(N):
+    return f"su{N}"
+
+
+def MCMC_convention_N(N):
+    return f"N={N}"
+
+
+def GRID_convention_L(L):
+    return f"L{L}"
+
+
+def MCMC_convention_L(L):
+    return f"L={L}"
+
+
+def GRID_convention_g(g):
+    return f"g{g}".rstrip('0').rstrip('.')
+
+
+def MCMC_convention_g(g):
+    return f"g={g:.2f}"
+
+
 class UWerr():
     def __init__(self, Data, Stau, Name, function=[], *varargin):
         """
@@ -178,7 +211,7 @@ class UWerr():
 
         if GammaOpt <= 0:
             print("UWerr: Gamma pathological with error below zero")
-            exit()
+            raise ValueError
 
         Gamma = Gamma + GammaOpt / self.N
         GammaOpt = Gamma[0] + 2. * np.sum(Gamma[1: Wopt])
@@ -186,7 +219,7 @@ class UWerr():
         ddv = dv * (np.sqrt((Wopt + .5) / self.N))
         rho = Gamma / Gamma[0]
         tauint = (np.cumsum(rho)[Wopt] - 0.5)
-        dtauint = tauint * 2 * np.sqrt((Wopt-tauint + 0.5) / self.N)
+        dtauint = tauint * 2 * np.sqrt((Wopt - tauint + 0.5) / self.N)
 
         return (fv, dv, ddv, tauint, dtauint, Wopt)
 
@@ -277,15 +310,15 @@ def disperr3(val, dval):
                 val[i] = 0.
                 location = 1
 
-            valformat = "%."+str(-location+dig-1) + "f"
+            valformat = "%." + str(-location + dig - 1) + "f"
             sval = valformat % val[i]
             res[i] = sval + append_err
 
         elif dval[i] >= 1:
-            digits = min(0, int(np.ceil(np.log10(dval[i]))-1)) + 1
+            digits = min(0, int(np.ceil(np.log10(dval[i])) - 1)) + 1
             error = np.around(dval[i], digits)
             value = np.around(val[i], digits)
-            serr = "%."+str(digits) + "f(%."+str(digits) + "f)"
+            serr = "%." + str(digits) + "f(%." + str(digits) + "f)"
             serr = serr % (value, error)
             res[i] = serr  # str(value)+"("+str(error)+")"
 
