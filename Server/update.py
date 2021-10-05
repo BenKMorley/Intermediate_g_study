@@ -181,10 +181,19 @@ def update(filename, N_s=None, g_s=None, L_s=None, m_s=None, OR=10, base_dir=f"/
                         ## Find all .dat files for a given run
                         start_configs = []
                         directory, file_start = os.path.split(file_root)
-                        files = os.listdir(directory)
-                        files = list(filter(lambda x: x.endswith('.dat') and f'{file_start}_phi2.' in x, files))
+
+                        Files_not_found = False
+                        try:
+                            files = os.listdir(directory)
+                            files = list(filter(lambda x: x.endswith('.dat') and f'{file_start}_phi2.' in x, files))
+                        
+                        except:
+                            Files_not_found = True
 
                         if len(files) == 0:
+                            Files_not_found = True
+
+                        if Files_not_found:
                             print("FILES NOT FOUND!")
 
                         else:
@@ -199,6 +208,7 @@ def update(filename, N_s=None, g_s=None, L_s=None, m_s=None, OR=10, base_dir=f"/
                             lengths = []
                             data_pieces = []
 
+                            inconsistant_data = False
                             for start in start_configs:
                                 new_data_piece = numpy.loadtxt(file_root + f"_phi2.{start}.dat")
                                 current_length = new_data_piece.shape[0]
@@ -207,7 +217,9 @@ def update(filename, N_s=None, g_s=None, L_s=None, m_s=None, OR=10, base_dir=f"/
 
                                 if prev_length != -1:
                                     # Check that the boundaries match
-                                    assert new_data_piece[0] == old_data_piece[-1]
+                                    if new_data_piece[0] != old_data_piece[-1]:
+                                        print(f"Data not consistant! (config {start})")
+                                        inconsistant_data = True
 
                                 prev_length = current_length
                                 old_data_piece = new_data_piece
@@ -218,7 +230,8 @@ def update(filename, N_s=None, g_s=None, L_s=None, m_s=None, OR=10, base_dir=f"/
                             if total_length != size:
                                 print(f"Wrong data size: Expected {size}, got {total_length}")
 
-                            else:
+                            # If the data is consistant and of the expected size then read it in
+                            elif not inconsistant_data:
                                 phi2 = numpy.zeros(total_length)
                                 m2 = numpy.zeros(total_length)
                                 m4 = numpy.zeros(total_length)
