@@ -71,8 +71,8 @@ def update(filename, N_s=None, g_s=None, L_s=None, m_s=None, OR=10, base_dir=f"/
                 if len(re.findall(r'\d+', name)) != 0:
                     value = int(re.findall(r'\d+', name)[0])
 
-                    if N not in sub_dict:
-                        sub_dict[N] = {}
+                    if value not in sub_dict:
+                        sub_dict[value] = {}
 
         else:
             for N in N_s:
