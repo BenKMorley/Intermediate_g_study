@@ -38,7 +38,7 @@ def GRID_convention_g(g):
 def MCMC_convention_g(g):
     return f"g={g:.2f}"
 
-def update(filename, N_s=None, g_s=None, L_s=None, m_s=None, OR=10, base_dir=f"/rds/project/dirac_vol4/rds-dirac-dp099/cosmhol-hbor"):
+def update(filename, N_s=None, g_s=None, L_s=None, m_s=None, OR=10, base_dir=f"/rds/project/dirac_vol4/rds-dirac-dp099/cosmhol-hbor", size=100001):
     if os.path.isfile(filename):
         old_data = h5py.File(filename, "a")
 
@@ -158,13 +158,36 @@ def update(filename, N_s=None, g_s=None, L_s=None, m_s=None, OR=10, base_dir=f"/
                     if MCMC_convention_L(L) not in list(old_data[MCMC_convention_N(N)][MCMC_convention_g(g)].keys()):
                         old_data[MCMC_convention_N(N)][MCMC_convention_g(g)].create_group(MCMC_convention_L(L))
 
-                    if MCMC_convention_m(m) not in list(old_data[MCMC_convention_N(N)][MCMC_convention_g(g)][MCMC_convention_L(L)].keys()):
+                    wrong_size = False
+                    data_not_found = False
+                    if MCMC_convention_m(m) in list(old_data[MCMC_convention_N(N)][MCMC_convention_g(g)][MCMC_convention_L(L)].keys()):
+                        print(f"{MCMC_convention_N(N)}, {MCMC_convention_g(g)}, {MCMC_convention_L(L)}, {MCMC_convention_m(m)} data already present")
+
+                        # Make sure the data contains the desired number of configs
+                        data_size = old_data[MCMC_convention_N(N)][MCMC_convention_g(g)][MCMC_convention_L(L)][MCMC_convention_m(m)].shape[1]
+        
+                        if size != data_size:
+                            print(f"Data present wrong size: Expected {size} got {data_size}")
+                            print(f"Deleting entry")
+                            del old_data[MCMC_convention_N(N)][MCMC_convention_g(g)][MCMC_convention_L(L)][MCMC_convention_m(m)]
+                            wrong_size = True
+                        
+                    else:
+                        data_not_found = True
+
+                    if data_not_found | wrong_size:
                         print(f"found new data for {N}, {g}, {L}, {m}")
 
-                        try:
-                            ## Find all .dat files for a given run
-                            start_configs = []
-                            files = os.popen(f'ls {file_root}_phi2.*.dat')
+                        ## Find all .dat files for a given run
+                        start_configs = []
+                        directory, file_start = os.path.split(file_root)
+                        files = os.listdir(directory)
+                        files = list(filter(lambda x: x.endswith('.dat') and f'{file_start}_phi2.' in x, files))
+
+                        if len(files) == 0:
+                            print("FILES NOT FOUND!")
+
+                        else:
                             for f in files:
                                 start_configs.append(int(re.findall(r'\d+.dat', f)[0][:-4]))
 
@@ -192,28 +215,23 @@ def update(filename, N_s=None, g_s=None, L_s=None, m_s=None, OR=10, base_dir=f"/
                             # Repeated values at the boundaries
                             total_length = sum(lengths) - (len(lengths) - 1)
 
-                            phi2 = numpy.zeros(total_length)
-                            m2 = numpy.zeros(total_length)
-                            m4 = numpy.zeros(total_length)
+                            if total_length != size:
+                                print(f"Wrong data size: Expected {size}, got {total_length}")
 
-                            for i, start in enumerate(start_configs):
-                                phi2[start: start + lengths[i]] = numpy.loadtxt(file_root + f"_phi2.{start}.dat")
-                                m2[start: start + lengths[i]] = numpy.loadtxt(file_root + f"_m2.{start}.dat")
-                                m4[start: start + lengths[i]] = numpy.loadtxt(file_root + f"_m4.{start}.dat")
+                            else:
+                                phi2 = numpy.zeros(total_length)
+                                m2 = numpy.zeros(total_length)
+                                m4 = numpy.zeros(total_length)
 
-                            old_data[MCMC_convention_N(N)][MCMC_convention_g(g)][MCMC_convention_L(L)].create_dataset(MCMC_convention_m(m), (3, len(phi2)), dtype='<f8')
+                                for i, start in enumerate(start_configs):
+                                    phi2[start: start + lengths[i]] = numpy.loadtxt(file_root + f"_phi2.{start}.dat")
+                                    m2[start: start + lengths[i]] = numpy.loadtxt(file_root + f"_m2.{start}.dat")
+                                    m4[start: start + lengths[i]] = numpy.loadtxt(file_root + f"_m4.{start}.dat")
 
-                            old_data[MCMC_convention_N(N)][MCMC_convention_g(g)][MCMC_convention_L(L)][MCMC_convention_m(m)][0] = m2
-                            old_data[MCMC_convention_N(N)][MCMC_convention_g(g)][MCMC_convention_L(L)][MCMC_convention_m(m)][1] = m4
-                            old_data[MCMC_convention_N(N)][MCMC_convention_g(g)][MCMC_convention_L(L)][MCMC_convention_m(m)][2] = phi2
+                                old_data[MCMC_convention_N(N)][MCMC_convention_g(g)][MCMC_convention_L(L)].create_dataset(MCMC_convention_m(m), (3, len(phi2)), dtype='<f8')
 
-                        except Exception:
-                            print("FILES NOT FOUND!")
-
-                    else:
-                        print(f"{MCMC_convention_N(N)}, {MCMC_convention_g(g)}, {MCMC_convention_L(L)}, {MCMC_convention_m(m)} data already present")
+                                old_data[MCMC_convention_N(N)][MCMC_convention_g(g)][MCMC_convention_L(L)][MCMC_convention_m(m)][0] = m2
+                                old_data[MCMC_convention_N(N)][MCMC_convention_g(g)][MCMC_convention_L(L)][MCMC_convention_m(m)][1] = m4
+                                old_data[MCMC_convention_N(N)][MCMC_convention_g(g)][MCMC_convention_L(L)][MCMC_convention_m(m)][2] = phi2
 
     return old_data
-
-
-update(filename, N_s=N_s, g_s=g_s, L_s=L_s)

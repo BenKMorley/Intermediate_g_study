@@ -4,6 +4,7 @@ settings.json
 run_simulation_csv.sh
 runs_to_do*
 Local/run*
+Server/run*
 Local/graphs/*
 *__pycache__*
 launch.json
