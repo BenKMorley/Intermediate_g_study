@@ -11,15 +11,6 @@ sys.path.append(os.getcwd() + '/Core')
 
 from Core.MISC import *
 
-N_s = [3]
-g_s = [0.1, 0.2, 0.3, 0.5, 0.6]
-L_s = [8, 16, 32, 48, 64, 96, 128]
-
-# L_s = [128]
-# g_s = [0.5]
-filename = f"h5data/MCMC_data_full2.h5"
-
-
 
 def update(filename, N_s=None, g_s=None, L_s=None, m_s=None, OR=10, base_dir=f"/rds/project/dirac_vol4/rds-dirac-dp099/cosmhol-hbor", size=100001):
     if os.path.isfile(filename):
