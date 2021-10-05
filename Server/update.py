@@ -2,7 +2,14 @@ import h5py
 import os
 import re
 import numpy
+import sys
 
+sys.path.append(os.getcwd() + '/..')
+sys.path.append(os.getcwd() + '/../Core')
+sys.path.append(os.getcwd())
+sys.path.append(os.getcwd() + '/Core')
+
+from Core.MISC import *
 
 N_s = [3]
 g_s = [0.1, 0.2, 0.3, 0.5, 0.6]
@@ -13,29 +20,6 @@ L_s = [8, 16, 32, 48, 64, 96, 128]
 filename = f"h5data/MCMC_data_full2.h5"
 
 
-def GRID_convention_m(m):
-    return f"m2{m}".rstrip('0')
-
-def MCMC_convention_m(m):
-    return f"msq={-m:.8f}"
-
-def GRID_convention_N(N):
-    return f"su{N}"
-
-def MCMC_convention_N(N):
-    return f"N={N}"
-
-def GRID_convention_L(L):
-    return f"L{L}"
-
-def MCMC_convention_L(L):
-    return f"L={L}"
-
-def GRID_convention_g(g):
-    return f"g{g}".rstrip('0').rstrip('.')
-
-def MCMC_convention_g(g):
-    return f"g={g:.2f}"
 
 def update(filename, N_s=None, g_s=None, L_s=None, m_s=None, OR=10, base_dir=f"/rds/project/dirac_vol4/rds-dirac-dp099/cosmhol-hbor", size=100001):
     if os.path.isfile(filename):
