@@ -43,7 +43,9 @@ def fig3_color(gL, min_gL=0.79, max_gL=76.81, func=numpy.log):
     return color_value
 
 
-def plot_Binder(N, g_s, L_s, data_file="../h5data/MCMC_data_full.h5", minus_sign_override=False, legend=True, ax=None, min_gL=3.1, max_gL=76.81, reweight=True, params=None, GL_lim=12.7, mlims=None):
+def plot_Binder(N, g_s, L_s, data_file="../h5data/MCMC_data_full.h5", minus_sign_override=False,
+                legend=True, ax=None, min_gL=3.1, max_gL=76.81, reweight=True, params=None, GL_lim=12.7,
+                mlims=None, min_traj=100001, therm=10000):
     if ax is None:
         fig, ax = plt.subplots()
         ax.set_xlabel(r'$\frac{m^2 - m_c^2}{g^2} x^\frac{1}{\nu}$')
@@ -81,10 +83,10 @@ def plot_Binder(N, g_s, L_s, data_file="../h5data/MCMC_data_full.h5", minus_sign
                     Binders = []
                     Binder_sigmas = []
 
-                    System = Critical_analysis(N, g, L)
+                    System = Critical_analysis(N, g, L, therm=therm)
                     System.MCMCdatafile = data_file
                     System.datadir = ''
-                    System.min_traj = 100001
+                    System.min_traj = min_traj
 
                     System.h5load_data()
 
@@ -102,8 +104,6 @@ def plot_Binder(N, g_s, L_s, data_file="../h5data/MCMC_data_full.h5", minus_sign
                         # h5file accessed in the same way
                         if bootstrap_success:
                             bin_size = System.Nbin_tauint[i]
-
-                        # pdb.set_trace()
 
                         # try:
                         #     m = float(re.findall(r'-\d+\.\d+', string)[0])
@@ -134,6 +134,7 @@ def plot_Binder(N, g_s, L_s, data_file="../h5data/MCMC_data_full.h5", minus_sign
                             if len(M4) % bin_size != 0:
                                 M4_binned = M4[:-(len(M4) % bin_size)]
                                 M2_binned = M2[:-(len(M2) % bin_size)]
+
                             else:
                                 M4_binned = M4
                                 M2_binned = M2
