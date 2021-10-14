@@ -179,6 +179,8 @@ def update(filename, N_s=None, g_s=None, L_s=None, m_s=None, OR=10, base_dir=f"/
                             lengths = []
                             data_pieces = []
 
+                            start_configs = numpy.sort(start_configs)
+
                             inconsistant_data = False
                             for start in start_configs:
                                 new_data_piece = numpy.loadtxt(file_root + f"_phi2.{start}.dat")
@@ -187,16 +189,21 @@ def update(filename, N_s=None, g_s=None, L_s=None, m_s=None, OR=10, base_dir=f"/
                                 lengths.append(current_length)
 
                                 if prev_length != -1:
-                                    # Check that the boundaries match
-                                    if new_data_piece[0] != old_data_piece[-1]:
+                                    if len(new_data_piece[:prev_length - start]) <= 0:
+                                        print(f"No overlapp between data sets")
+                                        inconsistant_data = True
+
+                                    diff = numpy.sum(numpy.abs(new_data_piece[:prev_length - start]
+                                                      - old_data_piece[start:]))
+                                    # Check that the boundaries match (boundaries can be > 1 config)
+                                    if diff != 0:
                                         print(f"Data not consistant! (config {start})")
                                         inconsistant_data = True
 
                                 prev_length = current_length
                                 old_data_piece = new_data_piece
                             
-                            # Repeated values at the boundaries
-                            total_length = sum(lengths) - (len(lengths) - 1)
+                            total_length = start + current_length
 
                             if total_length < size:
                                 print(f"Not enough data to read in: Expected {size}, got {total_length}")
