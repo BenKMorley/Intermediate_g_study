@@ -83,7 +83,7 @@ class Critical_analysis():
         * h5store_results(self): Writes result to hdf5 file
     """
 
-    def __init__(self, N, g, L, direc='h5data/', filename='MCMC_data_full.h5', Nboot=500, therm=10000, restrict=False):
+    def __init__(self, N, g, L, direc='h5data/', filename=None, Nboot=500, therm=10000, restrict=False):
         """
             Here we allocate some basic variables and seed the RNG
         """
@@ -109,8 +109,12 @@ class Critical_analysis():
         self.msq_final = 0.
         self.dmsq_final = 0.
         self.datadir = direc
-        self.MCMCdatafile = filename
-        self.resultsfile = 'Bindercrossings.h5'
+        if filename is None:
+            self.MCMCdatafile = f"MCMC_N{N}_data.h5"
+        else:
+            self.MCMCdatafile = filename
+
+        self.resultsfile = f"Binder_N{N}_data.h5"
         self.therm = therm  # Configurations to remove due to thermalization
         self.restrict = restrict
         self.min_traj = 0  # Minimum number of tradjectories to have in data
@@ -212,7 +216,9 @@ class Critical_analysis():
                 uwres_phi2 = uwfn.doit()
 
             except ValueError:
-                return self.actualm0sqlist[i]
+                print("Error During caclulation of Tau Int")
+                self.actualm0sqlist.remove(self.actualm0sqlist[i])
+                return None
 
             # compute largest tau_int
             tau_intl = int(np.max([uwres_M2[3], uwres_M4[3], uwres_phi2[3]]))

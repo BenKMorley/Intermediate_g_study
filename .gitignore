@@ -8,7 +8,7 @@ Server/run*
 Local/graphs/*
 *__pycache__*
 launch.json
-h5data/*.h5
+h5data/*
 MCMC_study.py
 new_simulations.csv
 su3_runs.ods
