@@ -8,7 +8,7 @@
 #SBATCH --output=log/double_evidence-%A-%a.out    # Standard output and error log
 #SBATCH --array=0-279              # Array range
 
-N=$1
+N=3
 
 if [ $N == 3 ]
 then
