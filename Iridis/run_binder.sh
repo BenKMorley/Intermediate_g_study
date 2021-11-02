@@ -27,4 +27,4 @@ g=${gs[ $g_index ]}
 L=${Ls[ $L_index ]}
 Bbar=${Bbars[ $Bbar_index ]}
 
-python3 Binderanalysis.py $N $g $Bbar $L > log/Binderanalysis_log_N${N}_g${g}_Bbar${Bbar}_L${L}.out
+python3 Local/Binderanalysis.py $N $g $Bbar $L > log/Binderanalysis_log_N${N}_g${g}_Bbar${Bbar}_L${L}.out
