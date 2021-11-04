@@ -7,6 +7,8 @@ runs_to_do*
 Iridis/run*
 Local/run*
 Server/run*
+Core/run*
+Iridis/run*
 Local/graphs/*
 *__pycache__*
 launch.json
