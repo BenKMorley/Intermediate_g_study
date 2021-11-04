@@ -4,6 +4,7 @@ Data/*
 settings.json
 run_simulation_csv.sh
 runs_to_do*
+Iridis/run*
 Local/run*
 Server/run*
 Local/graphs/*
