@@ -6,6 +6,8 @@ run_simulation_csv.sh
 runs_to_do*
 Local/run*
 Server/run*
+Core/run*
+Iridis/run*
 Local/graphs/*
 *__pycache__*
 launch.json
