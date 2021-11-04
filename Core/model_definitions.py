@@ -85,9 +85,9 @@ def load_h5_data(filename, N_s_list, g_s_list, L_s_list, Bbar_list, GL_min=0,
         for N in N_s_list:
             for g in g_s_list:
                 for L in L_s_list:
-                    ens = f[f'N={N}'][f'g={g:.2f}'][f'L={L}']
 
                     try:
+                        ens = f[f'N={N}'][f'g={g:.2f}'][f'L={L}']
                         m_s.append(ens[f'Bbar={Bbar:.3f}']['central'][()])
 
                     except Exception:

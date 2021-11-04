@@ -25,12 +25,23 @@
 # field theory" https://arxiv.org/abs/2009.14768
 ###############################################################################
 
-from frequentist_run import run_frequentist_analysis
-from model_definitions import *
-from bayesian_functions import *
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 import pdb
+import sys
+import os
+
+
+# Import from the Core directory
+sys.path.append(os.getcwd() + '/..')
+sys.path.append(os.getcwd() + '/../Core')
+sys.path.append(os.getcwd())
+sys.path.append(os.getcwd() + '/Core')
+
+from Core.frequentist_run import run_frequentist_analysis
+from Core.model_definitions import *
+from Core.bayesian_functions import *
+
 
 h5_data_file = "./h5data/Bindercrossings.h5"
 
@@ -178,7 +189,7 @@ def get_statistical_errors_central_fit(N, model_name="model1", GL_min_in=None,
             GL_min = 32.0
             Bbar_s = [0.43, 0.44]
 
-        g_s = [0.1, 0.2, 0.3, 0.6]
+        g_s = [0.1, 0.2, 0.3, 0.5, 0.6]
 
         param_names = ["alpha", "f0", "f1", "beta", "nu"]
         L_s = [16, 32, 48, 64, 96]
@@ -354,18 +365,20 @@ def get_systematic_errors(N, model_name="model1"):
 
     if N == 3:
         if model_name == "model1":
-            model = model1_1a
+            model = model1_2a
 
         if model_name == "model2":
             model = model2_1a
 
         N_s = [3]
-        Bbar_s = [0.43, 0.44]
-        x0 = [0, 0.5, -0.03, 1, 2 / 3]  # EFT values
-        g_s = [0.1, 0.2, 0.3, 0.6]
+        Bbar_s = [0.40, 0.41, 0.42, 0.43, 0.44, 0.45, 0.46, 0.47]
+        x0 = [0, 0, 0.46, -0.027, 1.026, 0.73]
+        g_s = [0.1, 0.2, 0.3, 0.5, 0.6]
 
-        param_names = ["alpha", "f0", "f1", "beta", "nu"]
-        L_s = [16, 32, 48, 64, 96]
+        h5_data_file = "h5data/Binder_N3_data.h5"
+
+        param_names = ["alpha1", "alpha2", "f0", "f1", "beta", "nu"]
+        L_s = [8, 16, 32, 48, 64, 96, 128]
         GL_mins = numpy.array([0.8, 1.6, 2.4, 3.2, 4, 4.8, 6.4, 8, 9.6, 12.8, 14.4,
                                16, 19.2, 24, 25.6])
 
@@ -456,12 +469,12 @@ def get_systematic_errors(N, model_name="model1"):
         print(f"{param} = {params_central[i]} +- {sys_sigmas[i]}")
 
     # Find the systematic variation in the critical mass
-    if model_name == "model1":
+    if model == model1_1a or model == model1_2a:
         g = 0.1
         m_c = mPT_1loop(g, N) + g ** 2 * (params[best_Bbar_index, best, 0] -
                                           params[best_Bbar_index, best, -2] *
                                           K1(g, N))
-        if N == 4:
+        if model == model1_2a:
             print("Critical Mass using alpha1:")
 
         print(f"m_c = {m_c}")
@@ -481,7 +494,7 @@ def get_systematic_errors(N, model_name="model1"):
         m_c_error = max(m_c - minimum_m, maximum_m - m_c)
         print(f"m_c_error = {m_c_error}")
 
-    if N == 2 or N == 3:
+    if model == model1_1a:
         results = {}
         results["params_central"] = params_central
         results["params_std"] = sys_sigmas
@@ -490,7 +503,7 @@ def get_systematic_errors(N, model_name="model1"):
             results["m_c"] = m_c
             results["m_c_error"] = m_c_error
 
-    if N == 4:
+    if model == model1_2a:
         results = {}
         results["params_central"] = params_central
         results["params_std"] = sys_sigmas
@@ -705,3 +718,6 @@ def Plot_fit(N):
     plt.ylabel("m[B = Bbar] / g")
     plt.legend()
     plt.show()
+
+
+get_systematic_errors(3)
