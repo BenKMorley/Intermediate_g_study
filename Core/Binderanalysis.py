@@ -201,7 +201,9 @@ class Critical_analysis():
         print(separator)
         print("Computing max. tauint of M^2, M^4, phi^4: ")
 
-        for i in range(self.actualNm0sq):
+        i = 0
+        while i < len(self.actualm0sqlist):
+            failed = False
             try:
                 # compute tau_int for M^2
                 uwfn = UWerr(np.array(self.M2[str(i)]).T, 1.5, '')
@@ -217,8 +219,7 @@ class Critical_analysis():
 
             except ValueError:
                 print("Error During caclulation of Tau Int")
-                self.actualm0sqlist.remove(self.actualm0sqlist[i])
-                return None
+                failed = True
 
             # compute largest tau_int
             tau_intl = int(np.max([uwres_M2[3], uwres_M4[3], uwres_phi2[3]]))
@@ -234,6 +235,14 @@ class Critical_analysis():
 
             print("msq=%.7f (tau_int)_max=%.0f using bin-size %d" %
                   (self.actualm0sqlist[i], self.tauint[-1], tau_intl))
+
+            if failed:
+                print(f'Removing mass {self.actualm0sqlist[i]}')
+                self.actualm0sqlist.remove(self.actualm0sqlist[i])
+                self.actualNm0sq -= 1
+
+            else:
+                i += 1
 
         print(separator)
 
