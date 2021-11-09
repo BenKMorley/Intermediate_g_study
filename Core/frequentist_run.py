@@ -25,17 +25,16 @@
 # field theory" https://arxiv.org/abs/2009.14768
 ###############################################################################
 
-from model_definitions import *
 from scipy.optimize import minimize, least_squares
-from scipy.linalg import logm
 from tqdm import tqdm
-import warnings
+import numpy
+from model_definitions import *
+from parameters import seperator
 
 
 def run_frequentist_analysis(input_h5_file, model, N_s, g_s, L_s, Bbar_s_in,
-                             GL_min, GL_max, param_names, x0, method="lm",
-                             no_samples=500, run_bootstrap=True,
-                             print_info=True):
+                             gL_min, x0, method="lm", no_samples=500, run_bootstrap=True,
+                             print_info=True, GL_max=numpy.inf):
     """
         Central function to run the frequentist analysis. This function is
         used repeatedly in publication_results.py
@@ -52,18 +51,16 @@ def run_frequentist_analysis(input_h5_file, model, N_s, g_s, L_s, Bbar_s_in,
             be ints
         Bbar_s_in: List of Bbar crossing values to be studied, Bbar values
             should be floats
-        GL_min: Float, minimum value of the product (ag) * (L / a) to be
+        gL_min: Float, minimum value of the product (ag) * (L / a) to be
             included in the fit
-        GL_max: Float, maximum value of the product (ag) * (L / a) to be
-            included in the fit
-        param_names: list of strings, with each entry being the name of a
-            parameter of the fit anzatz
         x0: list of floats, starting parameter guesses for the minimizer
         method: string, name of the minimization routine to be used
         no_samples: int, number of bootstrap samples to use
         run_bootstrap: bool, if False the function won't run a bootstrap
         print_info: bool, if True extra infomation about the fit results is
             returned to std::out
+        GL_max: Float, maximum value of the product (ag) * (L / a) to be
+            included in the fit
 
         OUTPUTS:
         --------
@@ -85,7 +82,7 @@ def run_frequentist_analysis(input_h5_file, model, N_s, g_s, L_s, Bbar_s_in,
     """
 
     samples, g_s, L_s, Bbar_s, m_s = load_h5_data(input_h5_file, N_s, g_s, L_s,
-                                                  Bbar_s_in, GL_min, GL_max)
+                                                  Bbar_s_in, gL_min, GL_max)
     N = N_s[0]
 
     cov_matrix, different_ensemble = cov_matrix_calc(g_s, L_s, m_s, samples)
@@ -111,12 +108,11 @@ def run_frequentist_analysis(input_h5_file, model, N_s, g_s, L_s, Bbar_s_in,
     n_params = len(res.x)
     dof = g_s.shape[0] - n_params
     p = chisq_pvalue(dof, chisq)
-    param_central = res.x
 
     if print_info:
-        print("##############################################################")
+        print(seperator)
         print(f"Config: N = {N}, Bbar_s = [{Bbar_s_in[0]}, {Bbar_s_in[1]}],"
-              f" gL_min = {GL_min}, gL_max = {GL_max}")
+              f" gL_min = {gL_min}")
         print(f"chisq = {chisq}")
         print(f"chisq/dof = {chisq / dof}")
         print(f"pvalue = {p}")

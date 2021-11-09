@@ -24,6 +24,10 @@
 ###############################################################################
 
 # list of available volumes
+from model_definitions import model1_1a, model1_2a, model2_1a, model2_2a
+seperator = "##############################################################"
+
+
 Ls = [8, 16, 32, 48, 64, 96, 128]
 gs = [0.1, 0.2, 0.3, 0.5, 0.6, 1.0]
 Ns = [2, 3, 4]
@@ -88,6 +92,17 @@ mlims['su2_0.7'] = [
             [-0.21310, -0.2121]]
 
 # N=3 ####
+mlims['su3_0.1'] = [
+    [],
+    [-0.097, -0.055],
+    [],
+    [],
+    [],
+    [],
+    []
+]
+
+
 mlims['su3_0.2'] = [
     [],
     [-0.097, -0.055],
@@ -108,6 +123,25 @@ mlims['su3_0.3'] = [
     []
 ]
 
+mlims['su3_0.5'] = [
+    [],
+    [-0.139, 0],
+    [],
+    [],
+    [],
+    [],
+    [-0.2075, -0.202]
+]
+
+mlims['su3_0.6'] = [
+    [],
+    [-0.139, 0],
+    [],
+    [],
+    [],
+    [],
+    []
+]
 
 
 # N=4 ####
@@ -154,3 +188,75 @@ mlims['su4_0.6'] = [
             [-0.2669, -0.262],
             [-0.2665, -0.264],
             [-0.26670, -0.265]]
+
+
+# For the Bayesian analysis
+alpha_range = [-0.4, 0.4]
+f0_range = [0, 1]
+f1_range = [-20, 20]
+beta_range = [-15, 15]
+nu_range = [0, 15]
+
+# Parameters used in publication_results.py analysis
+param_name_dict = {}
+param_name_dict[model1_1a.__name__] = ["alpha", "f0", "f1", "beta", "nu"]
+param_name_dict[model1_2a.__name__] = ["alpha1", "alpha2", "f0", "f1", "beta", "nu"]
+
+prior_range_dict = {}
+prior_range_dict[model1_1a.__name__] = [alpha_range, f0_range, f1_range, beta_range, nu_range]
+prior_range_dict[model1_2a.__name__] = [alpha_range, alpha_range, f0_range, f1_range, beta_range,
+                                        nu_range]
+
+param_dict = {}
+
+# N = 2
+param_dict[2] = {}
+
+param_dict[2]["model_1"] = model1_1a
+param_dict[2]["model_2"] = model2_1a
+param_dict[2]["param_names"] = param_name_dict[param_dict[2]["model_1"].__name__]
+param_dict[2]["Central_Bbar"] = [0.52, 0.53]
+param_dict[2]["Bbar_list"] = [0.51, 0.52, 0.53, 0.54, 0.55, 0.56, 0.57, 0.58, 0.59]
+param_dict[2]["g_s"] = [0.1, 0.2, 0.3, 0.5, 0.6]
+param_dict[2]["L_s"] = [8, 16, 32, 48, 64, 96, 128]
+param_dict[2]["x0"] = [0, 0.5431, -0.03586, 1, 2 / 3]  # EFT values
+param_dict[2]["gL_max"] = 32
+param_dict[2]["gL_central"] = {"model_1": 12.8, "model_2": 24}
+param_dict[2]["h5_data_file"] = "Bindercrossings.h5"
+param_dict[2]["prior_range"] = prior_range_dict[param_dict[2]["model_1"].__name__]
+
+# N = 3
+param_dict[3] = {}
+
+param_dict[3]["model_1"] = model1_1a
+param_dict[3]["model_2"] = model2_1a
+param_dict[3]["param_names"] = param_name_dict[param_dict[3]["model_1"].__name__]
+param_dict[3]["Central_Bbar"] = [0.43, 0.44]
+param_dict[3]["Bbar_list"] = [0.4, 0.41, 0.42, 0.43, 0.44, 0.45, 0.46, 0.47, 0.48]
+param_dict[3]["g_s"] = [0.1, 0.2, 0.3, 0.5, 0.6]
+param_dict[3]["L_s"] = [8, 16, 32, 48, 64, 96, 128]
+param_dict[3]["x0"] = [0, 0.5, -0.03, 1, 2 / 3]
+param_dict[3]["gL_max"] = 32
+param_dict[3]["gL_central"] = {"model_1": 12.8, "model_2": 24}
+param_dict[3]["h5_data_file"] = "Binder_N3_data.h5"
+param_dict[3]["prior_range"] = prior_range_dict[param_dict[2]["model_1"].__name__]
+
+
+# N = 4
+param_dict[4] = {}
+
+param_dict[4]["model_1"] = model1_2a
+param_dict[4]["model_2"] = model2_2a
+param_dict[4]["param_names"] = param_name_dict[param_dict[4]["model_1"].__name__]
+param_dict[4]["Central_Bbar"] = [0.42, 0.43]
+param_dict[4]["Bbar_list"] = [0.42, 0.43, 0.44, 0.45, 0.46, 0.47]
+param_dict[4]["g_s"] = [0.1, 0.2, 0.3, 0.5, 0.6]
+param_dict[4]["L_s"] = [8, 16, 32, 48, 64, 96, 128]
+param_dict[4]["x0"] = [0, 0, 0.4459, -0.02707, 1, 2 / 3]  # EFT values
+param_dict[4]["gL_max"] = 32
+param_dict[4]["gL_central"] = {"model_1": 12.8, "model_2": 32}
+param_dict[4]["h5_data_file"] = "Bindercrossings.h5"
+param_dict[4]["prior_range"] = prior_range_dict[param_dict[2]["model_1"].__name__]
+
+
+h5_dict = "h5data"

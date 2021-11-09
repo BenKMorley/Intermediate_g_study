@@ -67,6 +67,10 @@ def MCMC_convention_g(g):
     return f"g={g:.2f}"
 
 
+def calc_gL_mins(g_s, L_s):
+    return np.sort(list(set(np.outer(g_s, L_s).reshape(len(g_s) * len(L_s))))).round(2)
+
+
 class UWerr():
     def __init__(self, Data, Stau, Name, function=[], *varargin):
         """
