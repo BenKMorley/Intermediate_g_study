@@ -1,9 +1,6 @@
 #!/bin/sh
 
 NAME=Core/Binderanalysis.py
-DIR=h5data/
-FILENAME=MCMCdata.h5
-
 
 NUM_THREADS=60
 END_TASK_NO=1
@@ -16,32 +13,22 @@ N=$1
 if [ $(( $N )) == 2 ]
 then
     B_S=(0.51 0.52 0.53 0.54 0.55 0.56 0.57 0.58 0.59)
-    THERM=0
-    FILENAME=MCMCdata.h5
 fi
 
 if [ $(( $N )) == 3 ]
 then
     B_S=(0.40 0.41 0.42 0.43 0.44 0.45 0.46 0.47 0.48)
-    THERM=10000
-    FILENAME=MCMC_data_full.h5
 fi
 
 if [ $(( $N )) == 4 ]
 then
     B_S=(0.42 0.43 0.44 0.45 0.46 0.47)
-    THERM=0FILENAME=MCMCdata.h5
-    FILENAME=MCMCdata.h5
 fi
 
 LEN_G=${#G_S[@]}
 LEN_L=${#L_S[@]}
 LEN_B=${#B_S[@]}
 END=$(( $LEN_G * $LEN_L * $LEN_B))
-
-# Run from inside photon directory
-cd ..
-
 
 while [ $ID -le $END ]; do
 
@@ -56,7 +43,7 @@ while [ $ID -le $END ]; do
 
     echo about to run with N=$N ID=$ID G=$G L=$L B=$B
 
-    python3 $NAME $N $G $B $L -therm=$THERM -filename=$FILENAME &
+    python3 $NAME $N $G $B $L &
 
     ID=$(($ID + 1))
   fi
