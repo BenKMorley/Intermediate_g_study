@@ -44,7 +44,7 @@ mlims['su2_0.1'] = [
             [-0.0325, -0.029],
             [-0.0320, -0.02950],
             [-0.0318, -0.03025],
-            [-0.0315, -0.0307],
+            [-0.0315, -0.0308],
             [-0.0315, -0.0309]]
 
 mlims['su2_0.2'] = [
@@ -266,4 +266,4 @@ param_dict[4]["prior_range"] = prior_range_dict[param_dict[2]["model_1"].__name_
 param_dict[4]["therm"] = 0
 
 
-h5_dict = "h5data"
+h5data_dir = "h5data/"

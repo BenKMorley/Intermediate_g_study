@@ -41,7 +41,7 @@ sys.path.append(os.getcwd() + '/Core')
 from Core.frequentist_run import run_frequentist_analysis
 from Core.model_definitions import *
 from Core.bayesian_functions import *
-from Core.parameters import param_dict, seperator, h5_dict
+from Core.parameters import param_dict, seperator, h5data_dir
 from Core.MISC import calc_gL_mins
 
 
@@ -70,7 +70,7 @@ def get_pvalues_central_fit(N):
     x0 = param_dict[N]["x0"]
     model_1 = param_dict[N]["model_1"]
     model_2 = param_dict[N]["model_2"]
-    h5_data_file = f"{h5_dict}/{param_dict[N]['h5_data_file']}"
+    h5_data_file = f"{h5data_dir}/{param_dict[N]['h5_data_file']}"
 
     gL_mins = calc_gL_mins(g_s, L_s)
     gL_mins = gL_mins[gL_mins <= param_dict[N]["gL_max"]]
@@ -140,7 +140,7 @@ def get_statistical_errors_central_fit(N, model_name="model_1"):
     model = param_dict[N][model_name]
     gL_min = param_dict[N]["gL_central"][model_name]
     param_names = param_dict[N]["param_names"]
-    h5_data_file = f"{h5_dict}/{param_dict[N]['h5_data_file']}"
+    h5_data_file = f"{h5data_dir}/{param_dict[N]['h5_data_file']}"
 
     # Run once with the full dataset (no resampling)
     pvalue, params_central, dof =\
@@ -254,7 +254,7 @@ def get_systematic_errors(N, model_name="model_1", min_dof=15):
     L_s = param_dict[N]["L_s"]
     x0 = param_dict[N]["x0"]
     model = param_dict[N][model_name]
-    h5_data_file = f"{h5_dict}/{param_dict[N]['h5_data_file']}"
+    h5_data_file = f"{h5data_dir}/{param_dict[N]['h5_data_file']}"
     param_names = param_dict[N]["param_names"]
     n_params = len(param_names)
 
@@ -422,7 +422,7 @@ def get_Bayes_factors(N, points=5000, gL_max=numpy.inf):
     L_s_in = param_dict[N]["L_s"]
     model_1 = param_dict[N]["model_1"]
     model_2 = param_dict[N]["model_2"]
-    h5_data_file = f"{h5_dict}/{param_dict[N]['h5_data_file']}"
+    h5_data_file = f"{h5data_dir}/{param_dict[N]['h5_data_file']}"
     param_names = param_dict[N]["param_names"]
     n_params = len(param_names)
     prior_range = param_dict[N]["prior_range"]

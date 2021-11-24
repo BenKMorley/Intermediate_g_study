@@ -3,6 +3,7 @@ import re
 import pdb
 import numpy
 import matplotlib.pyplot as plt
+from scipy.optimize.nonlin import NoConvergence
 from tqdm import tqdm
 import sys
 import os
@@ -18,6 +19,7 @@ sys.path.append(os.getcwd() + '/Core')
 from Core.model_definitions import mPT_1loop, K1
 from publication_results import get_statistical_errors_central_fit
 from Core.Binderanalysis import Critical_analysis
+from Core.parameters import *
 
 # matplotlib.use('Qt5Agg')
 
@@ -42,16 +44,19 @@ def fig3_color(gL, min_gL=0.79, max_gL=76.81, func=numpy.log):
     return color_value
 
 
-def plot_Binder(N, g_s, L_s, data_file=None, data_dir="h5data", minus_sign_override=False,
+def plot_Binder(N, g_s, L_s, data_file=None, data_dir=None, minus_sign_override=False,
                 legend=True, ax=None, min_gL=3.1, max_gL=76.81, reweight=True, params=None, GL_lim=12.7,
                 mlims=None, min_traj=100001, therm=10000, scale_with_fit=False, no_reweight_samples=100,
                 crossings_file=None, plot_crossings=False):
 
     if data_file is None:
-        data_file = f"{data_dir}/MCMC_N{N}_data.h5"
+        data_file = param_dict[N]["MCMC_data_file"]
 
     if crossings_file is None:
-        crossings_file = f"{data_dir}/Binder_N{N}_data.h5"
+        crossings_file = param_dict[N]["h5_data_file"]
+
+    if data_dir is None:
+        data_dir = h5data_dir
 
     if ax is None:
         fig, ax = plt.subplots()
@@ -60,7 +65,7 @@ def plot_Binder(N, g_s, L_s, data_file=None, data_dir="h5data", minus_sign_overr
 
     markers = {8: 'd', 16: 'v', 32: '<', 48: '^', 64: 's', 96: 'o', 128: 'd'}
 
-    f = h5py.File(data_file, "r")
+    f = h5py.File(f"{data_dir}{data_file}", "r")
     if scale_with_fit:
         if params is None:
             try:
@@ -85,9 +90,9 @@ def plot_Binder(N, g_s, L_s, data_file=None, data_dir="h5data", minus_sign_overr
                 Binders = []
                 Binder_sigmas = []
 
-                System = Critical_analysis(N, g, L, therm=therm)
+                System = Critical_analysis(N, g, L)
                 System.MCMCdatafile = data_file
-                System.datadir = ''
+                System.datadir = data_dir
                 System.min_traj = min_traj
 
                 System.h5load_data()
