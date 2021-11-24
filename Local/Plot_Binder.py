@@ -203,8 +203,6 @@ def plot_Binder(N, g_s, L_s, data_file=None, data_dir="h5data", minus_sign_overr
                             Bbar_s.append(Bbar)
                             means.append(mean)
                             stds.append(std)
-                        
-                        pdb.set_trace()
 
                         if scale_with_fit:
                             ax.errorbar(((means - m_crit) / g ** 2) * (g * L) ** (1 / nu), Bbar_s, xerr=(stds / g ** 2) * (g * L) ** (1 / nu))

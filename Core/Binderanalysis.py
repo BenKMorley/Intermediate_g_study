@@ -39,6 +39,7 @@ import warnings
 import matplotlib.pyplot as plt
 import argparse
 
+
 sys.path.append('/home/bkm1n18/.local/lib/python3.9/site-packages')
 from parse import parse
 
@@ -83,7 +84,7 @@ class Critical_analysis():
         * h5store_results(self): Writes result to hdf5 file
     """
 
-    def __init__(self, N, g, L, direc='h5data/', filename=None, Nboot=500, therm=10000, restrict=False):
+    def __init__(self, N, g, L, direc='h5data/', Nboot=500, restrict=False):
         """
             Here we allocate some basic variables and seed the RNG
         """
@@ -109,13 +110,10 @@ class Critical_analysis():
         self.msq_final = 0.
         self.dmsq_final = 0.
         self.datadir = direc
-        if filename is None:
-            self.MCMCdatafile = f"MCMC_N{N}_data.h5"
-        else:
-            self.MCMCdatafile = filename
-
-        self.resultsfile = f"Binder_N{N}_data.h5"
-        self.therm = therm  # Configurations to remove due to thermalization
+        self.freeze_inner_boot = False
+        self.MCMCdatafile = param_dict[N]["MCMC_data_file"]
+        self.resultsfile = param_dict[N]["h5_data_file"]
+        self.therm = param_dict[N]["therm"]  # Configurations to remove due to thermalization
         self.restrict = restrict
         self.min_traj = 0  # Minimum number of tradjectories to have in data
 
@@ -342,6 +340,74 @@ class Critical_analysis():
 
         return ind
 
+    def compute_overlap_new(self, msq, L1bs):
+        """
+            This is relevant for reweighting:
+            Determine overlap of phi^2-distributions of simulation points with
+            various m^2 in order to assess whether reweighting appropriate. It
+            computes list with indices in m0sqlist which lie within acceptable
+            radius which can be set by class variable self.frac_of_dist. An
+            ensemble enters the reweighting if its distribution of phi^2
+            overlaps with the target-mass within self.frac_of_dist*sigma
+        """
+        prefac = (self.L ** 3) * (self.N / self.g)
+
+        simulated = []
+        dsimulated = []
+
+        for i in range(self.actualNm0sq):
+            phi2_boot = self.RWbinit_N_no_mean(self.phi2[str(i)], self.Nbin_tauint[i])
+            phi2 = phi2_boot[L1bs[i]]
+            simulated.append(np.mean(phi2))
+            dsimulated.append(np.std(phi2))
+
+        # determine nearest simulation points
+        above = np.where(msq > -np.array(self.actualm0sqlist))[0]
+        below = np.where(msq <= -np.array(self.actualm0sqlist))[0]
+        indexists = np.where(-1. * msq == np.array(self.actualm0sqlist))[0]
+
+        # now interpolate/extrapolate central value of phi^2 in the bare in put mass
+        if len(indexists) > 0:
+            # if m agrees with simulated point then take just this and do nothing
+            res1 = np.array(flatten([simulated[i] for i in indexists]))
+
+        else:
+            # otherwise interpolate/extrapolate <phi2> to simulation point
+            if len(above) > 0 and len(below) > 0:  # interpolate
+                alpha = (simulated[above[0]] - simulated[below[-1]])\
+                    / (self.actualm0sqlist[below[-1]] -
+                       self.actualm0sqlist[above[0]])
+
+                res1 = simulated[below[-1]] + \
+                    alpha * (self.actualm0sqlist[below[-1]] + msq)
+
+            elif len(below) == 0 and len(above) > 0:  # extapolate
+                alpha = (simulated[above[1]] - simulated[above[0]])\
+                    / (self.actualm0sqlist[above[0]] -
+                       self.actualm0sqlist[above[1]])
+
+                res1 = simulated[above[0]] + \
+                    alpha * (self.actualm0sqlist[above[0]] + msq)
+
+            elif len(below) > 0 and len(above) == 0:  # extrapolate
+                alpha = (simulated[below[-1]] -
+                         simulated[below[-2]]) \
+                    / (self.actualm0sqlist[below[-2]] -
+                       self.actualm0sqlist[below[-1]])
+
+                res1 = simulated[below[-1]] +\
+                    alpha * (self.actualm0sqlist[below[-1]] + msq)
+
+        # now determine which phi^2 distributions of simulated bare masses
+        # overlap with the one we just inter/extrapolated to within fraction
+        # self.frac_of_dist of the standard deviation
+        x = np.array(simulated)
+        dx = np.array(dsimulated)
+        ind = np.where((res1 < x + self.frac_of_dist * dx) &
+                       (res1 > x - self.frac_of_dist * dx))[0]
+
+        return ind
+
     def RWbinit_N(self, dat, Nbinl):
         """
             bin data after reweighting explicit binning as arg ##3
@@ -360,6 +426,25 @@ class Critical_analysis():
             for n in range(int(Nbins)):
                 newdat = np.r_[newdat, np.array([np.mean(dat[n * Nbinl:(n + 1)
                                                                * Nbinl], 0)])]
+
+        return newdat
+
+    def RWbinit_N_no_mean(self, dat, Nbinl):
+        """
+            bin data after reweighting explicit binning as arg ##3
+            - dat is Ntraj x Nobs array
+            - Nbinl is the number of trajectories to be binned into one bin
+        """
+        # Determine number of bins
+        Nbins = int(np.floor(dat.shape[0] / Nbinl))
+
+        # do the binning
+        size = dat.shape[0]
+
+        newdat = np.zeros((Nbins, Nbinl))
+
+        for n in range(int(Nbins)):
+            newdat[n] = dat[n * Nbinl:(n + 1) * Nbinl]
 
         return newdat
 
@@ -389,22 +474,11 @@ class Critical_analysis():
         """
         res = f(dat)
         res_bs = np.array([])
-        N = dat.shape[0]
-        av0s = np.zeros(self.Nboot)
-        av1s = np.zeros(self.Nboot)
-        av2s = np.zeros(self.Nboot)
 
         for i in range(self.Nboot):
             wol = bsindices[:, i]
-            # kwargs = {'return_extra': True}
-            kwargs = {}
 
             resl = f(dat[wol, :], *args, **kwargs)
-            # resl, av0, av1, av2 = f(dat[wol, :], *args, **kwargs)
-
-            # av0s[i] = av0
-            # av1s[i] = av1
-            # av2s[i] = av2
 
             res_bs = np.r_[res_bs, np.array([resl])]
 
@@ -412,8 +486,7 @@ class Critical_analysis():
             return np.nan, np.nan
 
         else:
-            dres = np.sqrt(np.real(np.sum((np.array(res_bs) - res)**2, 0))) \
-                / np.sqrt(self.Nboot)
+            dres = np.sqrt(np.real(np.sum((np.array(res_bs) - res)**2, 0))) / np.sqrt(self.Nboot)
 
             return res, dres
 
@@ -424,7 +497,7 @@ class Critical_analysis():
             - x is N x 3 array with
                 1st column <reweighting factor>
                 2nd column <M2> reweighted
-                3rd column <M5> reweighted
+                3rd column <M4> reweighted
         """
         # the reweighting factor can get huge and require arithmetics beyond
         # double precision fpa in this case an exception is raised adn np.nan
@@ -434,9 +507,6 @@ class Critical_analysis():
                 av = np.mean(x, 0)
 
                 B = av[0] * av[2] / av[1] ** 2
-
-                if B > 1:
-                    print("Hello")
 
                 return B, av[0], av[1], av[2]
 
@@ -451,14 +521,15 @@ class Critical_analysis():
             except Exception:
                 return np.nan
 
-    def reweight_Binder(self, msq, L1bs, L0bs, sigma=False):
+    def reweight_Binder_new(self, msq, L1bs, L0bs, len_res=False):
         """
             This function computes the reweighted Binder cumulant
             - msq is target bare mass squared for for reweighting
             - L1bs/L0bs are L1/L0 bootstrap indices
         """
         # compute reweighting factor for each ensemble, then reweight, then bin
-        iinclude = self.compute_overlap(msq)
+        # Use the same bootstrap indices for this
+        iinclude = self.compute_overlap_new(msq, L1bs)
 
         res = []
         dres = []
@@ -473,8 +544,7 @@ class Critical_analysis():
             # compute the unbinned reweighting factor
             try:
                 RWfac = np.exp(-(msq + self.actualm0sqlist[i]) * (self.L**3) *
-                                (self.N / self.g) *
-                               np.array(self.phi2[str(i)]))
+                                (self.N / self.g) * np.array(self.phi2[str(i)]))
 
             except Exception:
                 RWfac = np.nan * np.array(self.phi2[str(i)])
@@ -490,21 +560,18 @@ class Critical_analysis():
 
             except Exception:
                 RW_fac_bin = self.RWbinit_N(np.nan * RWfac, self.Nbin_tauint[i])
-
+            
             try:
-                RW_2_bin = self.RWbinit_N(RWfac * np.array(self.M2[str(i)]),
-                                          self.Nbin_tauint[i])
+                RW_2_bin = self.RWbinit_N(RWfac * np.array(self.M2[str(i)]), self.Nbin_tauint[i])
 
             except Exception:
-                RW_2_bin = self.RWbinit_N(np.nan * np.array(self.M2[str(i)]),
-                                          self.Nbin_tauint[i])
+                RW_2_bin = self.RWbinit_N(np.nan * np.array(self.M2[str(i)]), self.Nbin_tauint[i])
 
             try:
-                RW_4_bin = self.RWbinit_N(RWfac * np.array(self.M4[str(i)]),
-                                          self.Nbin_tauint[i])
+                RW_4_bin = self.RWbinit_N(RWfac * np.array(self.M4[str(i)]), self.Nbin_tauint[i])
+
             except Exception:
-                RW_4_bin = self.RWbinit_N(np.nan * np.array(self.M4[str(i)]),
-                                          self.Nbin_tauint[i])
+                RW_4_bin = self.RWbinit_N(np.nan * np.array(self.M4[str(i)]), self.Nbin_tauint[i])
 
             # collate binned quantities into array
             datl = np.array([])
@@ -513,32 +580,129 @@ class Critical_analysis():
             datl = np.r_[datl, np.array([RW_4_bin])]    # <M4>
 
             # pick data for current bootstrap (L1 bootstrap indices)
-            # can only be done after data combined with
-            # reweighting factor
+            # can only be done after data combined with reweighting factor
             datl = datl[:, L1bs[i]]
 
-            # run the bootstrap for the Binder comulant with L0 bootstrap
-            # indices
+            # run the bootstrap for the Binder comulant with L0 bootstrap indices
             resl, dresl = self.bootit(self.B, datl.T, L0bs[i])
 
             res.append(resl)
             dres.append(dresl)
 
-        # filter out occurences of NaNs and produce weighted average over
-        # reweighted results for Binder cumulant
+        # filter out occurences of NaNs and produce weighted average over reweighted results for
+        # Binder cumulant
 
         ## Always filter out Nan!
-        dres0 = [dx for x, dx in zip(res, dres) if
-                    ((not np.isnan(x)) and (dx != 0.))]
+        dres0 = [dx for x, dx in zip(res, dres) if ((not np.isnan(x)) and (dx != 0.))]
 
-        res0 = [x for x, dx in zip(res, dres) if
-                ((not np.isnan(x)) and (dx != 0.))]
+        res0 = [x for x, dx in zip(res, dres) if ((not np.isnan(x)) and (dx != 0.))]
+
+        print(res0)
+        print(iinclude)
 
         if len(res0) > 0 and len(dres0) > 0:
             denom = np.sum(1. / np.array(dres0) ** 2)
             numer = np.sum(np.array(res0) / np.array(dres0) ** 2)
 
             B = 1 - self.N * 1. / 3 * numer / denom
+
+            print(B)
+
+        else:
+            B = np.nan
+
+        if len_res:
+            return B - self.Bbar, len(res0)
+
+        return B - self.Bbar
+
+    def reweight_Binder(self, msq, L1bs, L0bs, sigma=False, len_res=False):
+        """
+            This function computes the reweighted Binder cumulant
+            - msq is target bare mass squared for for reweighting
+            - L1bs/L0bs are L1/L0 bootstrap indices
+        """
+        # compute reweighting factor for each ensemble, then reweight, then bin
+        # Use the same bootstrap indices for this
+        iinclude = self.compute_overlap_new(msq, L1bs)
+
+        res = []
+        dres = []
+        # loop over masses to be included in current reweighting
+        for i in iinclude:
+            # In the following:
+            # the reweighting factor can get huge and require arithmetics
+            # beyond double precision fpa in this case an exception is raised
+            # and np.nan returned to be dealt with later. The nan values are
+            # filtered out later and excluded from the analysis
+
+            # compute the unbinned reweighting factor
+            try:
+                RWfac = np.exp(-(msq + self.actualm0sqlist[i]) * (self.L**3) *
+                                (self.N / self.g) * np.array(self.phi2[str(i)]))
+
+            except Exception:
+                RWfac = np.nan * np.array(self.phi2[str(i)])
+
+            # Flag contributions where the exponent is so negative the exponent
+            # goes to 0, or so large it goes to infinity.
+            if min(RWfac == 0) or max(RWfac == np.inf):
+                RWfac = np.nan * np.array(self.phi2[str(i)])
+
+            # binning for reweighting factor, phi^2, M^2 and M^4
+            try:
+                RW_fac_bin = self.RWbinit_N(RWfac, self.Nbin_tauint[i])
+
+            except Exception:
+                RW_fac_bin = self.RWbinit_N(np.nan * RWfac, self.Nbin_tauint[i])
+            
+            try:
+                RW_2_bin = self.RWbinit_N(RWfac * np.array(self.M2[str(i)]), self.Nbin_tauint[i])
+
+            except Exception:
+                RW_2_bin = self.RWbinit_N(np.nan * np.array(self.M2[str(i)]), self.Nbin_tauint[i])
+
+            try:
+                RW_4_bin = self.RWbinit_N(RWfac * np.array(self.M4[str(i)]), self.Nbin_tauint[i])
+
+            except Exception:
+                RW_4_bin = self.RWbinit_N(np.nan * np.array(self.M4[str(i)]), self.Nbin_tauint[i])
+
+            # collate binned quantities into array
+            datl = np.array([])
+            datl = np.array([RW_fac_bin])              # reweighting factor
+            datl = np.r_[datl, np.array([RW_2_bin])]    # <M2>
+            datl = np.r_[datl, np.array([RW_4_bin])]    # <M4>
+            pdb.set_trace()
+
+            # pick data for current bootstrap (L1 bootstrap indices)
+            # can only be done after data combined with reweighting factor
+            datl = datl[:, L1bs[i]]
+
+            # run the bootstrap for the Binder comulant with L0 bootstrap indices
+            resl, dresl = self.bootit(self.B, datl.T, L0bs[i])
+
+            res.append(resl)
+            dres.append(dresl)
+
+        # filter out occurences of NaNs and produce weighted average over reweighted results for
+        # Binder cumulant
+
+        ## Always filter out Nan!
+        dres0 = [dx for x, dx in zip(res, dres) if ((not np.isnan(x)) and (dx != 0.))]
+
+        res0 = [x for x, dx in zip(res, dres) if ((not np.isnan(x)) and (dx != 0.))]
+
+        print(res0)
+        print(iinclude)
+
+        if len(res0) > 0 and len(dres0) > 0:
+            denom = np.sum(1. / np.array(dres0) ** 2)
+            numer = np.sum(np.array(res0) / np.array(dres0) ** 2)
+
+            B = 1 - self.N * 1. / 3 * numer / denom
+
+            print(B)
 
             if sigma:
                 sigma = np.sqrt((1 / denom)) * self.N / 3
@@ -551,8 +715,10 @@ class Critical_analysis():
         if sigma:
             return B - self.Bbar, sigma
 
-        else:
-            return B - self.Bbar
+        if len_res:
+            return B - self.Bbar, len(res0)
+
+        return B - self.Bbar
 
     def find_Binder_crossing(self, mmax, mmin):
         """
@@ -586,7 +752,7 @@ class Critical_analysis():
 
         # compute central value for crossing
         try:
-            mcsq, r = opt.brentq(self.reweight_Binder, mmin, mmax,
+            mcsq, r = opt.brentq(self.reweight_Binder_new, mmin, mmax,
                                  args=(L1bs, L0bs), full_output=True,
                                  xtol=1e-6)
 
@@ -599,27 +765,38 @@ class Critical_analysis():
         # compute crossing under Bootstrap
         print("Now starting bootstrap with %d samples:" % self.Nboot)
         bres = []
+        bres_dict = {}
 
         for i in range(self.Nboot):  # start boostrap
-            # assign the set of L0 bootstrap indices for the ith L1 boostrap
-            # sample
+            # assign the set of L0 bootstrap indices for the ith L1 boostrap sample
             L1bs = self.L1_bsindices[i]
-            L0bs = self.refresh_L0_bsindices()
+
+            if not self.freeze_inner_boot:
+                L0bs = self.refresh_L0_bsindices()
+
             try:
-                mcsq_i, r = opt.brentq(self.reweight_Binder, mmin, mmax,
-                                       args=(L1bs, L0bs), full_output=True,
-                                       xtol=1e-6)
+                mcsq_i, r = opt.brentq(self.reweight_Binder_new, mmin, mmax, args=(L1bs, L0bs),
+                                       full_output=True, xtol=1e-6)
 
             except ValueError:
                 print("No crossing point found -- aborting")
                 exit()
 
             bres.append(mcsq_i)
+
+            # Record the number of mass points that contributed
+            B, len_res = self.reweight_Binder_new(mcsq_i, L1bs, L0bs, len_res=True)
+
+            if len_res in bres_dict:
+                bres_dict[len_res].append(mcsq_i)
+
+            else:
+                bres_dict[len_res] = [mcsq_i]
+
             print("bs sample %4d: mc^2=%e" % (i, mcsq_i))
 
         # compute the BS error
-        dmcsq = np.sqrt(np.real(np.sum((np.array(bres) - mcsq) ** 2, 0)))\
-            / np.sqrt(self.Nboot)
+        dmcsq = np.sqrt(np.real(np.sum((np.array(bres) - mcsq) ** 2, 0))) / np.sqrt(self.Nboot)
 
         print("result %.6f +/- %.6f" % (mcsq, dmcsq))
         print(separator)

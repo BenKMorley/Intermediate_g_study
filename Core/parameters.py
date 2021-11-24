@@ -223,7 +223,10 @@ param_dict[2]["x0"] = [0, 0.5431, -0.03586, 1, 2 / 3]  # EFT values
 param_dict[2]["gL_max"] = 32
 param_dict[2]["gL_central"] = {"model_1": 12.8, "model_2": 24}
 param_dict[2]["h5_data_file"] = "Bindercrossings.h5"
+param_dict[2]["MCMC_data_file"] = "MCMCdata.h5"
 param_dict[2]["prior_range"] = prior_range_dict[param_dict[2]["model_1"].__name__]
+param_dict[2]["therm"] = 0
+
 
 # N = 3
 param_dict[3] = {}
@@ -239,7 +242,9 @@ param_dict[3]["x0"] = [0, 0.5, -0.03, 1, 2 / 3]
 param_dict[3]["gL_max"] = 32
 param_dict[3]["gL_central"] = {"model_1": 12.8, "model_2": 24}
 param_dict[3]["h5_data_file"] = "Binder_N3_data.h5"
+param_dict[3]["MCMC_data_file"] = "MCMC_N3_data.h5"
 param_dict[3]["prior_range"] = prior_range_dict[param_dict[2]["model_1"].__name__]
+param_dict[3]["therm"] = 10000
 
 
 # N = 4
@@ -256,7 +261,9 @@ param_dict[4]["x0"] = [0, 0, 0.4459, -0.02707, 1, 2 / 3]  # EFT values
 param_dict[4]["gL_max"] = 32
 param_dict[4]["gL_central"] = {"model_1": 12.8, "model_2": 32}
 param_dict[4]["h5_data_file"] = "Bindercrossings.h5"
+param_dict[4]["MCMC_data_file"] = "MCMCdata.h5"
 param_dict[4]["prior_range"] = prior_range_dict[param_dict[2]["model_1"].__name__]
+param_dict[4]["therm"] = 0
 
 
 h5_dict = "h5data"
