@@ -673,7 +673,6 @@ class Critical_analysis():
             datl = np.array([RW_fac_bin])              # reweighting factor
             datl = np.r_[datl, np.array([RW_2_bin])]    # <M2>
             datl = np.r_[datl, np.array([RW_4_bin])]    # <M4>
-            pdb.set_trace()
 
             # pick data for current bootstrap (L1 bootstrap indices)
             # can only be done after data combined with reweighting factor
