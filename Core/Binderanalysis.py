@@ -38,6 +38,7 @@ import pdb
 import warnings
 import matplotlib.pyplot as plt
 import argparse
+from time import sleep
 
 
 sys.path.append('/home/bkm1n18/.local/lib/python3.9/site-packages')
@@ -84,7 +85,7 @@ class Critical_analysis():
         * h5store_results(self): Writes result to hdf5 file
     """
 
-    def __init__(self, N, g, L, direc='h5data/', Nboot=500, restrict=False):
+    def __init__(self, N, g, L, direc='h5data/', Nboot=2, restrict=False):
         """
             Here we allocate some basic variables and seed the RNG
         """
@@ -881,8 +882,19 @@ def compute_Bindercrossing(N, g, Bbar, Lin, **kwargs):
     # start the actual determination of m^2 where the Binder cumulant assumes
     # the value Bbar
     run1.find_Binder_crossing(-xmin, -xmax)
-    run1.h5store_results()
 
+    save_success = False
+
+    while(not save_success):
+        try:
+            run1.h5store_results()
+
+            # Only reach this line if above runs successfully
+            save_success = True
+        
+        except Exception:
+            # File probably in use wait
+            sleep(1)
 
 if __name__ == "__main__":
     # For passing in arguments from the command line

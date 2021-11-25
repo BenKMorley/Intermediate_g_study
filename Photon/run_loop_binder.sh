@@ -6,31 +6,33 @@ NUM_THREADS=60
 END_TASK_NO=1
 ID=0
 
-G_S=(0.1 0.2 0.3 0.5 0.6)
-L_S=(8 16 32 48 64 96)
+L_S=(8 16 32 48 64 96 128)
 N=$1
 
 if [ $(( $N )) == 2 ]
 then
     B_S=(0.51 0.52 0.53 0.54 0.55 0.56 0.57 0.58 0.59)
+    G_S=(0.1 0.2 0.3 0.5 0.6)
 fi
 
 if [ $(( $N )) == 3 ]
 then
     B_S=(0.40 0.41 0.42 0.43 0.44 0.45 0.46 0.47 0.48)
+    G_S=(0.1 0.2 0.3 0.5 0.6)
 fi
 
 if [ $(( $N )) == 4 ]
 then
     B_S=(0.42 0.43 0.44 0.45 0.46 0.47)
+    G_S=(0.1 0.2 0.3 0.5 0.6)
 fi
 
 LEN_G=${#G_S[@]}
 LEN_L=${#L_S[@]}
 LEN_B=${#B_S[@]}
-END=$(( $LEN_G * $LEN_L * $LEN_B))
+END=$(( $LEN_G * $LEN_L * $LEN_B ))
 
-while [ $ID -le $END ]; do
+while [ $ID -lt $END ]; do
 
   if [ $(( $RUNNING_PROCESSES )) -lt $(( $NUM_THREADS )) ]
   then
@@ -43,7 +45,7 @@ while [ $ID -le $END ]; do
 
     echo about to run with N=$N ID=$ID G=$G L=$L B=$B
 
-    python3 $NAME $N $G $B $L &
+    python3 $NAME $N $G $B $L > Photon/log/Binder_Run_N${N}_g${G}_L${L}_B${B}.out &
 
     ID=$(($ID + 1))
   fi
