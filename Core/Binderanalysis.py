@@ -85,7 +85,7 @@ class Critical_analysis():
         * h5store_results(self): Writes result to hdf5 file
     """
 
-    def __init__(self, N, g, L, direc='h5data/', Nboot=2, restrict=False):
+    def __init__(self, N, g, L, direc='h5data/', Nboot=500, restrict=False):
         """
             Here we allocate some basic variables and seed the RNG
         """
