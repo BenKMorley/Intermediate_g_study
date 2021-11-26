@@ -1,3 +1,4 @@
+Core/parameters.py
 Photon/log/*
 log/*
 *.pdf

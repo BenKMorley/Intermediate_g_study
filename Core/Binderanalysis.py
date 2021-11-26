@@ -40,6 +40,7 @@ import matplotlib.pyplot as plt
 import argparse
 from time import sleep
 
+import logging
 
 sys.path.append('/home/bkm1n18/.local/lib/python3.9/site-packages')
 from parse import parse
@@ -128,14 +129,13 @@ class Critical_analysis():
             f = h5py.File(filename, 'r')
 
         else:
-            print("Can't find data file ", filename)
+            logging.error(f"Can't find data file, {filename}")
             exit()
 
         # some IO to command line
-        print(separator)
-        print("Loading data for N=%d, ag=%.2f, L/a=%d" % (self.N, self.g,
-                                                          self.L))
-        print(separator)
+        logging.info(separator)
+        logging.info("Loading data for N=%d, ag=%.2f, L/a=%d" % (self.N, self.g, self.L))
+        logging.info(separator)
 
         # get hdf5 group and determine available simulated masses
         dat = f.get('N=%d/g=%.2f/L=%d' % (self.N, self.g, self.L))
@@ -172,7 +172,7 @@ class Critical_analysis():
 
         # now loop over available masses and, in each case, assign values for
         # M^2, M^4 and phi^2 measurements to class variables
-        print("Found %d msq values:" % (len(self.actualm0sqlist)))
+        logging.info("Found %d msq values:" % (len(self.actualm0sqlist)))
 
         for ii in range(self.actualNm0sq):
             self.M2[str(ii)], self.M4[str(ii)], self.phi2[str(ii)] = \
@@ -186,10 +186,10 @@ class Critical_analysis():
 
             self.Ntraj.append(len(self.M2[str(ii)]))
 
-            print(ii, "with %7d trajectories" % (len(self.M2[str(ii)])))
+            logging.info(f"{ii} with {len(self.M2[str(ii)]):7d} trajectories")
 
-        print("Data loaded")
-        print(separator)
+        logging.info("Data loaded")
+        logging.info(separator)
 
     def compute_tauint_and_bootstrap_indices(self):
         """
@@ -197,8 +197,8 @@ class Critical_analysis():
             `Monte Carlo Errors with less errors`
             https://arxiv.org/abs/hep-lat/0306017
         """
-        print(separator)
-        print("Computing max. tauint of M^2, M^4, phi^4: ")
+        logging.info(separator)
+        logging.info("Computing max. tauint of M^2, M^4, phi^4: ")
 
         i = 0
         while i < len(self.actualm0sqlist):
@@ -217,7 +217,7 @@ class Critical_analysis():
                 uwres_phi2 = uwfn.doit()
 
             except ValueError:
-                print("Error During caclulation of Tau Int")
+                logging.error("Error During caclulation of Tau Int")
                 failed = True
 
             # compute largest tau_int
@@ -232,18 +232,18 @@ class Critical_analysis():
 
             self.Nbin_tauint.append(tau_intl)
 
-            print("msq=%.7f (tau_int)_max=%.0f using bin-size %d" %
-                  (self.actualm0sqlist[i], self.tauint[-1], tau_intl))
+            logging.info(f"msq={self.actualm0sqlist[i]:.7f} (tau_int)_max={self.tauint[-1]:.0f}" + 
+                         f"using bin-size {tau_intl}")
 
             if failed:
-                print(f'Removing mass {self.actualm0sqlist[i]}')
+                logging.debug(f'Removing mass {self.actualm0sqlist[i]}')
                 self.actualm0sqlist.remove(self.actualm0sqlist[i])
                 self.actualNm0sq -= 1
 
             else:
                 i += 1
 
-        print(separator)
+        logging.info(separator)
 
         # now that we know the binning size we can generate boostrap indices
         # for all bins of L1 boostratp for central value
@@ -260,8 +260,8 @@ class Critical_analysis():
 
             self.L1_bsindices.append(L1tmp)
 
-        print("Generated bootstrap indices")
-        print(separator)
+        logging.debug("Generated bootstrap indices")
+        logging.debug(separator)
 
     def plot_tr_phi2_distributions(self):
         plt.close('all')
@@ -598,8 +598,8 @@ class Critical_analysis():
 
         res0 = [x for x, dx in zip(res, dres) if ((not np.isnan(x)) and (dx != 0.))]
 
-        print(res0)
-        print(iinclude)
+        logging.debug(res0)
+        logging.debug(iinclude)
 
         if len(res0) > 0 and len(dres0) > 0:
             denom = np.sum(1. / np.array(dres0) ** 2)
@@ -607,7 +607,7 @@ class Critical_analysis():
 
             B = 1 - self.N * 1. / 3 * numer / denom
 
-            print(B)
+            logging.debug(B)
 
         else:
             B = np.nan
@@ -693,8 +693,8 @@ class Critical_analysis():
 
         res0 = [x for x, dx in zip(res, dres) if ((not np.isnan(x)) and (dx != 0.))]
 
-        print(res0)
-        print(iinclude)
+        logging.debug(res0)
+        logging.debug(iinclude)
 
         if len(res0) > 0 and len(dres0) > 0:
             denom = np.sum(1. / np.array(dres0) ** 2)
@@ -702,7 +702,7 @@ class Critical_analysis():
 
             B = 1 - self.N * 1. / 3 * numer / denom
 
-            print(B)
+            logging.debug(B)
 
             if sigma:
                 sigma = np.sqrt((1 / denom)) * self.N / 3
@@ -736,9 +736,8 @@ class Critical_analysis():
                 determine the value of the Binder cumulant at that point by
                 means of a weighted average.
         """
-        print(separator)
-        print("Starting determination of crossing point of Binder cumulant"
-              "with Bbar=%.2f" % (self.Bbar))
+        logging.info(separator)
+        logging.info(f"Starting determination of crossing point of Binder cumulant with Bbar={self.Bbar:.2f}")
 
         # Fill list with trivial L1 bootstrap indices (i.e. 0,1,2,3,5,...)
         # for central value and use L0_bsindices for the inner bootstrap
@@ -757,13 +756,13 @@ class Critical_analysis():
                                  xtol=1e-6)
 
         except ValueError:
-            print("No crossing point found -- aborting")
+            logging.error("No crossing point found -- aborting")
             exit()
 
-        print("Crossing point central value found at mc^2=%e" % (mcsq))
+        logging.info("Crossing point central value found at mc^2=%e" % (mcsq))
 
         # compute crossing under Bootstrap
-        print("Now starting bootstrap with %d samples:" % self.Nboot)
+        logging.info(f"Now starting bootstrap with {self.Nboot} samples:")
         bres = []
         bres_dict = {}
 
@@ -779,7 +778,7 @@ class Critical_analysis():
                                        full_output=True, xtol=1e-6)
 
             except ValueError:
-                print("No crossing point found -- aborting")
+                logging.error("No crossing point found -- aborting")
                 exit()
 
             bres.append(mcsq_i)
@@ -793,13 +792,13 @@ class Critical_analysis():
             else:
                 bres_dict[len_res] = [mcsq_i]
 
-            print("bs sample %4d: mc^2=%e" % (i, mcsq_i))
+            logging.info(f"bs sample {i}: mc^2={mcsq_i:e}")
 
         # compute the BS error
         dmcsq = np.sqrt(np.real(np.sum((np.array(bres) - mcsq) ** 2, 0))) / np.sqrt(self.Nboot)
 
-        print("result %.6f +/- %.6f" % (mcsq, dmcsq))
-        print(separator)
+        logging.info(f"result {mcsq:.6f} +/- {dmcsq:.6f}")
+        logging.info(separator)
 
         self.msq_final = mcsq
         self.dmsq_final = dmcsq
@@ -845,7 +844,7 @@ def compute_Bindercrossing(N, g, Bbar, Lin, **kwargs):
         # Andreas Juettner (juettner@soton.ac.uk)                            #
         ######################################################################
     """
-    print(compute_Bindercrossing.__doc__)
+    logging.info(compute_Bindercrossing.__doc__)
     check_exists('L/a', Lin)
     check_exists('ag', g)
     check_exists('N', N)
@@ -918,6 +917,10 @@ if __name__ == "__main__":
     del kwargs['g']
     del kwargs['Bbar']
     del kwargs['L']
+
+    # Initiate logger
+    logging.basicConfig(filename=f'{logging_base_name}N{args.N}_g{args.g}_L{args.L}_Bbar{args.Bbar}.txt',
+                        level=logging.DEBUG)
 
     ###########################################################################
     # call main routine
