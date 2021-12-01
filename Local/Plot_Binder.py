@@ -141,6 +141,7 @@ def plot_Binder(N, g_s, L_s, data_file=None, data_dir=None, minus_sign_override=
 
                 masses = numpy.array(masses)
 
+
                 if scale_with_fit:
                     ax.errorbar(((masses - m_crit) / g ** 2) * (g * L) ** (1 / nu), Binders, Binder_sigmas, marker=markers[L], label=f'g={g}, L={L}', color=fig3_color(g * L, min_gL=min_gL, max_gL=max_gL), ls='', fillstyle='none')
 
@@ -148,9 +149,14 @@ def plot_Binder(N, g_s, L_s, data_file=None, data_dir=None, minus_sign_override=
                     ax.errorbar(masses, Binders, Binder_sigmas, marker=markers[L], label=f'g={g}, L={L}', color=fig3_color(g * L, min_gL=min_gL, max_gL=max_gL), ls='', fillstyle='none')
 
                 if reweight:
+                    # Find the largest deviation between masses and assume half
+                    # of this is the reweighting length
+                    masses = numpy.array(masses)
+                    max_gap = numpy.maximum(numpy.abs(masses[1:] - masses[:-1]))
+
                     # Use Andreas's Critical Analysis Class to do the reweighting
                     if mlims is None:
-                        min_m, max_m = min(masses), max(masses)
+                        min_m, max_m = min(masses) - max_gap / 2, max(masses) + max_gap / 2
                     else:
                         min_m, max_m = mlims
 
