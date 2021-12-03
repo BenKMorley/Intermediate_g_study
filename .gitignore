@@ -1,5 +1,6 @@
 Core/parameters.py
 Photon/log/*
+Iridis/log/*
 log/*
 *.pdf
 Data/*
