@@ -23,6 +23,8 @@
 # directory
 ###############################################################################
 
+print("Hi I'm at the top of the file")
+
 # custom libraries for this project
 from parameters import *
 from MISC import *
@@ -30,10 +32,8 @@ from MISC import *
 # generic python libraries
 import numpy as np
 import scipy.optimize as opt
-import random
 import h5py
 import os
-import sys
 import pdb
 import warnings
 import matplotlib.pyplot as plt
@@ -42,7 +42,6 @@ from time import sleep
 
 import logging
 
-sys.path.append('/home/bkm1n18/.local/lib/python3.9/site-packages')
 from parse import parse
 
 # strict: raise exceptions in case of warnings
@@ -528,6 +527,8 @@ class Critical_analysis():
             - msq is target bare mass squared for for reweighting
             - L1bs/L0bs are L1/L0 bootstrap indices
         """
+        logging.debug(f'Trying m2 = {msq}')
+
         # compute reweighting factor for each ensemble, then reweight, then bin
         # Use the same bootstrap indices for this
         iinclude = self.compute_overlap_new(msq, L1bs)
@@ -893,9 +894,11 @@ def compute_Bindercrossing(N, g, Bbar, Lin, **kwargs):
         
         except Exception:
             # File probably in use wait
+            print("Waiting for file")
             sleep(1)
 
 if __name__ == "__main__":
+    print("Hi I'm starting main")
     # For passing in arguments from the command line
     parser = argparse.ArgumentParser()
 
@@ -920,7 +923,7 @@ if __name__ == "__main__":
 
     # Initiate logger
     logging.basicConfig(filename=f'{logging_base_name}N{args.N}_g{args.g}_L{args.L}_Bbar{args.Bbar}.txt',
-                        level=logging.DEBUG)
+                        level=logging.DEBUG, format='%(asctime)s :: %(levelname)s :: %(message)s')
 
     ###########################################################################
     # call main routine
