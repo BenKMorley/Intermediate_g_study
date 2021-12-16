@@ -40,7 +40,7 @@ sys.path.append(os.getcwd() + '/Core')
 
 from Core.frequentist_run import run_frequentist_analysis
 from Core.model_definitions import *
-from Core.bayesian_functions import *
+# from Core.bayesian_functions import *
 from Core.parameters import param_dict, seperator, h5data_dir
 from Core.MISC import calc_gL_mins
 
@@ -327,12 +327,12 @@ def get_systematic_errors(N, model_name="model_1", min_dof=15):
         print(f"{param} = {params_central[i]} +- {sys_sigmas[i]}")
 
     # Find the systematic variation in the critical mass
-    if model == model1_1a or model == model1_2a:
+    if model.__name__ == "model1_1a" or model.__name__ == "model1_2a":
         g = 0.1
         m_c = mPT_1loop(g, N) + g ** 2 * (params[best_Bbar_index, best, 0] -
                                           params[best_Bbar_index, best, -2] * K1(g, N))
 
-        if model == model1_2a:
+        if model.__name__ == "model1_2a":
             print("Critical Mass using alpha1:")
 
         print(f"m_c = {m_c}")
