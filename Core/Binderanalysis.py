@@ -23,8 +23,6 @@
 # directory
 ###############################################################################
 
-print("Hi I'm at the top of the file")
-
 # custom libraries for this project
 from parameters import *
 from MISC import *
@@ -85,7 +83,7 @@ class Critical_analysis():
         * h5store_results(self): Writes result to hdf5 file
     """
 
-    def __init__(self, N, g, L, direc='h5data/', Nboot=500, restrict=False):
+    def __init__(self, N, g, L, Nboot=500, restrict=False, new_boot='n'):
         """
             Here we allocate some basic variables and seed the RNG
         """
@@ -110,13 +108,16 @@ class Critical_analysis():
         self.Nboot = Nboot
         self.msq_final = 0.
         self.dmsq_final = 0.
-        self.datadir = direc
+        self.datadir = h5data_dir
         self.freeze_inner_boot = False
         self.MCMCdatafile = param_dict[N]["MCMC_data_file"]
         self.resultsfile = param_dict[N]["h5_data_file"]
         self.therm = param_dict[N]["therm"]  # Configurations to remove due to thermalization
         self.restrict = restrict
         self.min_traj = 0  # Minimum number of tradjectories to have in data
+        self.new_boot = True if new_boot is 'y' else False # Use bootstrap for reweighting
+
+        logging.info(f"Using bootstrap on reweighting inclusion: {self.new_boot}")
 
     def h5load_data(self):
         """
@@ -273,7 +274,7 @@ class Critical_analysis():
 
         return fig, ax
 
-    def compute_overlap(self, msq):
+    def compute_overlap(self, msq, L1bs):
         """
             This is relevant for reweighting:
             Determine overlap of phi^2-distributions of simulation points with
@@ -283,81 +284,17 @@ class Critical_analysis():
             ensemble enters the reweighting if its distribution of phi^2
             overlaps with the target-mass within self.frac_of_dist*sigma
         """
-        prefac = (self.L ** 3) * (self.N / self.g)
-
-        # compute mean value and standard deviation of phi^2
-        self.simulated = [np.mean(self.phi2[str(i)]) for i in
-                          range(self.actualNm0sq)]
-        self.dsimulated = [np.std(self.phi2[str(i)]) for i in
-                           range(self.actualNm0sq)]
-
-        # determine nearest simulation points
-        above = np.where(msq > -np.array(self.actualm0sqlist))[0]
-        below = np.where(msq <= -np.array(self.actualm0sqlist))[0]
-        indexists = np.where(-1. * msq == np.array(self.actualm0sqlist))[0]
-
-        # now interpolate/extrapolate central value of phi^2 in the bare in
-        # put mass
-        if len(indexists) > 0:
-            # if m agrees with simulated point then take just this and do
-            # nothing
-            res1 = np.array(flatten([self.simulated[i] for i in indexists]))
-
-        else:
-            # otherwise interpolate/extrapolate <phi2> to simulation point
-            if len(above) > 0 and len(below) > 0:  # interpolate
-                alpha = (self.simulated[above[0]] - self.simulated[below[-1]])\
-                    / (self.actualm0sqlist[below[-1]] -
-                       self.actualm0sqlist[above[0]])
-
-                res1 = self.simulated[below[-1]] + \
-                    alpha * (self.actualm0sqlist[below[-1]] + msq)
-
-            elif len(below) == 0 and len(above) > 0:  # extapolate
-                alpha = (self.simulated[above[1]] - self.simulated[above[0]])\
-                    / (self.actualm0sqlist[above[0]] -
-                       self.actualm0sqlist[above[1]])
-
-                res1 = self.simulated[above[0]] + \
-                    alpha * (self.actualm0sqlist[above[0]] + msq)
-
-            elif len(below) > 0 and len(above) == 0:  # extrapolate
-                alpha = (self.simulated[below[-1]] -
-                         self.simulated[below[-2]]) \
-                    / (self.actualm0sqlist[below[-2]] -
-                       self.actualm0sqlist[below[-1]])
-
-                res1 = self.simulated[below[-1]] +\
-                    alpha * (self.actualm0sqlist[below[-1]] + msq)
-
-        # now determine which phi^2 distributions of simulated bare masses
-        # overlap with the one we just inter/extrapolated to within fraction
-        # self.frac_of_dist of the standard deviation
-        x = np.array(self.simulated)
-        dx = np.array(self.dsimulated)
-        ind = np.where((res1 < x + self.frac_of_dist * dx) &
-                       (res1 > x - self.frac_of_dist * dx))[0]
-
-        return ind
-
-    def compute_overlap_new(self, msq, L1bs):
-        """
-            This is relevant for reweighting:
-            Determine overlap of phi^2-distributions of simulation points with
-            various m^2 in order to assess whether reweighting appropriate. It
-            computes list with indices in m0sqlist which lie within acceptable
-            radius which can be set by class variable self.frac_of_dist. An
-            ensemble enters the reweighting if its distribution of phi^2
-            overlaps with the target-mass within self.frac_of_dist*sigma
-        """
-        prefac = (self.L ** 3) * (self.N / self.g)
-
         simulated = []
         dsimulated = []
 
         for i in range(self.actualNm0sq):
-            phi2_boot = self.RWbinit_N_no_mean(self.phi2[str(i)], self.Nbin_tauint[i])
-            phi2 = phi2_boot[L1bs[i]]
+            if self.new_boot:
+                phi2_boot = self.RWbinit_N_no_mean(self.phi2[str(i)], self.Nbin_tauint[i])
+                phi2 = phi2_boot[L1bs[i]]
+
+            else:
+                phi2 = self.phi2[str(i)]
+
             simulated.append(np.mean(phi2))
             dsimulated.append(np.std(phi2))
 
@@ -366,8 +303,9 @@ class Critical_analysis():
         below = np.where(msq <= -np.array(self.actualm0sqlist))[0]
         indexists = np.where(-1. * msq == np.array(self.actualm0sqlist))[0]
 
-        # now interpolate/extrapolate central value of phi^2 in the bare in put mass
+        # now interpolate/extrapolate central value of phi^2 in the bare input mass
         if len(indexists) > 0:
+
             # if m agrees with simulated point then take just this and do nothing
             res1 = np.array(flatten([simulated[i] for i in indexists]))
 
@@ -375,32 +313,24 @@ class Critical_analysis():
             # otherwise interpolate/extrapolate <phi2> to simulation point
             if len(above) > 0 and len(below) > 0:  # interpolate
                 alpha = (simulated[above[0]] - simulated[below[-1]])\
-                    / (self.actualm0sqlist[below[-1]] -
-                       self.actualm0sqlist[above[0]])
+                    / (self.actualm0sqlist[below[-1]] - self.actualm0sqlist[above[0]])
 
-                res1 = simulated[below[-1]] + \
-                    alpha * (self.actualm0sqlist[below[-1]] + msq)
+                res1 = simulated[below[-1]] + alpha * (self.actualm0sqlist[below[-1]] + msq)
 
             elif len(below) == 0 and len(above) > 0:  # extapolate
                 alpha = (simulated[above[1]] - simulated[above[0]])\
-                    / (self.actualm0sqlist[above[0]] -
-                       self.actualm0sqlist[above[1]])
+                    / (self.actualm0sqlist[above[0]] - self.actualm0sqlist[above[1]])
 
-                res1 = simulated[above[0]] + \
-                    alpha * (self.actualm0sqlist[above[0]] + msq)
+                res1 = simulated[above[0]] + alpha * (self.actualm0sqlist[above[0]] + msq)
 
             elif len(below) > 0 and len(above) == 0:  # extrapolate
-                alpha = (simulated[below[-1]] -
-                         simulated[below[-2]]) \
-                    / (self.actualm0sqlist[below[-2]] -
-                       self.actualm0sqlist[below[-1]])
+                alpha = (simulated[below[-1]] - simulated[below[-2]]) \
+                    / (self.actualm0sqlist[below[-2]] - self.actualm0sqlist[below[-1]])
 
-                res1 = simulated[below[-1]] +\
-                    alpha * (self.actualm0sqlist[below[-1]] + msq)
+                res1 = simulated[below[-1]] + alpha * (self.actualm0sqlist[below[-1]] + msq)
 
-        # now determine which phi^2 distributions of simulated bare masses
-        # overlap with the one we just inter/extrapolated to within fraction
-        # self.frac_of_dist of the standard deviation
+        # now determine which phi^2 distributions of simulated bare masses overlap with the one we
+        # just inter/extrapolated to within fraction self.frac_of_dist of the standard deviation
         x = np.array(simulated)
         dx = np.array(dsimulated)
         ind = np.where((res1 < x + self.frac_of_dist * dx) &
@@ -521,27 +451,25 @@ class Critical_analysis():
             except Exception:
                 return np.nan
 
-    def reweight_Binder_new(self, msq, L1bs, L0bs, len_res=False):
+    def reweight_Binder(self, msq, L1bs, L0bs):
         """
             This function computes the reweighted Binder cumulant
             - msq is target bare mass squared for for reweighting
             - L1bs/L0bs are L1/L0 bootstrap indices
         """
-        logging.debug(f'Trying m2 = {msq}')
-
         # compute reweighting factor for each ensemble, then reweight, then bin
         # Use the same bootstrap indices for this
-        iinclude = self.compute_overlap_new(msq, L1bs)
+        iinclude = self.compute_overlap(msq, L1bs)
 
         res = []
         dres = []
+
         # loop over masses to be included in current reweighting
         for i in iinclude:
             # In the following:
-            # the reweighting factor can get huge and require arithmetics
-            # beyond double precision fpa in this case an exception is raised
-            # and np.nan returned to be dealt with later. The nan values are
-            # filtered out later and excluded from the analysis
+            # the reweighting factor can get huge and require arithmetics beyond double precision
+            # fpa in this case an exception is raised and np.nan returned to be dealt with later.
+            # The nan values are filtered out later and excluded from the analysis
 
             # compute the unbinned reweighting factor
             try:
@@ -551,8 +479,8 @@ class Critical_analysis():
             except Exception:
                 RWfac = np.nan * np.array(self.phi2[str(i)])
 
-            # Flag contributions where the exponent is so negative the exponent
-            # goes to 0, or so large it goes to infinity.
+            # Flag contributions where the exponent is so negative the exponent goes to 0, or so
+            # large it goes to infinity.
             if min(RWfac == 0) or max(RWfac == np.inf):
                 RWfac = np.nan * np.array(self.phi2[str(i)])
 
@@ -596,7 +524,6 @@ class Critical_analysis():
 
         ## Always filter out Nan!
         dres0 = [dx for x, dx in zip(res, dres) if ((not np.isnan(x)) and (dx != 0.))]
-
         res0 = [x for x, dx in zip(res, dres) if ((not np.isnan(x)) and (dx != 0.))]
 
         logging.debug(res0)
@@ -612,112 +539,6 @@ class Critical_analysis():
 
         else:
             B = np.nan
-
-        if len_res:
-            return B - self.Bbar, len(res0)
-
-        return B - self.Bbar
-
-    def reweight_Binder(self, msq, L1bs, L0bs, sigma=False, len_res=False):
-        """
-            This function computes the reweighted Binder cumulant
-            - msq is target bare mass squared for for reweighting
-            - L1bs/L0bs are L1/L0 bootstrap indices
-        """
-        # compute reweighting factor for each ensemble, then reweight, then bin
-        # Use the same bootstrap indices for this
-        iinclude = self.compute_overlap_new(msq, L1bs)
-
-        res = []
-        dres = []
-        # loop over masses to be included in current reweighting
-        for i in iinclude:
-            # In the following:
-            # the reweighting factor can get huge and require arithmetics
-            # beyond double precision fpa in this case an exception is raised
-            # and np.nan returned to be dealt with later. The nan values are
-            # filtered out later and excluded from the analysis
-
-            # compute the unbinned reweighting factor
-            try:
-                RWfac = np.exp(-(msq + self.actualm0sqlist[i]) * (self.L**3) *
-                                (self.N / self.g) * np.array(self.phi2[str(i)]))
-
-            except Exception:
-                RWfac = np.nan * np.array(self.phi2[str(i)])
-
-            # Flag contributions where the exponent is so negative the exponent
-            # goes to 0, or so large it goes to infinity.
-            if min(RWfac == 0) or max(RWfac == np.inf):
-                RWfac = np.nan * np.array(self.phi2[str(i)])
-
-            # binning for reweighting factor, phi^2, M^2 and M^4
-            try:
-                RW_fac_bin = self.RWbinit_N(RWfac, self.Nbin_tauint[i])
-
-            except Exception:
-                RW_fac_bin = self.RWbinit_N(np.nan * RWfac, self.Nbin_tauint[i])
-            
-            try:
-                RW_2_bin = self.RWbinit_N(RWfac * np.array(self.M2[str(i)]), self.Nbin_tauint[i])
-
-            except Exception:
-                RW_2_bin = self.RWbinit_N(np.nan * np.array(self.M2[str(i)]), self.Nbin_tauint[i])
-
-            try:
-                RW_4_bin = self.RWbinit_N(RWfac * np.array(self.M4[str(i)]), self.Nbin_tauint[i])
-
-            except Exception:
-                RW_4_bin = self.RWbinit_N(np.nan * np.array(self.M4[str(i)]), self.Nbin_tauint[i])
-
-            # collate binned quantities into array
-            datl = np.array([])
-            datl = np.array([RW_fac_bin])              # reweighting factor
-            datl = np.r_[datl, np.array([RW_2_bin])]    # <M2>
-            datl = np.r_[datl, np.array([RW_4_bin])]    # <M4>
-
-            # pick data for current bootstrap (L1 bootstrap indices)
-            # can only be done after data combined with reweighting factor
-            datl = datl[:, L1bs[i]]
-
-            # run the bootstrap for the Binder comulant with L0 bootstrap indices
-            resl, dresl = self.bootit(self.B, datl.T, L0bs[i])
-
-            res.append(resl)
-            dres.append(dresl)
-
-        # filter out occurences of NaNs and produce weighted average over reweighted results for
-        # Binder cumulant
-
-        ## Always filter out Nan!
-        dres0 = [dx for x, dx in zip(res, dres) if ((not np.isnan(x)) and (dx != 0.))]
-
-        res0 = [x for x, dx in zip(res, dres) if ((not np.isnan(x)) and (dx != 0.))]
-
-        logging.debug(res0)
-        logging.debug(iinclude)
-
-        if len(res0) > 0 and len(dres0) > 0:
-            denom = np.sum(1. / np.array(dres0) ** 2)
-            numer = np.sum(np.array(res0) / np.array(dres0) ** 2)
-
-            B = 1 - self.N * 1. / 3 * numer / denom
-
-            logging.debug(B)
-
-            if sigma:
-                sigma = np.sqrt((1 / denom)) * self.N / 3
-
-        else:
-            B = np.nan
-            simga = np.nan
-
-        # The denominator gives the estimate of the bootstrap variance
-        if sigma:
-            return B - self.Bbar, sigma
-
-        if len_res:
-            return B - self.Bbar, len(res0)
 
         return B - self.Bbar
 
@@ -752,7 +573,7 @@ class Critical_analysis():
 
         # compute central value for crossing
         try:
-            mcsq, r = opt.brentq(self.reweight_Binder_new, mmin, mmax,
+            mcsq, r = opt.brentq(self.reweight_Binder, mmin, mmax,
                                  args=(L1bs, L0bs), full_output=True,
                                  xtol=1e-6)
 
@@ -765,7 +586,6 @@ class Critical_analysis():
         # compute crossing under Bootstrap
         logging.info(f"Now starting bootstrap with {self.Nboot} samples:")
         bres = []
-        bres_dict = {}
 
         for i in range(self.Nboot):  # start boostrap
             # assign the set of L0 bootstrap indices for the ith L1 boostrap sample
@@ -775,7 +595,7 @@ class Critical_analysis():
                 L0bs = self.refresh_L0_bsindices()
 
             try:
-                mcsq_i, r = opt.brentq(self.reweight_Binder_new, mmin, mmax, args=(L1bs, L0bs),
+                mcsq_i, r = opt.brentq(self.reweight_Binder, mmin, mmax, args=(L1bs, L0bs),
                                        full_output=True, xtol=1e-6)
 
             except ValueError:
@@ -785,13 +605,7 @@ class Critical_analysis():
             bres.append(mcsq_i)
 
             # Record the number of mass points that contributed
-            B, len_res = self.reweight_Binder_new(mcsq_i, L1bs, L0bs, len_res=True)
-
-            if len_res in bres_dict:
-                bres_dict[len_res].append(mcsq_i)
-
-            else:
-                bres_dict[len_res] = [mcsq_i]
+            B = self.reweight_Binder(mcsq_i, L1bs, L0bs)
 
             logging.info(f"bs sample {i}: mc^2={mcsq_i:e}")
 
@@ -879,8 +693,7 @@ def compute_Bindercrossing(N, g, Bbar, Lin, **kwargs):
     # ensemble and bin data correspondingly
     run1.compute_tauint_and_bootstrap_indices()
 
-    # start the actual determination of m^2 where the Binder cumulant assumes
-    # the value Bbar
+    # start the actual determination of m^2 where the Binder cumulant assumes the value Bbar
     run1.find_Binder_crossing(-xmin, -xmax)
 
     save_success = False
@@ -898,7 +711,6 @@ def compute_Bindercrossing(N, g, Bbar, Lin, **kwargs):
             sleep(1)
 
 if __name__ == "__main__":
-    print("Hi I'm starting main")
     # For passing in arguments from the command line
     parser = argparse.ArgumentParser()
 
@@ -907,10 +719,11 @@ if __name__ == "__main__":
     parser.add_argument('Bbar', metavar="Bbar", type=float)
     parser.add_argument('L', metavar="L / a", type=int)
 
-    parser.add_argument('-therm', metavar="No. therm steps", type=int, default=argparse.SUPPRESS)       # No. of thermalization steps
-    parser.add_argument('-Nboot', metavar="No. boot samples", type=int, default=argparse.SUPPRESS)      # No. of boot samples
-    parser.add_argument('-direc', metavar="Directory", type=str, default=argparse.SUPPRESS)             # Directory
-    parser.add_argument('-filename', metavar="Filename", type=str, default=argparse.SUPPRESS)               # Filename
+    # No. of boot samples
+    parser.add_argument('-Nboot', metavar="No. boot samples", type=int, default=argparse.SUPPRESS)
+
+    # Use bootstrap on reweighting cut-offs, either 'y' or 'n'
+    parser.add_argument('-new_boot', metavar="new_boot", type=str, default=argparse.SUPPRESS)
 
     args = parser.parse_args()
 
@@ -923,7 +736,7 @@ if __name__ == "__main__":
 
     # Initiate logger
     logging.basicConfig(filename=f'{logging_base_name}N{args.N}_g{args.g}_L{args.L}_Bbar{args.Bbar}.txt',
-                        level=logging.DEBUG, format='%(asctime)s :: %(levelname)s :: %(message)s')
+                        level=logging.INFO, format='%(asctime)s :: %(levelname)s :: %(message)s')
 
     ###########################################################################
     # call main routine
