@@ -23,7 +23,7 @@
 # The code has been used for the analysis presented in
 # "Nonperturbative infrared finiteness in super-renormalisable scalar quantum
 # field theory" https://arxiv.org/abs/2009.14768
-##################################tqdm#############################################
+###################################################################################
 
 import matplotlib.pyplot as plt
 import pdb
@@ -365,7 +365,7 @@ def get_systematic_errors(N, model_name="model_1", min_dof=15):
         alphas2 = alphas2[acceptable]
 
         # Calculate using alpha2
-        m_c2 = mPT_1loop(g, N) + g ** 2 *  (params[best_Bbar_index, best, 1] -
+        m_c2 = mPT_1loop(g, N) + g ** 2 * (params[best_Bbar_index, best, 1] -
                 params[best_Bbar_index, best, -2] * K1(g, N))
 
         print("Critical Mass using alpha2:")

@@ -115,7 +115,7 @@ class Critical_analysis():
         self.therm = param_dict[N]["therm"]  # Configurations to remove due to thermalization
         self.restrict = restrict
         self.min_traj = 0  # Minimum number of tradjectories to have in data
-        self.new_boot = True if new_boot is 'y' else False # Use bootstrap for reweighting
+        self.new_boot = True if new_boot == 'y' else False  # Use bootstrap for reweighting
 
         logging.info(f"Using bootstrap on reweighting inclusion: {self.new_boot}")
 
@@ -143,6 +143,7 @@ class Critical_analysis():
         # Only extract data points in the range we're interested in
         sn = 'su%d_%g' % (self.N, self.g)
         iLin = np.where(np.array(Ls) == int(self.L))[0][0]
+
         if sn in mlims:
             if mlims[sn][iLin]:
                 xmin = -mlims[sn][iLin][1]
@@ -201,8 +202,10 @@ class Critical_analysis():
         logging.info("Computing max. tauint of M^2, M^4, phi^4: ")
 
         i = 0
+
         while i < len(self.actualm0sqlist):
             failed = False
+
             try:
                 # compute tau_int for M^2
                 uwfn = UWerr(np.array(self.M2[str(i)]).T, 1.5, '')
@@ -232,7 +235,7 @@ class Critical_analysis():
 
             self.Nbin_tauint.append(tau_intl)
 
-            logging.info(f"msq={self.actualm0sqlist[i]:.7f} (tau_int)_max={self.tauint[-1]:.0f}" + 
+            logging.info(f"msq={self.actualm0sqlist[i]:.7f} (tau_int)_max={self.tauint[-1]:.0f}" +
                          f"using bin-size {tau_intl}")
 
             if failed:
@@ -277,11 +280,10 @@ class Critical_analysis():
     def compute_overlap(self, msq, L1bs):
         """
             This is relevant for reweighting:
-            Determine overlap of phi^2-distributions of simulation points with
-            various m^2 in order to assess whether reweighting appropriate. It
-            computes list with indices in m0sqlist which lie within acceptable
-            radius which can be set by class variable self.frac_of_dist. An
-            ensemble enters the reweighting if its distribution of phi^2
+            Determine overlap of phi^2-distributions of simulation points with various m^2 in order
+            to assess whether reweighting appropriate. It computes list with indices in m0sqlist
+            which lie within acceptable radius which can be set by class variable
+            self.frac_of_dist. An ensemble enters the reweighting if its distribution of phi^2
             overlaps with the target-mass within self.frac_of_dist*sigma
         """
         simulated = []
@@ -490,7 +492,7 @@ class Critical_analysis():
 
             except Exception:
                 RW_fac_bin = self.RWbinit_N(np.nan * RWfac, self.Nbin_tauint[i])
-            
+
             try:
                 RW_2_bin = self.RWbinit_N(RWfac * np.array(self.M2[str(i)]), self.Nbin_tauint[i])
 
@@ -569,6 +571,7 @@ class Critical_analysis():
         for j in range(len(self.actualm0sqlist)):
             N = self.phi2[str(j)].shape[0]
             L1bs.append(np.arange(int(np.floor(N / self.Nbin_tauint[j]))))
+
         L0bs = self.refresh_L0_bsindices()
 
         # compute central value for crossing
@@ -586,6 +589,7 @@ class Critical_analysis():
         # compute crossing under Bootstrap
         logging.info(f"Now starting bootstrap with {self.Nboot} samples:")
         bres = []
+        bres_dict = {}
 
         for i in range(self.Nboot):  # start boostrap
             # assign the set of L0 bootstrap indices for the ith L1 boostrap sample
@@ -604,6 +608,17 @@ class Critical_analysis():
 
             bres.append(mcsq_i)
 
+            # Find the mass points that led to this crossing point determination
+            iinclude = tuple(self.compute_overlap(mcsq_i, L1bs))
+
+            if iinclude not in bres_dict:
+                bres_dict[iinclude] = [mcsq_i]
+
+            else:
+                bres_dict[iinclude].append(mcsq_i)
+
+            print(bres_dict)
+
             # Record the number of mass points that contributed
             B = self.reweight_Binder(mcsq_i, L1bs, L0bs)
 
@@ -618,6 +633,7 @@ class Critical_analysis():
         self.msq_final = mcsq
         self.dmsq_final = dmcsq
         self.msq_bins_final = bres
+        self.msq_bins_dict = bres_dict
 
     def h5store_results(self):
         """
@@ -625,16 +641,19 @@ class Critical_analysis():
             file
         """
         f = h5py.File(self.datadir + self.resultsfile, 'a')
-        key = 'N=%d/g=%.2f/L=%d/Bbar=%.3f' % (self.N, self.g, self.L,
-                                              self.Bbar)
+        key = 'N=%d/g=%.2f/L=%d/Bbar=%.3f' % (self.N, self.g, self.L, self.Bbar)
 
-        if key in f:  # remove data under key if exists
+        if key in f:
             del f[key]
 
         g = f.create_group(key)
         g.create_dataset('central', data=self.msq_final)
         g.create_dataset('std', data=self.dmsq_final)
         g.create_dataset('bs_bins', data=self.msq_bins_final)
+
+        for iinclude in self.msq_bins_dict:
+            g.create_dataset(f'bs_bins_{iinclude}', data=self.msq_bins_dict[iinclude])
+
         g.attrs['masses'] = self.actualm0sqlist
         g.attrs['Ntraj'] = self.Ntraj
         g.attrs['tauint'] = self.tauint
@@ -674,23 +693,21 @@ def compute_Bindercrossing(N, g, Bbar, Lin, **kwargs):
     # load simulation data for current value of N, g
     run1.h5load_data()
 
-    # Determine interval over which solver runs. Choose range between
-    # smallest/largest simulated m^2 or, if defined in parameters.py,
-    # custom choice
+    # Determine interval over which solver runs. Choose range between smallest/largest simulated
+    # m^2 or, if defined in parameters.py, custom choice
     xmin = min(run1.actualm0sqlist)
     xmax = max(run1.actualm0sqlist)
 
     sn = 'su%d_%g' % (N, g)
 
-    # tailored min and max to extrapolate beyond simulatedpoints by means of
-    # reweighting
+    # tailored min and max to extrapolate beyond simulatedpoints by means of reweighting
     if sn in mlims:
         if mlims[sn][iLin]:
             xmin = -mlims[sn][iLin][1]
             xmax = -mlims[sn][iLin][0]
 
-    # compute integrated autocorrelation time for basic quantities for each
-    # ensemble and bin data correspondingly
+    # compute integrated autocorrelation time for basic quantities for each ensemble and bin data
+    # correspondingly
     run1.compute_tauint_and_bootstrap_indices()
 
     # start the actual determination of m^2 where the Binder cumulant assumes the value Bbar
@@ -704,11 +721,12 @@ def compute_Bindercrossing(N, g, Bbar, Lin, **kwargs):
 
             # Only reach this line if above runs successfully
             save_success = True
-        
+
         except Exception:
             # File probably in use wait
             print("Waiting for file")
             sleep(1)
+
 
 if __name__ == "__main__":
     # For passing in arguments from the command line
@@ -734,7 +752,7 @@ if __name__ == "__main__":
     del kwargs['Bbar']
     del kwargs['L']
 
-    # Initiate logger
+    # # Initiate logger
     logging.basicConfig(filename=f'{logging_base_name}N{args.N}_g{args.g}_L{args.L}_Bbar{args.Bbar}.txt',
                         level=logging.INFO, format='%(asctime)s :: %(levelname)s :: %(message)s')
 
