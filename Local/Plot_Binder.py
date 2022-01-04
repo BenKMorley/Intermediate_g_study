@@ -7,6 +7,8 @@ from scipy.optimize.nonlin import NoConvergence
 from tqdm import tqdm
 import sys
 import os
+from multiprocessing import Pool
+
 
 
 # Import from the Core directory
@@ -45,9 +47,9 @@ def fig3_color(gL, min_gL=0.79, max_gL=76.81, func=numpy.log):
 
 
 def plot_Binder(N, g_s, L_s, data_file=None, data_dir=None, minus_sign_override=False,
-                legend=True, ax=None, min_gL=3.1, max_gL=76.81, reweight=True, params=None, GL_lim=12.7,
-                mlims=None, min_traj=100001, therm=10000, scale_with_fit=False, no_reweight_samples=100,
-                crossings_file=None, plot_crossings=False):
+                legend=True, ax=None, min_gL=3.1, max_gL=76.81, reweight=True, params=None,
+                GL_lim=12.7, mlims=None, min_traj=100001, scale_with_fit=False,
+                no_reweight_samples=100, crossings_file=None, plot_crossings=False):
 
     if data_file is None:
         data_file = param_dict[N]["MCMC_data_file"]
@@ -83,145 +85,155 @@ def plot_Binder(N, g_s, L_s, data_file=None, data_dir=None, minus_sign_override=
             m_crit = mPT_1loop(g, N) + g ** 2 * (alpha - beta * K1(g, N))
 
         for L in L_s:
-            if (g * L) > GL_lim:
-                data = f[f'N={N}'][f'g={g:.2f}'][f'L={L}']
+            if (g * L) <= GL_lim:
+                continue
 
-                masses = []
-                Binders = []
-                Binder_sigmas = []
+            data = f[f'N={N}'][f'g={g:.2f}'][f'L={L}']
 
-                System = Critical_analysis(N, g, L)
-                System.MCMCdatafile = data_file
-                System.datadir = data_dir
-                System.min_traj = min_traj
+            masses = []
+            Binders = []
+            Binder_sigmas = []
 
-                System.h5load_data()
+            System = Critical_analysis(N, g, L)
+            System.MCMCdatafile = data_file
+            System.datadir = data_dir
+            System.min_traj = min_traj
 
-                System.compute_tauint_and_bootstrap_indices()
+            System.h5load_data()
 
-                for i, m in enumerate(System.actualm0sqlist):
-                    bin_size = max(4 * System.Nbin_tauint[i], 50)
-                    mass_data = data[f'msq={m:.8f}']
+            System.compute_tauint_and_bootstrap_indices()
 
-                    if minus_sign_override:
-                        masses.append(-m)
+            for i, m in enumerate(System.actualm0sqlist):
+                bin_size = max(4 * System.Nbin_tauint[i], 50)
+                mass_data = data[f'msq={m:.8f}']
 
-                    M2 = mass_data[0]
-                    M4 = mass_data[1]
+                if minus_sign_override:
+                    masses.append(-m)
 
-                    Binder = 1 - (N / 3) * numpy.mean(M4) / (numpy.mean(M2) ** 2)
+                M2 = mass_data[0]
+                M4 = mass_data[1]
 
-                    # Sort the data into bins
-                    if len(M4) % bin_size != 0:
-                        M4_binned = M4[:-(len(M4) % bin_size)]
-                        M2_binned = M2[:-(len(M2) % bin_size)]
+                Binder = 1 - (N / 3) * numpy.mean(M4) / (numpy.mean(M2) ** 2)
 
-                    else:
-                        M4_binned = M4
-                        M2_binned = M2
-
-                    no_bins = len(M4_binned) // bin_size
-
-                    M4_binned = M4_binned.reshape((no_bins, bin_size))
-                    M2_binned = M2_binned.reshape((no_bins, bin_size))
-
-                    # Do a bootstrapping procedure
-                    no_samples = 500
-                    boot_indices = numpy.random.randint(no_bins, size=(no_samples, no_bins))
-                    Binder_boot = numpy.zeros(no_samples)
-
-                    for i in range(no_samples):
-                        M4_sample = M4_binned[boot_indices[i]]
-                        M2_sample = M2_binned[boot_indices[i]]
-
-                        Binder_boot[i] = 1 - (N / 3) * numpy.mean(M4_sample) / (numpy.mean(M2_sample) ** 2)
-
-                    Binders.append(Binder)
-                    Binder_sigmas.append(numpy.std(Binder_boot))
-
-                masses = numpy.array(masses)
-
-
-                if scale_with_fit:
-                    ax.errorbar(((masses - m_crit) / g ** 2) * (g * L) ** (1 / nu), Binders, Binder_sigmas, marker=markers[L], label=f'g={g}, L={L}', color=fig3_color(g * L, min_gL=min_gL, max_gL=max_gL), ls='', fillstyle='none')
+                # Sort the data into bins
+                if len(M4) % bin_size != 0:
+                    M4_binned = M4[:-(len(M4) % bin_size)]
+                    M2_binned = M2[:-(len(M2) % bin_size)]
 
                 else:
-                    ax.errorbar(masses, Binders, Binder_sigmas, marker=markers[L], label=f'g={g}, L={L}', color=fig3_color(g * L, min_gL=min_gL, max_gL=max_gL), ls='', fillstyle='none')
+                    M4_binned = M4
+                    M2_binned = M2
 
-                if reweight:
-                    # Find the largest deviation between masses and assume half
-                    # of this is the reweighting length
-                    masses = numpy.array(masses)
-                    max_gap = numpy.maximum(numpy.abs(masses[1:] - masses[:-1]))
+                no_bins = len(M4_binned) // bin_size
 
-                    # Use Andreas's Critical Analysis Class to do the reweighting
-                    if mlims is None:
-                        min_m, max_m = min(masses) - max_gap / 2, max(masses) + max_gap / 2
-                    else:
-                        min_m, max_m = mlims
+                M4_binned = M4_binned.reshape((no_bins, bin_size))
+                M2_binned = M2_binned.reshape((no_bins, bin_size))
 
-                    System.Bbar = 0.5
-                    L0bs = System.refresh_L0_bsindices()
-                    L1bs = []
-                    trphi2 = []
-                    print("mass     lower sigma     upper sigma")
+                # Do a bootstrapping procedure
+                no_samples = 500
+                boot_indices = numpy.random.randint(no_bins, size=(no_samples, no_bins))
+                Binder_boot = numpy.zeros(no_samples)
 
-                    for j in range(len(System.actualm0sqlist)):
-                        trphi2.append(System.phi2[str(j)])
-                        lower_extreme_sigma = (numpy.mean(trphi2[j]) - min(trphi2[j])) / numpy.std(trphi2[j])
-                        upper_extreme_sigma = (max(trphi2[j]) - numpy.mean(trphi2[j])) / numpy.std(trphi2[j])
-                        print(f"{System.actualm0sqlist[j]:.3f}        ", end="")
-                        print(f"{lower_extreme_sigma:.2f}       ", end="")
-                        print(f"{upper_extreme_sigma:.2f}")
+                for i in range(no_samples):
+                    M4_sample = M4_binned[boot_indices[i]]
+                    M2_sample = M2_binned[boot_indices[i]]
 
-                        N_ = trphi2[j].shape[0]
-                        L1bs.append(numpy.arange(int(numpy.floor(N_ / System.Nbin_tauint[j]))))
+                    Binder_boot[i] = 1 - (N / 3) * numpy.mean(M4_sample) / (numpy.mean(M2_sample) ** 2)
 
-                    mass_range = numpy.linspace(min_m, max_m, no_reweight_samples)
-                    results = numpy.zeros(no_reweight_samples)
-                    sigmas = numpy.zeros(no_reweight_samples)
+                Binders.append(Binder)
+                Binder_sigmas.append(numpy.std(Binder_boot))
 
-                    # System.plot_tr_phi2_distributions()
-                    # plt.show()
+            masses = numpy.array(masses)
 
-                    for i, m in tqdm(enumerate(mass_range)):
-                        Binder_bit, sigma = System.reweight_Binder(m, L1bs, L0bs, sigma=True)
+            if scale_with_fit:
+                ax.errorbar(((masses - m_crit) / g ** 2) * (g * L) ** (1 / nu), Binders,
+                            Binder_sigmas, marker=markers[L], label=f'g={g}, L={L}',
+                            color=fig3_color(g * L, min_gL=min_gL, max_gL=max_gL), ls='',
+                            fillstyle='none')
 
-                        print(Binder_bit, sigma)
+            else:
+                ax.errorbar(masses, Binders, Binder_sigmas, marker=markers[L],
+                            label=f'g={g}, L={L}',
+                            color=fig3_color(g * L, min_gL=min_gL, max_gL=max_gL), ls='',
+                            fillstyle='none')
 
-                        results[i] = Binder_bit
-                        sigmas[i] = sigma
+            if reweight:
+                # Find the largest deviation between masses and assume half
+                # of this is the reweighting length
+                masses = numpy.array(masses)
+                max_gap = numpy.max(numpy.abs(masses[1:] - masses[:-1]))
+
+                # Use Andreas's Critical Analysis Class to do the reweighting
+                if mlims is None:
+                    min_m, max_m = min(masses) - max_gap, max(masses) + max_gap
+                else:
+                    min_m, max_m = mlims
+
+                System.Bbar = 0.5
+                L0bs = System.refresh_L0_bsindices()
+                L1bs = []
+                trphi2 = []
+                print("mass     lower sigma     upper sigma")
+
+                for j in range(len(System.actualm0sqlist)):
+                    trphi2.append(System.phi2[str(j)])
+                    lower_extreme_sigma = (numpy.mean(trphi2[j]) - min(trphi2[j])) / numpy.std(trphi2[j])
+                    upper_extreme_sigma = (max(trphi2[j]) - numpy.mean(trphi2[j])) / numpy.std(trphi2[j])
+                    print(f"{System.actualm0sqlist[j]:.3f}        ", end="")
+                    print(f"{lower_extreme_sigma:.2f}       ", end="")
+                    print(f"{upper_extreme_sigma:.2f}")
+
+                    N_ = trphi2[j].shape[0]
+                    L1bs.append(numpy.arange(int(numpy.floor(N_ / System.Nbin_tauint[j]))))
+
+                mass_range = numpy.linspace(min_m, max_m, no_reweight_samples)
+                results = numpy.zeros(no_reweight_samples)
+                sigmas = numpy.zeros(no_reweight_samples)
+
+                # System.plot_tr_phi2_distributions()
+                # plt.show()
+
+                for i, m in tqdm(enumerate(mass_range)):
+                    Binder_bit, sigma = System.reweight_Binder(m, L1bs, L0bs, sigma=True)
+
+                    print(Binder_bit, sigma)
+
+                    results[i] = Binder_bit
+                    sigmas[i] = sigma
+
+                if scale_with_fit:
+                    ax.fill_between(((mass_range - m_crit) / g ** 2) * (g * L) ** (1 / nu),
+                                    results + System.Bbar - sigmas, results + System.Bbar + sigmas)
+
+                else:
+                    ax.fill_between(mass_range, results + System.Bbar - sigmas,
+                                    results + System.Bbar + sigmas)
+
+                # Now plot the Binderanalysis fits if possible
+                if plot_crossings:
+                    cross_file = h5py.File(f'{data_dir}{crossings_file}', 'r')
+                    cross_data = cross_file[f'N={N}'][f'g={g:.2f}'][f'L={L}']
+
+                    Bbar_s = []
+                    means = []
+                    stds = []
+
+                    for key in cross_data.keys():
+                        Bbar = float(re.findall(r'Bbar=\d+.\d+', key)[0][5:])
+                        mean = cross_data[key]['central'][()]
+                        std = cross_data[key]['std'][()]
+
+                        Bbar_s.append(Bbar)
+                        means.append(mean)
+                        stds.append(std)
 
                     if scale_with_fit:
-                        ax.fill_between(((mass_range - m_crit) / g ** 2) * (g * L) ** (1 / nu), results + System.Bbar - sigmas, results + System.Bbar + sigmas)
+                        ax.errorbar(((means - m_crit) / g ** 2) * (g * L) ** (1 / nu), Bbar_s,
+                                    xerr=(stds / g ** 2) * (g * L) ** (1 / nu), ls='', color='k')
 
                     else:
-                        ax.fill_between(mass_range, results + System.Bbar - sigmas, results + System.Bbar + sigmas)
+                        ax.errorbar(means, Bbar_s, xerr=stds, ls='', color='k')
 
-                    # Now plot the Binderanalysis fits if possible
-                    if plot_crossings:
-                        cross_file = h5py.File(crossings_file, 'r')
-                        cross_data = cross_file[f'N={N}'][f'g={g:.2f}'][f'L={L}']
-
-                        Bbar_s = []
-                        means = []
-                        stds = []
-                        for key in cross_data.keys():
-                            Bbar = float(re.findall(r'Bbar=\d+.\d+', key)[0][5:])
-                            mean = cross_data[key]['central'][()]
-                            std = cross_data[key]['std'][()]
-
-                            Bbar_s.append(Bbar)
-                            means.append(mean)
-                            stds.append(std)
-
-                        if scale_with_fit:
-                            ax.errorbar(((means - m_crit) / g ** 2) * (g * L) ** (1 / nu), Bbar_s, xerr=(stds / g ** 2) * (g * L) ** (1 / nu))
-
-                        else:
-                            ax.errorbar(means, Bbar_s, xerr=stds, ls='', color='k')
-
-                        cross_file.close()
 
     f.close()
 
