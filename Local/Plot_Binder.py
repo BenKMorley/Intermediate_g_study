@@ -7,8 +7,8 @@ from scipy.optimize.nonlin import NoConvergence
 from tqdm import tqdm
 import sys
 import os
+from scipy.stats import shapiro
 from multiprocessing import Pool
-
 
 
 # Import from the Core directory
@@ -49,7 +49,8 @@ def fig3_color(gL, min_gL=0.79, max_gL=76.81, func=numpy.log):
 def plot_Binder(N, g_s, L_s, data_file=None, data_dir=None, minus_sign_override=False,
                 legend=True, ax=None, min_gL=3.1, max_gL=76.81, reweight=True, params=None,
                 GL_lim=12.7, mlims=None, min_traj=100001, scale_with_fit=False,
-                no_reweight_samples=100, crossings_file=None, plot_crossings=False):
+                no_reweight_samples=100, crossings_file=None, plot_crossings=False,
+                plot_histograms=False):
 
     if data_file is None:
         data_file = param_dict[N]["MCMC_data_file"]
@@ -234,6 +235,67 @@ def plot_Binder(N, g_s, L_s, data_file=None, data_dir=None, minus_sign_override=
                     else:
                         ax.errorbar(means, Bbar_s, xerr=stds, ls='', color='k')
 
+                if plot_histograms:
+                    color_cycle = plt.rcParams['axes.prop_cycle'].by_key()['color']
+                    current_color_index = 0
+
+                    color_dict = {}
+
+                    cross_file = h5py.File(f'{data_dir}{crossings_file}', 'r')
+                    cross_data = cross_file[f'N={N}'][f'g={g:.2f}'][f'L={L}']
+
+                    Bbar_s = []
+                    means = []
+                    stds = []
+
+                    for key in cross_data.keys():
+                        Bbar = float(re.findall(r'Bbar=\d+.\d+', key)[0][5:])
+                        data = cross_data[key]['bs_bins'][()]
+                        print(f"Found {len(data)} data samples")
+
+                        mean = cross_data[key]['central'][()]
+
+                        # Global histogram to fix the bins
+                        num_bins = 20
+                        heights, bins = numpy.histogram(data, num_bins)
+
+                        # Extract the seperate contributions to this histogram
+                        m = numpy.array([i for i in cross_data[key]])
+                        m = m[m != 'central']
+                        m = m[m != 'bs_bins']
+                        m = m[m != 'std']
+
+                        # Data that doesn't have contribution splitting
+                        if len(m) == 0:
+                            ax.bar(bins[:-1], heights / 10000, bottom=Bbar,
+                                    width=numpy.diff(bins), alpha=0.3, color='k')
+
+                        else:
+                            for sub_key in m:
+                                sub_data = cross_data[key][sub_key]
+                                heights, sub_bins = numpy.histogram(sub_data, bins=bins)
+
+                                if sub_key not in color_dict:
+                                    color_dict[sub_key] = color_cycle[current_color_index]
+                                    current_color_index += 1
+
+                                    # Add combination of reweighting contributions to the legend
+                                    ax.bar(sub_bins[:-1], heights / 10000, bottom=Bbar,
+                                        width=numpy.diff(bins), alpha=0.3,
+                                        color=color_dict[sub_key], label=sub_key)
+
+                                else:
+                                    ax.bar(sub_bins[:-1], heights / 10000, bottom=Bbar,
+                                        width=numpy.diff(bins), alpha=0.3,
+                                        color=color_dict[sub_key])
+
+                        # Do the shapiro test on the data
+                        try:
+                            W, p = shapiro(data)
+                            ax.text(mean, Bbar - 0.002, f'p = {p:.4f}', color='k', alpha=0.5)
+                        
+                        except Exception:
+                            print("Could not perform the Shapiro test")
 
     f.close()
 
