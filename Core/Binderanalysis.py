@@ -453,7 +453,7 @@ class Critical_analysis():
             except Exception:
                 return np.nan
 
-    def reweight_Binder(self, msq, L1bs, L0bs):
+    def reweight_Binder(self, msq, L1bs, L0bs, sigma=False):
         """
             This function computes the reweighted Binder cumulant
             - msq is target bare mass squared for for reweighting
@@ -539,8 +539,15 @@ class Critical_analysis():
 
             logging.debug(B)
 
+            if sigma:
+                sigma_value = np.sqrt((1 / denom)) * self.N / 3
+
         else:
             B = np.nan
+            sigma_value = np.nan
+
+        if sigma:
+            return B - self.Bbar, sigma_value
 
         return B - self.Bbar
 
