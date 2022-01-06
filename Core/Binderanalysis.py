@@ -83,7 +83,7 @@ class Critical_analysis():
         * h5store_results(self): Writes result to hdf5 file
     """
 
-    def __init__(self, N, g, L, Nboot=500, restrict=False, new_boot='n', width=0):
+    def __init__(self, N, g, L, Nboot=500, restrict=False, new_boot='n', width=0, filename=None):
         """
             Here we allocate some basic variables and seed the RNG
         """
@@ -112,7 +112,12 @@ class Critical_analysis():
         self.datadir = h5data_dir
         self.freeze_inner_boot = False
         self.MCMCdatafile = param_dict[N]["MCMC_data_file"]
-        self.resultsfile = param_dict[N]["h5_data_file"]
+
+        if filename is None:
+            self.resultsfile = param_dict[N]["h5_data_file"]
+        else:
+            self.resultsfile = filename
+
         self.therm = param_dict[N]["therm"]  # Configurations to remove due to thermalization
         self.restrict = restrict
         self.min_traj = 0  # Minimum number of tradjectories to have in data
@@ -849,7 +854,7 @@ if __name__ == "__main__":
         del kwargs['logging']
 
     else:
-        logging.basicConfig(filename=f'{logging_base_name}N{args.N}_g{args.g}_L{args.L}_' + \
+        logging.basicConfig(filename=f'{logging_base_name}N{args.N}_g{args.g}_L{args.L}_' +
             f'Bbar{args.Bbar}.txt', level=logging.INFO,
             format='%(asctime)s :: %(levelname)s :: %(message)s')
 
