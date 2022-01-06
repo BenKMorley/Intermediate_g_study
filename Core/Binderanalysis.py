@@ -83,7 +83,7 @@ class Critical_analysis():
         * h5store_results(self): Writes result to hdf5 file
     """
 
-    def __init__(self, N, g, L, Nboot=500, restrict=False, new_boot='n'):
+    def __init__(self, N, g, L, Nboot=500, restrict=False, new_boot='n', width=0):
         """
             Here we allocate some basic variables and seed the RNG
         """
@@ -101,6 +101,7 @@ class Critical_analysis():
 
         # time std of phi^2 distribution to include in reweighting
         self.frac_of_dist = 1
+        self.transition_w = float(width)  # The width of the reweigting inclusion function
         self.Nbin_tauint = []
         self.tauint = []
         self.Nbin_min = 50
@@ -271,7 +272,8 @@ class Critical_analysis():
         fig, ax = plt.subplots()
 
         for i in range(self.actualNm0sq):
-            ax.hist(self.phi2[str(i)], bins=20, label=rf"m^2 = m{self.actualm0sqlist[i]}", alpha=0.4)
+            ax.hist(self.phi2[str(i)], bins=20,
+                    label=rf"m^2 = m{self.actualm0sqlist[i]}", alpha=0.4)
 
         plt.legend()
 
@@ -340,6 +342,76 @@ class Critical_analysis():
 
         return ind
 
+    def compute_overlap_weighted(self, msq, L1bs):
+        """
+            This is relevant for reweighting:
+            Determine overlap of phi^2-distributions of simulation points with various m^2 in order
+            to assess whether reweighting appropriate. It computes list with indices in m0sqlist
+            which lie within acceptable radius which can be set by class variable
+            self.frac_of_dist. An ensemble enters the reweighting if its distribution of phi^2
+            overlaps with the target-mass within self.frac_of_dist*sigma
+
+            Given that a given ensemble should be included in the reweighting assign it a weight
+        """
+        simulated = []
+        dsimulated = []
+
+        for i in range(self.actualNm0sq):
+            if self.new_boot:
+                phi2_boot = self.RWbinit_N_no_mean(self.phi2[str(i)], self.Nbin_tauint[i])
+                phi2 = phi2_boot[L1bs[i]]
+
+            else:
+                phi2 = self.phi2[str(i)]
+
+            simulated.append(np.mean(phi2))
+            dsimulated.append(np.std(phi2))
+
+        # determine nearest simulation points
+        above = np.where(msq > -np.array(self.actualm0sqlist))[0]
+        below = np.where(msq <= -np.array(self.actualm0sqlist))[0]
+        indexists = np.where(-1. * msq == np.array(self.actualm0sqlist))[0]
+
+        # now interpolate/extrapolate central value of phi^2 in the bare input mass
+        if len(indexists) > 0:
+
+            # if m agrees with simulated point then take just this and do nothing
+            res1 = np.array(flatten([simulated[i] for i in indexists]))
+
+        else:
+            # otherwise interpolate/extrapolate <phi2> to simulation point
+            if len(above) > 0 and len(below) > 0:  # interpolate
+                alpha = (simulated[above[0]] - simulated[below[-1]])\
+                    / (self.actualm0sqlist[below[-1]] - self.actualm0sqlist[above[0]])
+
+                res1 = simulated[below[-1]] + alpha * (self.actualm0sqlist[below[-1]] + msq)
+
+            elif len(below) == 0 and len(above) > 0:  # extapolate
+                alpha = (simulated[above[1]] - simulated[above[0]])\
+                    / (self.actualm0sqlist[above[0]] - self.actualm0sqlist[above[1]])
+
+                res1 = simulated[above[0]] + alpha * (self.actualm0sqlist[above[0]] + msq)
+
+            elif len(below) > 0 and len(above) == 0:  # extrapolate
+                alpha = (simulated[below[-1]] - simulated[below[-2]]) \
+                    / (self.actualm0sqlist[below[-2]] - self.actualm0sqlist[below[-1]])
+
+                res1 = simulated[below[-1]] + alpha * (self.actualm0sqlist[below[-1]] + msq)
+
+        # now determine which phi^2 distributions of simulated bare masses overlap with the one we
+        # just inter/extrapolated to within fraction self.frac_of_dist of the standard deviation
+        x = np.array(simulated)
+        dx = np.array(dsimulated)
+        ind = np.where((res1 < x + self.frac_of_dist * dx) &
+                       (res1 > x - self.frac_of_dist * dx))[0]
+
+        # For each index that is included we determine a weight
+        z = np.abs((res1 - x) / dx)[ind]
+
+        weights = np.array([weight(z_i, self.frac_of_dist, self.transition_w) for z_i in z])
+
+        return ind, weights
+
     def RWbinit_N(self, dat, Nbinl):
         """
             bin data after reweighting explicit binning as arg ##3
@@ -356,8 +428,7 @@ class Critical_analysis():
 
         else:
             for n in range(int(Nbins)):
-                newdat = np.r_[newdat, np.array([np.mean(dat[n * Nbinl:(n + 1)
-                                                               * Nbinl], 0)])]
+                newdat = np.r_[newdat, np.array([np.mean(dat[n * Nbinl:(n + 1) * Nbinl], 0)])]
 
         return newdat
 
@@ -391,8 +462,7 @@ class Critical_analysis():
             N = self.phi2[str(j)].shape[0]  # number of trajectories
             Nbins = int(np.floor(N / self.Nbin_tauint[j]))  # number of bins
 
-            rn.append(self.rng_nest.randint(0, Nbins,
-                                            size=(Nbins, self.Nboot)))
+            rn.append(self.rng_nest.randint(0, Nbins, size=(Nbins, self.Nboot)))
 
         return rn
 
@@ -431,9 +501,8 @@ class Critical_analysis():
                 2nd column <M2> reweighted
                 3rd column <M4> reweighted
         """
-        # the reweighting factor can get huge and require arithmetics beyond
-        # double precision fpa in this case an exception is raised adn np.nan
-        # returned to be dealt with later
+        # the reweighting factor can get huge and require arithmetics beyond double precision fpa
+        # in this case an exception is raised adn np.nan returned to be dealt with later
         if return_extra:
             try:
                 av = np.mean(x, 0)
@@ -461,7 +530,7 @@ class Critical_analysis():
         """
         # compute reweighting factor for each ensemble, then reweight, then bin
         # Use the same bootstrap indices for this
-        iinclude = self.compute_overlap(msq, L1bs)
+        iinclude, weights = self.compute_overlap_weighted(msq, L1bs)
 
         res = []
         dres = []
@@ -523,24 +592,28 @@ class Critical_analysis():
 
         # filter out occurences of NaNs and produce weighted average over reweighted results for
         # Binder cumulant
-
-        ## Always filter out Nan!
         dres0 = [dx for x, dx in zip(res, dres) if ((not np.isnan(x)) and (dx != 0.))]
         res0 = [x for x, dx in zip(res, dres) if ((not np.isnan(x)) and (dx != 0.))]
+        weights = [w for w, x, dx in zip(weights, res, dres) if ((not np.isnan(x)) and (dx != 0.))]
 
         logging.debug(res0)
         logging.debug(iinclude)
 
         if len(res0) > 0 and len(dres0) > 0:
-            denom = np.sum(1. / np.array(dres0) ** 2)
-            numer = np.sum(np.array(res0) / np.array(dres0) ** 2)
+            # Also multiply the weights by the inverse variance
+            full_weights = weights / np.array(dres0) ** 2
 
-            B = 1 - self.N * 1. / 3 * numer / denom
+            # Normalize the weights
+            full_weights = full_weights / np.sum(full_weights)
+
+            mean = np.average(res0, weights=full_weights)
+
+            B = 1 - self.N * 1. / 3 * mean
 
             logging.debug(B)
 
             if sigma:
-                sigma_value = np.sqrt((1 / denom)) * self.N / 3
+                sigma_value = np.sqrt(np.sum(full_weights ** 2 * np.array(dres0) ** 2)) * self.N / 3
 
         else:
             B = np.nan
@@ -583,9 +656,8 @@ class Critical_analysis():
 
         # compute central value for crossing
         try:
-            mcsq, r = opt.brentq(self.reweight_Binder, mmin, mmax,
-                                 args=(L1bs, L0bs), full_output=True,
-                                 xtol=1e-6)
+            mcsq, r = opt.brentq(self.reweight_Binder, mmin, mmax, args=(L1bs, L0bs),
+                                 full_output=True, xtol=1e-6)
 
         except ValueError:
             logging.error("No crossing point found -- aborting")
@@ -607,7 +679,7 @@ class Critical_analysis():
 
             try:
                 mcsq_i, r = opt.brentq(self.reweight_Binder, mmin, mmax, args=(L1bs, L0bs),
-                                       full_output=True, xtol=1e-6)
+                                        full_output=True, xtol=1e-6)
 
             except ValueError:
                 logging.error("No crossing point found -- aborting")
@@ -616,7 +688,8 @@ class Critical_analysis():
             bres.append(mcsq_i)
 
             # Find the mass points that led to this crossing point determination
-            iinclude = tuple(self.compute_overlap(mcsq_i, L1bs))
+            iinclude, weights = self.compute_overlap_weighted(mcsq_i, L1bs)
+            iinclude = tuple(iinclude)
 
             if iinclude not in bres_dict:
                 bres_dict[iinclude] = [mcsq_i]
@@ -624,7 +697,7 @@ class Critical_analysis():
             else:
                 bres_dict[iinclude].append(mcsq_i)
 
-            print(bres_dict)
+            logging.debug(bres_dict)
 
             # Record the number of mass points that contributed
             B = self.reweight_Binder(mcsq_i, L1bs, L0bs)
@@ -731,7 +804,7 @@ def compute_Bindercrossing(N, g, Bbar, Lin, **kwargs):
 
         except Exception:
             # File probably in use wait
-            print("Waiting for file")
+            logging.info("Waiting for file")
             sleep(1)
 
 
@@ -750,6 +823,15 @@ if __name__ == "__main__":
     # Use bootstrap on reweighting cut-offs, either 'y' or 'n'
     parser.add_argument('-new_boot', metavar="new_boot", type=str, default=argparse.SUPPRESS)
 
+    # Make the width of the reweighting weight curve as an input
+    parser.add_argument('-width', metavar="width", type=str, default=argparse.SUPPRESS)
+
+    # Output file
+    parser.add_argument('-filename', metavar="filename", type=str, default=argparse.SUPPRESS)
+
+    # Logging file
+    parser.add_argument('-logging', metavar="logging", type=str, default=argparse.SUPPRESS)
+
     args = parser.parse_args()
 
     # Extract any optional arguments
@@ -760,8 +842,16 @@ if __name__ == "__main__":
     del kwargs['L']
 
     # # Initiate logger
-    logging.basicConfig(filename=f'{logging_base_name}N{args.N}_g{args.g}_L{args.L}_Bbar{args.Bbar}.txt',
-                        level=logging.INFO, format='%(asctime)s :: %(levelname)s :: %(message)s')
+    if 'logging' in kwargs:
+        logging.basicConfig(filename=kwargs['logging'],
+                    level=logging.INFO, format='%(asctime)s :: %(levelname)s :: %(message)s')
+
+        del kwargs['logging']
+
+    else:
+        logging.basicConfig(filename=f'{logging_base_name}N{args.N}_g{args.g}_L{args.L}_' + \
+            f'Bbar{args.Bbar}.txt', level=logging.INFO,
+            format='%(asctime)s :: %(levelname)s :: %(message)s')
 
     ###########################################################################
     # call main routine

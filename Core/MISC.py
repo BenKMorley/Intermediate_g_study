@@ -333,3 +333,45 @@ def disperr3(val, dval):
             res[i] = str(value) + "(" + str(error) + ")"
 
     return res
+
+
+def weight(z, f, v):
+    """
+        Calculate the weight used for reweighting to a given mass given the mean of the
+        distribution we're reweighting to is z sigma away from the mean we're reweighting from
+        where sigma is the standard deviation of the distribution we are reweighting from.
+
+        INPUTS:
+        -------
+        z:  float
+        f:  float, this is the upper bound on deviation between the means of the extrapolated
+            tr(phi^2) distribution and the tr(phi^2) mean of the mass point we are reweighting
+            from, for this mass to be used in a reweighting. This variable is called
+            self.frac_of_dist.
+        v:  float, the width of the transition from full inclusion (weight = 0) to no inclusion
+            (weight = 1)
+    """
+    assert v >= 0, "we need a finite width to the distribution"
+    assert v <= f, "The transition needs to fit in the interval [0, f]"
+
+    if v == 0:
+        if z <= f:
+            return 1
+
+        else:
+            return 0
+
+    else:
+        a = 2 / v ** 2
+
+        if z < f - v:
+            return 1
+
+        elif z <= f - v / 2:
+            return 1 - a * (z - (f - v)) ** 2
+
+        elif z <= f:
+            return a * (f - z) ** 2
+
+        else:
+            return 0
