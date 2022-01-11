@@ -100,7 +100,7 @@ class Critical_analysis():
         self.Ntraj = []
 
         # time std of phi^2 distribution to include in reweighting
-        self.frac_of_dist = 1
+        self.transition_centre = 1
         self.transition_w = float(width)  # The width of the reweigting inclusion function
         self.Nbin_tauint = []
         self.tauint = []
@@ -290,8 +290,8 @@ class Critical_analysis():
             Determine overlap of phi^2-distributions of simulation points with various m^2 in order
             to assess whether reweighting appropriate. It computes list with indices in m0sqlist
             which lie within acceptable radius which can be set by class variable
-            self.frac_of_dist. An ensemble enters the reweighting if its distribution of phi^2
-            overlaps with the target-mass within self.frac_of_dist*sigma
+            self.transition_centre. An ensemble enters the reweighting if its distribution of phi^2
+            overlaps with the target-mass within self.transition_centre*sigma
         """
         simulated = []
         dsimulated = []
@@ -339,11 +339,11 @@ class Critical_analysis():
                 res1 = simulated[below[-1]] + alpha * (self.actualm0sqlist[below[-1]] + msq)
 
         # now determine which phi^2 distributions of simulated bare masses overlap with the one we
-        # just inter/extrapolated to within fraction self.frac_of_dist of the standard deviation
+        # just inter/extrapolated to within fraction self.transition_centre of the standard deviation
         x = np.array(simulated)
         dx = np.array(dsimulated)
-        ind = np.where((res1 < x + self.frac_of_dist * dx) &
-                       (res1 > x - self.frac_of_dist * dx))[0]
+        ind = np.where((res1 < x + self.transition_centre * dx) &
+                       (res1 > x - self.transition_centre * dx))[0]
 
         return ind
 
@@ -353,8 +353,8 @@ class Critical_analysis():
             Determine overlap of phi^2-distributions of simulation points with various m^2 in order
             to assess whether reweighting appropriate. It computes list with indices in m0sqlist
             which lie within acceptable radius which can be set by class variable
-            self.frac_of_dist. An ensemble enters the reweighting if its distribution of phi^2
-            overlaps with the target-mass within self.frac_of_dist*sigma
+            self.transition_centre. An ensemble enters the reweighting if its distribution of phi^2
+            overlaps with the target-mass within self.transition_centre*sigma
 
             Given that a given ensemble should be included in the reweighting assign it a weight
         """
@@ -404,16 +404,18 @@ class Critical_analysis():
                 res1 = simulated[below[-1]] + alpha * (self.actualm0sqlist[below[-1]] + msq)
 
         # now determine which phi^2 distributions of simulated bare masses overlap with the one we
-        # just inter/extrapolated to within fraction self.frac_of_dist of the standard deviation
+        # just inter/extrapolated to within fraction self.transition_centre of the standard deviation
+        limit = self.transition_centre + self.transition_w / 2
         x = np.array(simulated)
         dx = np.array(dsimulated)
-        ind = np.where((res1 < x + self.frac_of_dist * dx) &
-                       (res1 > x - self.frac_of_dist * dx))[0]
+        ind = np.where((res1 < x + limit * dx) &
+                       (res1 > x - limit * dx))[0]
 
         # For each index that is included we determine a weight
         z = np.abs((res1 - x) / dx)[ind]
 
-        weights = np.array([weight(z_i, self.frac_of_dist, self.transition_w) for z_i in z])
+        weights = np.array([weight_centered(z_i, self.transition_centre, self.transition_w) for
+                            z_i in z])
 
         return ind, weights
 
