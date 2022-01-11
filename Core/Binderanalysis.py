@@ -848,9 +848,11 @@ if __name__ == "__main__":
     del kwargs['Bbar']
     del kwargs['L']
 
+    width = kwargs['width']
+
     # # Initiate logger
     logging.basicConfig(filename=f'{logging_base_name}N{args.N}_g{args.g}_L{args.L}_' +
-        f'Bbar{args.Bbar}_w{kwargs['width']}.txt', level=logging.INFO,
+        f'Bbar{args.Bbar}_w{width}.txt', level=logging.INFO,
         format='%(asctime)s :: %(levelname)s :: %(message)s')
 
     ###########################################################################
