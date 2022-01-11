@@ -849,16 +849,9 @@ if __name__ == "__main__":
     del kwargs['L']
 
     # # Initiate logger
-    if 'logging' in kwargs:
-        logging.basicConfig(filename=kwargs['logging'],
-                    level=logging.INFO, format='%(asctime)s :: %(levelname)s :: %(message)s')
-
-        del kwargs['logging']
-
-    else:
-        logging.basicConfig(filename=f'{logging_base_name}N{args.N}_g{args.g}_L{args.L}_' +
-            f'Bbar{args.Bbar}.txt', level=logging.INFO,
-            format='%(asctime)s :: %(levelname)s :: %(message)s')
+    logging.basicConfig(filename=f'{logging_base_name}N{args.N}_g{args.g}_L{args.L}_' +
+        f'Bbar{args.Bbar}_w{kwargs['width']}.txt', level=logging.INFO,
+        format='%(asctime)s :: %(levelname)s :: %(message)s')
 
     ###########################################################################
     # call main routine
