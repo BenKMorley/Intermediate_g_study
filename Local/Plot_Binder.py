@@ -12,7 +12,6 @@ from multiprocessing import Pool
 
 
 # Import from the Core directory
-sys.path.append(os.getcwd() + '/..')
 sys.path.append(os.getcwd() + '/../Core')
 sys.path.append(os.getcwd())
 sys.path.append(os.getcwd() + '/Core')
@@ -20,10 +19,9 @@ sys.path.append(os.getcwd() + '/Core')
 
 from Core.model_definitions import mPT_1loop, K1
 from publication_results import get_statistical_errors_central_fit
+from Core.MISC import weight
 from Core.Binderanalysis import Critical_analysis
 from Core.parameters import *
-
-# matplotlib.use('Qt5Agg')
 
 
 def fig3_color(gL, min_gL=0.79, max_gL=76.81, func=numpy.log):
@@ -46,11 +44,13 @@ def fig3_color(gL, min_gL=0.79, max_gL=76.81, func=numpy.log):
     return color_value
 
 
-def plot_Binder(N, g_s, L_s, data_file=None, data_dir=None, minus_sign_override=False,
+def plot_Binder(N, g_s, L_s, data_file=None, data_dir=None, minus_sign_override=True,
                 legend=True, ax=None, min_gL=3.1, max_gL=76.81, reweight=True, params=None,
-                GL_lim=12.7, mlims=None, min_traj=100001, scale_with_fit=False,
+                GL_lim=0, mlims=None, min_traj=0, scale_with_fit=False,
                 no_reweight_samples=100, crossings_file=None, plot_crossings=False,
-                plot_histograms=False):
+                plot_histograms=False, width=0):
+
+    text_height = 0.003
 
     if data_file is None:
         data_file = param_dict[N]["MCMC_data_file"]
@@ -95,7 +95,7 @@ def plot_Binder(N, g_s, L_s, data_file=None, data_dir=None, minus_sign_override=
             Binders = []
             Binder_sigmas = []
 
-            System = Critical_analysis(N, g, L)
+            System = Critical_analysis(N, g, L, width=width)
             System.MCMCdatafile = data_file
             System.datadir = data_dir
             System.min_traj = min_traj
@@ -110,6 +110,9 @@ def plot_Binder(N, g_s, L_s, data_file=None, data_dir=None, minus_sign_override=
 
                 if minus_sign_override:
                     masses.append(-m)
+
+                else:
+                    masses.append(m)
 
                 M2 = mass_data[0]
                 M4 = mass_data[1]
@@ -158,18 +161,18 @@ def plot_Binder(N, g_s, L_s, data_file=None, data_dir=None, minus_sign_override=
                             color=fig3_color(g * L, min_gL=min_gL, max_gL=max_gL), ls='',
                             fillstyle='none')
 
+            # Find the largest deviation between masses and assume half
+            # of this is the reweighting length
+            masses = numpy.array(masses)
+            max_gap = numpy.max(numpy.abs(masses[1:] - masses[:-1]))
+
+            if mlims is None:
+                min_m, max_m = min(masses) - max_gap, max(masses) + max_gap
+            else:
+                min_m, max_m = mlims
+
             if reweight:
-                # Find the largest deviation between masses and assume half
-                # of this is the reweighting length
-                masses = numpy.array(masses)
-                max_gap = numpy.max(numpy.abs(masses[1:] - masses[:-1]))
-
                 # Use Andreas's Critical Analysis Class to do the reweighting
-                if mlims is None:
-                    min_m, max_m = min(masses) - max_gap, max(masses) + max_gap
-                else:
-                    min_m, max_m = mlims
-
                 System.Bbar = 0.5
                 L0bs = System.refresh_L0_bsindices()
                 L1bs = []
@@ -224,9 +227,15 @@ def plot_Binder(N, g_s, L_s, data_file=None, data_dir=None, minus_sign_override=
                         mean = cross_data[key]['central'][()]
                         std = cross_data[key]['std'][()]
 
-                        Bbar_s.append(Bbar)
-                        means.append(mean)
-                        stds.append(std)
+                        if mean > mlims[0] and mean < mlims[1]:
+                            Bbar_s.append(Bbar)
+                            means.append(mean)
+                            stds.append(std)
+
+                            ax.text(mean - 2 * std, Bbar - text_height * 2, f'sigma={std:.2e}', color='r',
+                                    alpha=0.5)
+                            ax.text(mean - 2 * std, Bbar - text_height * 3, f'mu={mean:.5e}', color='g',
+                                    alpha=0.5)
 
                     if scale_with_fit:
                         ax.errorbar(((means - m_crit) / g ** 2) * (g * L) ** (1 / nu), Bbar_s,
@@ -254,6 +263,11 @@ def plot_Binder(N, g_s, L_s, data_file=None, data_dir=None, minus_sign_override=
                         print(f"Found {len(data)} data samples")
 
                         mean = cross_data[key]['central'][()]
+                        std = cross_data[key]['std'][()]
+
+                        if mean < mlims[0] or mean > mlims[1]:
+                            print(f'Skipping histogram at {mean}')
+                            continue
 
                         # Global histogram to fix the bins
                         num_bins = 20
@@ -292,8 +306,8 @@ def plot_Binder(N, g_s, L_s, data_file=None, data_dir=None, minus_sign_override=
                         # Do the shapiro test on the data
                         try:
                             W, p = shapiro(data)
-                            ax.text(mean, Bbar - 0.002, f'p = {p:.4f}', color='k', alpha=0.5)
-                        
+                            ax.text(mean - 2 * std, Bbar - text_height, f'p = {p:.4f}', color='k', alpha=0.5)
+
                         except Exception:
                             print("Could not perform the Shapiro test")
 
@@ -302,6 +316,6 @@ def plot_Binder(N, g_s, L_s, data_file=None, data_dir=None, minus_sign_override=
     if legend:
         plt.legend()
 
-    ax.set_xlim(min(mass_range), max(mass_range))
+    ax.set_xlim(min_m, max_m)
 
     return ax, scale_with_fit
