@@ -347,7 +347,7 @@ class Critical_analysis():
 
         return ind
 
-    def compute_overlap_weighted(self, msq, L1bs):
+    def compute_overlap_weighted(self, msq, L1bs=None):
         """
             This is relevant for reweighting:
             Determine overlap of phi^2-distributions of simulation points with various m^2 in order
@@ -473,7 +473,7 @@ class Critical_analysis():
 
         return rn
 
-    def bootit(self, f, dat, bsindices, *args, **kwargs):
+    def bootit(self, f, dat, bsindices):
         """
             A simple boostrap routine, takes function f and applies dat
             - f is function
@@ -487,7 +487,7 @@ class Critical_analysis():
         for i in range(self.Nboot):
             wol = bsindices[:, i]
 
-            resl = f(dat[wol, :], *args, **kwargs)
+            resl = f(dat[wol, :])
 
             res_bs = np.r_[res_bs, np.array([resl])]
 
@@ -499,7 +499,7 @@ class Critical_analysis():
 
             return res, dres
 
-    def B(self, x, return_extra=False):
+    def B(self, x):
         """
             Helper function: Compute the ratio in the Binder cumulant including
             reweighting
@@ -510,24 +510,14 @@ class Critical_analysis():
         """
         # the reweighting factor can get huge and require arithmetics beyond double precision fpa
         # in this case an exception is raised adn np.nan returned to be dealt with later
-        if return_extra:
-            try:
-                av = np.mean(x, 0)
+        try:
+            av = np.mean(x, 0)
+            result = av[0] * av[2] / av[1] ** 2
 
-                B = av[0] * av[2] / av[1] ** 2
+        except Exception:
+            result = np.nan
 
-                return B, av[0], av[1], av[2]
-
-            except Exception:
-                return np.nan
-
-        else:
-            try:
-                av = np.mean(x, 0)
-                return av[0] * av[2] / av[1] ** 2
-
-            except Exception:
-                return np.nan
+        return result
 
     def reweight_Binder(self, msq, L1bs, L0bs, sigma=False):
         """
