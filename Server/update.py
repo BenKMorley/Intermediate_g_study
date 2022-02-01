@@ -158,10 +158,10 @@ def update(filename, N_s=None, g_s=None, L_s=None, m_s=None, OR=10, base_dir=f"/
                             files = os.listdir(directory)
                             files = list(filter(lambda x: x.endswith('.dat') and f'{file_start}_phi2.' in x, files))
                         
-                        except:
+                        except Exception:
                             Files_not_found = True
 
-                        if len(files) == 0:
+                        if (not Files_not_found) and (len(files) == 0):
                             Files_not_found = True
 
                         if Files_not_found:
@@ -172,6 +172,7 @@ def update(filename, N_s=None, g_s=None, L_s=None, m_s=None, OR=10, base_dir=f"/
                                 start_configs.append(int(re.findall(r'\d+.dat', f)[0][:-4]))
 
                             prev_length = -1
+                            prev_start = -1
 
                             # Subtract 1 for each section due to overlapp,
                             # however for first contribution there is no
@@ -189,17 +190,26 @@ def update(filename, N_s=None, g_s=None, L_s=None, m_s=None, OR=10, base_dir=f"/
                                 lengths.append(current_length)
 
                                 if prev_length != -1:
-                                    if len(new_data_piece[:prev_length - start]) <= 0:
-                                        print(f"No overlapp between data sets")
-                                        inconsistant_data = True
+                                    delta_start = prev_start + prev_length - start
+                                    # if len(new_data_piece[:prev_length - start]) <= 0:
+                                    #     print(f"No overlapp between data sets")
+                                    #     inconsistant_data = True
 
-                                    diff = numpy.sum(numpy.abs(new_data_piece[:prev_length - start]
-                                                      - old_data_piece[start:]))
-                                    # Check that the boundaries match (boundaries can be > 1 config)
-                                    if diff != 0:
-                                        print(f"Data not consistant! (config {start})")
-                                        inconsistant_data = True
+                                    if delta_start > 0:
+                                        try:
+                                            diff = numpy.sum(numpy.abs(new_data_piece[:delta_start] - old_data_piece[-delta_start:]))
+                                        
+                                        except:
+                                            pdb.set_trace()
 
+                                        # Check that the boundaries match (boundaries can be > 1 config)
+                                        if diff != 0:
+                                            print(f"Data not consistant! (config {start})")
+                                            pdb.set_trace()
+                                            inconsistant_data = True
+
+
+                                prev_start = start                               
                                 prev_length = current_length
                                 old_data_piece = new_data_piece
                             
