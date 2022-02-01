@@ -25,6 +25,7 @@
 # field theory" https://arxiv.org/abs/2009.14768
 ###################################################################################
 
+import enum
 import matplotlib.pyplot as plt
 import pdb
 import sys
@@ -41,14 +42,29 @@ sys.path.append(os.getcwd() + '/../Core')
 sys.path.append(os.getcwd())
 sys.path.append(os.getcwd() + '/Core')
 
-from Core.frequentist_run import run_frequentist_analysis
 from Core.model_definitions import *
 # from Core.bayesian_functions import *
 from Core.parameters import param_dict, seperator, h5data_dir
-from Core.MISC import calc_gL_mins
 
 
 logging.basicConfig(filename='Local/py_log/scaling_analysis_log.txt', level="INFO")
+
+
+def run_minimizer(N, m_s, g_s, L_s, Bbar_s, cov_inv, x0, model, method, res_function):
+    if method == "least_squares":
+        res = least_squares(res_function, x0, args=(cov_inv, model))
+
+    if method == "lm":
+        res = least_squares(res_function, x0, args=(cov_inv, model), method=method)
+
+    # Using scipy.optimize.minimize
+    if method in ["dogbox", "Nelder-Mead", "Powell", "CG", "BFGS", "COBYLA"]:
+        def dummy_func(x, y, z):
+            return numpy.sum(res_function(x, y, z) ** 2)
+
+        res = minimize(dummy_func, x0, args=(cov_inv, model), method=method)
+
+    return res
 
 
 class scaling_analysis(object):
@@ -64,6 +80,8 @@ class scaling_analysis(object):
         self.n_params = len(self.param_names)
 
         self.load_data()
+
+        self.gL_mins = numpy.sort(list(set(self.g_s * self.L_s)))
 
     def load_data(self):
         self.g_s = []
@@ -112,11 +130,12 @@ class scaling_analysis(object):
                             logging.info(f"Samples full of zeros for g = {g}, L = {L}, Bbar = {B}")
                             continue
 
-                        self.g_s.append(g)
-                        self.L_s.append(L)
-                        self.B_s.append(B)
-                        self.m_s.append(B_data['central'][()])
-                        self.samples.append(B_data['bs_bins'][()])
+                        if B in param_dict[self.N]["Bbar_list"]:
+                            self.g_s.append(g)
+                            self.L_s.append(L)
+                            self.B_s.append(B)
+                            self.m_s.append(B_data['central'][()])
+                            self.samples.append(B_data['bs_bins'][()])
 
         self.g_s = numpy.array(self.g_s)
         self.L_s = numpy.array(self.L_s)
@@ -173,8 +192,6 @@ class scaling_analysis(object):
                     > "m_c_error": float, Overall systematic error when accounting
                         for both alpha values
         """
-        gL_mins = numpy.sort(list(set(self.g_s * self.L_s)))
-
         # Make a list of all Bbar pairs
         Bbar_list = []
         Bbar_s = list(set(self.B_s))
@@ -182,15 +199,15 @@ class scaling_analysis(object):
             for j in range(i + 1, len(Bbar_s)):
                 Bbar_list.append([Bbar_s[i], Bbar_s[j]])
 
-        pvalues = numpy.zeros((len(Bbar_list), len(gL_mins)))
-        params = numpy.zeros((len(Bbar_list), len(gL_mins), self.n_params))
-        dofs = numpy.zeros((len(Bbar_list), len(gL_mins)))
+        pvalues = numpy.zeros((len(Bbar_list), len(self.gL_mins)))
+        params = numpy.zeros((len(Bbar_list), len(self.gL_mins), self.n_params))
+        dofs = numpy.zeros((len(Bbar_list), len(self.gL_mins)))
 
         for i, Bbar_s in enumerate(Bbar_list):
             Bbar_1, Bbar_2 = Bbar_s
             logging.info(f"Running fits with Bbar_1 = {Bbar_1}, Bbar_2 = {Bbar_2}")
 
-            for j, gL_min in enumerate(gL_mins):
+            for j, gL_min in enumerate(self.gL_mins):
                 # Select the relevent subset of the data
                 keep = numpy.logical_or(self.B_s == Bbar_1, self.B_s == Bbar_2)
                 keep = numpy.logical_and(keep, self.g_s * self.L_s > gL_min - 10 ** -10)
@@ -211,18 +228,8 @@ class scaling_analysis(object):
 
                 res_function = make_res_function(self.N, m_s, g_s, L_s, Bbar_s)
 
-                # Using scipy.optimize.least_squares
-                if self.minimization_method == "least_squares":
-                    res = least_squares(res_function, self.x0, args=(cov_inv, self.model))
-
-                if self.minimization_method == "lm":
-                    res = least_squares(res_function, self.x0, args=(cov_inv, self.model), method="lm")
-
-                # Using scipy.optimize.minimize
-                if self.minimization_method in ["dogbox", "Nelder-Mead", "Powell", "CG", "BFGS",
-                                                "COBYLA"]:
-                    res = minimize(lambda x, y, z: numpy.sum(res_function(x, y, z) ** 2),
-                                self.x0, args=(cov_inv, self.model), method=self.minimization_method)
+                res = run_minimizer(self.N, m_s, g_s, L_s, Bbar_s, cov_inv, self.x0, self.model,
+                                    self.minimization_method, res_function)
 
                 chisq = chisq_calc(res.x, cov_inv, self.model, res_function)
                 n_params = len(res.x)
@@ -239,25 +246,26 @@ class scaling_analysis(object):
                 logging.info(f"chisq/dof = {chisq / dof}")
                 logging.info(f"pvalue = {p}")
                 logging.info(f"dof = {dof}")
+                logging.info(f"params = {res.x}")
 
         # Extract the index of the smallest gL_min fit that has an acceptable p-value
-        r = len(gL_mins)
+        r = len(self.gL_mins)
         best = r - 1
 
-        for i, gL_min in enumerate(gL_mins):
+        for i, gL_min in enumerate(self.gL_mins):
             if numpy.max(pvalues[:, r - 1 - i]) > 0.05:
                 best = r - 1 - i
 
         best_Bbar_index = numpy.argmax(pvalues[:, best])
         best_Bbar = Bbar_list[best_Bbar_index]
-        self.gL_min_central = gL_mins[best]
+        self.gL_min_central = self.gL_mins[best]
         self.Bbars_central = best_Bbar
         self.p = pvalues[best_Bbar_index, best]
 
         logging.info("##################################################################")
         logging.info("BEST RESULT")
         logging.info(f"Bbar_s = {best_Bbar}")
-        logging.info(f"gL_min = {gL_mins[best]:.2f}")
+        logging.info(f"gL_min = {self.gL_mins[best]:.2f}")
         logging.info(f"pvalue : {pvalues[best_Bbar_index, best]}")
         logging.info(f"dof : {dofs[best_Bbar_index, best]}")
         logging.info("##################################################################")
@@ -276,6 +284,8 @@ class scaling_analysis(object):
         # Find the most extreme values of the parameter estimates that are deemed acceptable
         sys_sigmas = numpy.zeros(n_params)
 
+        self.param_histogram = numpy.zeros((self.n_params, numpy.sum(acceptable)))
+
         for i, param in enumerate(self.param_names):
             if numpy.sum(acceptable) == 0:
                 sys_sigmas[i] = 0
@@ -284,6 +294,8 @@ class scaling_analysis(object):
             param_small = params[..., i]
             minimum = numpy.min(param_small[acceptable])
             maximum = numpy.max(param_small[acceptable])
+
+            self.param_histogram[i] = param_small[acceptable]
 
             # Define the systematic error bar by the largest deviation from the central fit by an
             # acceptable fit
@@ -382,20 +394,8 @@ class scaling_analysis(object):
 
             res_function = make_res_function(self.N, m_s, g_s, L_s, Bbar_s)
 
-            if self.minimization_method == "least_squares":
-                res = least_squares(res_function, self.x0, args=(cov_inv, self.model))
-
-            if self.minimization_method == "lm":
-                res = least_squares(res_function, self.x0, args=(cov_inv, self.model),
-                                    method=self.minimization_method)
-
-            # Using scipy.optimize.minimize
-            if self.minimization_method in ["dogbox", "Nelder-Mead", "Powell", "CG", "BFGS",
-                          "COBYLA"]:
-                def dummy_func(x, y, z):
-                    return numpy.sum(res_function(x, y, z) ** 2)
-                res = minimize(dummy_func, self.x0, args=(cov_inv, self.model),
-                               method=self.minimization_method)
+            res = run_minimizer(self.N, m_s, g_s, L_s, Bbar_s, cov_inv, self.x0, self.model,
+                                self.minimization_method, res_function)
 
             param_estimates[i] = numpy.array(res.x)
 
@@ -426,6 +426,90 @@ class scaling_analysis(object):
 
         logging.info(f"m_c_error = {m_c_error}")
         self.m_c_error_statistical = m_c_error
+
+    def get_pvalues(self):
+        Bbar_1, Bbar_2 = self.Bbars_central
+
+        self.pvalues = []
+
+        for i, gL_min in enumerate(self.gL_mins):
+            keep = numpy.logical_or(self.B_s == Bbar_1, self.B_s == Bbar_2)
+            keep = numpy.logical_and(keep, self.g_s * self.L_s > gL_min - 10 ** -10)
+
+            # Check if there are enough datapoints to do the fit
+            if sum(keep) - self.n_params < 2:
+                continue
+
+            samples = self.samples[keep]
+            g_s = self.g_s[keep]
+            L_s = self.L_s[keep]
+            Bbar_s = self.B_s[keep]
+            m_s = self.m_s[keep]
+
+            cov_matrix, different_ensemble = cov_matrix_calc(g_s, L_s, m_s, samples)
+            cov_1_2 = numpy.linalg.cholesky(cov_matrix)
+            cov_inv = numpy.linalg.inv(cov_1_2)
+
+            res_function = make_res_function(self.N, m_s, g_s, L_s, Bbar_s)
+
+            res = run_minimizer(self.N, m_s, g_s, L_s, Bbar_s, cov_inv, self.x0, self.model,
+                                self.minimization_method, res_function)
+
+            chisq = chisq_calc(res.x, cov_inv, self.model, res_function)
+            n_params = len(res.x)
+            dof = g_s.shape[0] - n_params
+            p = chisq_pvalue(dof, chisq)
+
+            self.pvalues.append(p)
+
+    def plot_fit(self):
+        colors = ['b', 'r', 'k', 'g', 'yellow', 'purple']
+        Bbar_1, Bbar_2 = self.Bbars_central
+
+        keep = numpy.logical_or(self.B_s == Bbar_1, self.B_s == Bbar_2)
+        keep = numpy.logical_and(keep, self.g_s * self.L_s > self.gL_min_central - 10 ** -10)
+
+        samples = self.samples[keep]
+        g_s = self.g_s[keep]
+        L_s = self.L_s[keep]
+        Bbar_s = self.B_s[keep]
+        m_s = self.m_s[keep]
+
+        gL_s = g_s * L_s
+        x_scale = gL_s ** (-1 / self.params_central[-1])
+
+        x_max = max(x_scale)
+        x_min = min(x_scale)
+        nu = self.params_central[-1]
+
+        for i, g in enumerate(list(set(g_s))):
+            plt.errorbar(x_scale[g_s == g], (m_s / g_s)[g_s == g],
+                numpy.std(samples[g_s == g], axis=1), ls='', color=colors[i], marker='o',
+                markerfacecolor='none')
+
+            m_c = mPT_1loop(g, self.N) + g ** 2 * (self.params_central[0] - self.params_central[-2]
+                                                * K1(g, self.N))
+
+            plt.plot([x_min, x_max], [m_c / g, ] * 2, color=colors[i], ls='--')
+
+            for j, Bbar in enumerate(self.Bbars_central):
+                L_min = x_max ** - nu / g
+                L_max = x_min ** - nu / g
+                L_s = numpy.linspace(L_min, L_max, 1000)
+                x_scale_ = (L_s * g) ** (-1 / self.params_central[-1])
+
+                m_cs = self.model(self.N, g, L_s, Bbar, *self.params_central)
+
+                if j == 0:
+                    plt.plot(x_scale_, m_cs / g, label=f'ag = {g}', color=colors[i])
+
+                else:
+                    plt.plot(x_scale_, m_cs / g, color=colors[i])
+
+        plt.xlabel(r'$1 / (gL)^{1/\nu}$')
+        plt.ylabel(r'$a\bar{m}^2(g, L) / g$')
+        plt.legend()
+        plt.show()
 
 
 def print_results(width, N, model):
@@ -464,10 +548,10 @@ def print_results(width, N, model):
     print(f'{a.gL_min_central}'.ljust(15))
 
 
-def run(model, N):
+def run(model, N, file=f"h5data/width/width_0.0.h5"):
     print(f'Running for model : {model.__name__}')
 
-    a = scaling_analysis(N, f"h5data/width/width_0.0.h5", model=model)
+    a = scaling_analysis(N, file, model=model)
     print('width'.ljust(15), end='')
 
     for param in a.param_names:
@@ -477,7 +561,70 @@ def run(model, N):
     print('Bbar_s'.ljust(15), end='')
     print('gL_min'.ljust(15))
 
-    for width in numpy.arange(10) / 10:
+    for width in numpy.arange(8, 10) / 10:
+        # try:
         print_results(width, N, model)
+        # except:
+        #     continue
 
     print()
+
+
+def param_histograms(model, N, file):
+    a = scaling_analysis(N, file, model=model)
+    a.get_systematic_errors()
+
+    for i, param in enumerate(a.param_names):
+        plt.hist(a.param_histogram[i])
+        plt.title(param)
+        plt.show()
+
+
+a = scaling_analysis(3, "h5data/width/width_0.4.h5", model1_1a)
+a.get_systematic_errors()
+a.plot_fit()
+
+
+param_histograms(model1_1a, 3, "h5data/width/width_0.4.h5")
+
+
+def pvalue_plot(N, model1, model2):
+    fig, ax = plt.subplots()
+    widths = numpy.arange(5) / 5
+
+    for width in widths:
+        print(f'Running for width: {width:.1f}')
+
+        a = scaling_analysis(N, f"h5data/width/width_{width:.1f}.h5", model=model1)
+
+        a.get_systematic_errors()
+        a.get_pvalues()
+
+        pvalues_1 = a.pvalues
+
+        ax.scatter(a.gL_mins[:len(pvalues_1)], pvalues_1, marker='o',
+                   color=((1 - width) / max(1 - widths), 0, width / max(widths)),
+                   label=f'log(g), w={width:.1f}', facecolors='none')
+
+    for width in widths:
+        print(f'Running for width: {width:.1f}')
+
+        a = scaling_analysis(N, f"h5data/width/width_{width:.1f}.h5", model=model2)
+
+        a.get_systematic_errors()
+        a.get_pvalues()
+
+        pvalues_2 = a.pvalues
+
+        ax.scatter(a.gL_mins[:len(pvalues_2)], pvalues_2, marker='^',
+                   color=((1 - width) / max(1 - widths), 0, width / max(widths)),
+                   label=f'log(L), w={width:.1f}', facecolors='none')
+
+    plt.legend()
+    fig.set_size_inches(18.5, 10.5)
+    plt.savefig(f'Local/graphs/pvalues_N{N}.pdf')
+
+
+run(model3, 3, "h5data/width/width_0.4.h5")
+# pvalue_plot(2, model1_1a, model2_1a)
+# pvalue_plot(4, model1_2a, model2_2a)
