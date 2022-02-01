@@ -1,3 +1,4 @@
+from tkinter.tix import Tree
 import h5py
 import re
 import pdb
@@ -48,8 +49,9 @@ def plot_Binder(N, g_s, L_s, data_file=None, data_dir=None, minus_sign_override=
                 legend=True, ax=None, min_gL=3.1, max_gL=76.81, reweight=True, params=None,
                 GL_lim=0, mlims=None, min_traj=0, scale_with_fit=False,
                 no_reweight_samples=100, crossings_file=None, plot_crossings=False,
-                plot_histograms=False, width=0):
+                plot_histograms=False, width=0, remove_outliers=False):
 
+    dont_plot_hist = False
     text_height = 0.003
 
     if data_file is None:
@@ -69,6 +71,7 @@ def plot_Binder(N, g_s, L_s, data_file=None, data_dir=None, minus_sign_override=
     markers = {8: 'd', 16: 'v', 32: '<', 48: '^', 64: 's', 96: 'o', 128: 'd'}
 
     f = h5py.File(f"{data_dir}{data_file}", "r")
+
     if scale_with_fit:
         if params is None:
             try:
@@ -227,24 +230,42 @@ def plot_Binder(N, g_s, L_s, data_file=None, data_dir=None, minus_sign_override=
                         mean = cross_data[key]['central'][()]
                         std = cross_data[key]['std'][()]
 
-                        if mean > mlims[0] and mean < mlims[1]:
+                        if mean > min_m and mean < max_m:
                             Bbar_s.append(Bbar)
+
+                            if remove_outliers:
+                                samples = cross_data[key]['bs_bins'][()]
+                                samples = samples[numpy.abs(samples - mean) < 5 * std]
+                                mean = numpy.mean(samples)
+                                std = numpy.std(samples)
+
                             means.append(mean)
                             stds.append(std)
 
-                            ax.text(mean - 2 * std, Bbar - text_height * 2, f'sigma={std:.2e}', color='r',
-                                    alpha=0.5)
-                            ax.text(mean - 2 * std, Bbar - text_height * 3, f'mu={mean:.5e}', color='g',
-                                    alpha=0.5)
+                            # ax.text(mean - 2 * std, Bbar - text_height * 2, f'sigma={std:.2e}', color='r',
+                            #         alpha=0.5)
+                            # ax.text(mean - 2 * std, Bbar - text_height * 3, f'mu={mean:.5e}', color='g',
+                            #         alpha=0.5)
 
-                    if scale_with_fit:
-                        ax.errorbar(((means - m_crit) / g ** 2) * (g * L) ** (1 / nu), Bbar_s,
-                                    xerr=(stds / g ** 2) * (g * L) ** (1 / nu), ls='', color='k')
+                    if Bbar_s != []:
+                        if scale_with_fit:
+                            ax.errorbar(((means - m_crit) / g ** 2) * (g * L) ** (1 / nu), Bbar_s,
+                                        xerr=(stds / g ** 2) * (g * L) ** (1 / nu), ls='', color='k')
+
+                        else:
+                            ax.errorbar(means, Bbar_s, xerr=stds, ls='', color='k')
+
+                        # Scale the plot appropriately
+                        ax.set_ylim(min(Bbar_s) - 0.01, max(Bbar_s) + 0.01)
+
+                        delta = max(means) - min(means)
+                        ax.set_xlim(min(means) - 0.1 * delta, max(means) + 0.1 * delta)
 
                     else:
-                        ax.errorbar(means, Bbar_s, xerr=stds, ls='', color='k')
+                        print('No crossing points found')
+                        dont_plot_hist = True
 
-                if plot_histograms:
+                if plot_histograms and not dont_plot_hist:
                     color_cycle = plt.rcParams['axes.prop_cycle'].by_key()['color']
                     current_color_index = 0
 
@@ -265,9 +286,16 @@ def plot_Binder(N, g_s, L_s, data_file=None, data_dir=None, minus_sign_override=
                         mean = cross_data[key]['central'][()]
                         std = cross_data[key]['std'][()]
 
-                        if mean < mlims[0] or mean > mlims[1]:
+                        if mean < min_m or mean > max_m:
                             print(f'Skipping histogram at {mean}')
                             continue
+
+                        if remove_outliers:
+                            data = cross_data[key]['bs_bins'][()]
+                            print(f'Max deviation = {numpy.max(numpy.abs(data - mean)) / std} sigma')
+                            data = data[numpy.abs(data - mean) < 5 * std]
+                            mean = numpy.mean(data)
+                            std = numpy.std(data)
 
                         # Global histogram to fix the bins
                         num_bins = 20
@@ -287,16 +315,21 @@ def plot_Binder(N, g_s, L_s, data_file=None, data_dir=None, minus_sign_override=
                         else:
                             for sub_key in m:
                                 sub_data = cross_data[key][sub_key]
+
+                                if remove_outliers:
+                                    print(f'Max deviation = {numpy.max(numpy.abs(sub_data - cross_data[key]["central"][()])) / cross_data[key]["std"][()]} sigma')
+                                    sub_data = sub_data[numpy.abs(sub_data - cross_data[key]['central'][()]) < 5 * cross_data[key]['std'][()]]
+
                                 heights, sub_bins = numpy.histogram(sub_data, bins=bins)
 
                                 if sub_key not in color_dict:
-                                    color_dict[sub_key] = color_cycle[current_color_index]
+                                    color_dict[sub_key] = color_cycle[current_color_index % len(color_cycle)]
                                     current_color_index += 1
 
                                     # Add combination of reweighting contributions to the legend
                                     ax.bar(sub_bins[:-1], heights / 10000, bottom=Bbar,
                                         width=numpy.diff(bins), alpha=0.3,
-                                        color=color_dict[sub_key], label=sub_key)
+                                        color=color_dict[sub_key])
 
                                 else:
                                     ax.bar(sub_bins[:-1], heights / 10000, bottom=Bbar,
