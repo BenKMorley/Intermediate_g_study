@@ -293,6 +293,14 @@ def model2_2a(N, g, L, Bbar, alpha1, alpha2, f0, f1, lambduh, nu):
                         - lambduh * K2(L, N))
 
 
+def model27(N, g, L, Bbar, alpha, c, f0, f1, lambduh, nu, omega):
+  return mPT_1loop(g, N) + g ** 2 * (alpha + (g * L) ** (-1 / nu) * (((Bbar / (1 + c * (g * L) ** -omega)) - f0) / f1) - lambduh * K1(g, N))
+
+
+def model3(N, g, L, Bbar, alpha, c, f0, f1, lambduh, nu, omega):
+  return mPT_1loop(g, N) + g ** 2 * (alpha + ((g * L) ** (-1 / nu) / (1 + c * (g * L) ** omega)) * ((Bbar - f0) / f1) - lambduh * K1(g, N))
+
+
 def cov_matrix_calc(g_s, L_s, m_s, samples):
     """
         This function calculates the covariance matrix of the Binder crossing
