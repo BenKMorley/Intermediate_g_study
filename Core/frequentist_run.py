@@ -32,9 +32,9 @@ from model_definitions import *
 from parameters import seperator
 
 
-def run_frequentist_analysis(input_h5_file, model, N_s, g_s, L_s, Bbar_s_in,
+def run_frequentist_analysis(input_h5_file, model, N_s_in, g_s_in, L_s_in, Bbar_s_in,
                              gL_min, x0, method="lm", no_samples=500, run_bootstrap=True,
-                             print_info=True, GL_max=numpy.inf):
+                             print_info=True, gL_max=numpy.inf):
     """
         Central function to run the frequentist analysis. This function is
         used repeatedly in publication_results.py
@@ -59,7 +59,7 @@ def run_frequentist_analysis(input_h5_file, model, N_s, g_s, L_s, Bbar_s_in,
         run_bootstrap: bool, if False the function won't run a bootstrap
         print_info: bool, if True extra infomation about the fit results is
             returned to std::out
-        GL_max: Float, maximum value of the product (ag) * (L / a) to be
+        gL_max: Float, maximum value of the product (ag) * (L / a) to be
             included in the fit
 
         OUTPUTS:
@@ -81,9 +81,22 @@ def run_frequentist_analysis(input_h5_file, model, N_s, g_s, L_s, Bbar_s_in,
         > dof: int, number of degrees of freedom in the fit
     """
 
-    samples, g_s, L_s, Bbar_s, m_s = load_h5_data(input_h5_file, N_s, g_s, L_s,
-                                                  Bbar_s_in, gL_min, GL_max)
-    N = N_s[0]
+    samples, g_s, L_s, Bbar_s, m_s = load_h5_data(input_h5_file, N_s_in, g_s_in, L_s_in,
+                                                  Bbar_s_in, gL_min, gL_max)
+    N = N_s_in[0]
+
+    # Flag any samples that are zeros - we can't include them or we'll get a singular matrix
+    total = numpy.sum(numpy.abs(samples), axis=1)
+    remove = (total == 0)
+
+    for i in numpy.argwhere(remove):
+        print(f"Samples full of zeros for g = {g_s[i]}, L = {L_s[i]}, Bbar = {Bbar_s[i]}")
+
+    g_s = g_s[numpy.logical_not(remove)]
+    L_s = L_s[numpy.logical_not(remove)]
+    Bbar_s = Bbar_s[numpy.logical_not(remove)]
+    samples = samples[numpy.logical_not(remove)]
+    m_s = m_s[numpy.logical_not(remove)]
 
     cov_matrix, different_ensemble = cov_matrix_calc(g_s, L_s, m_s, samples)
     cov_1_2 = numpy.linalg.cholesky(cov_matrix)
@@ -125,7 +138,7 @@ def run_frequentist_analysis(input_h5_file, model, N_s, g_s, L_s, Bbar_s_in,
         for i in tqdm(range(no_samples)):
             m_s = samples[:, i]
 
-            res_function = make_res_function(N_s[0], m_s, g_s, L_s, Bbar_s)
+            res_function = make_res_function(N_s_in[0], m_s, g_s, L_s, Bbar_s)
 
             if method == "least_squares":
                 res = least_squares(res_function, x0, args=(cov_inv, model))
