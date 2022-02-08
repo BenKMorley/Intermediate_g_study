@@ -192,14 +192,14 @@ class Critical_analysis():
             self.M4[str(ii)] = self.M4[str(ii)][self.therm:]
             self.phi2[str(ii)] = self.phi2[str(ii)][self.therm:]
 
-            self.actualm0sqlist = numpy.array(self.actualm0sqlist)
+            self.actualm0sqlist = np.array(self.actualm0sqlist)
 
             # Convert the raw data to numpy.float128 if possible
             if self.use_128:
-                self.M2[str(ii)] = self.M2[str(ii)].astype(numpy.float128)
-                self.M4[str(ii)] = self.M4[str(ii)].astype(numpy.float128)
-                self.phi2[str(ii)] = self.phi2[str(ii)].astype(numpy.float128)
-                self.actualm0sqlist = self.actualm0sqlist.astype(numpy.float128)
+                self.M2[str(ii)] = self.M2[str(ii)].astype(np.float128)
+                self.M4[str(ii)] = self.M4[str(ii)].astype(np.float128)
+                self.phi2[str(ii)] = self.phi2[str(ii)].astype(np.float128)
+                self.actualm0sqlist = self.actualm0sqlist.astype(np.float128)
 
             self.Ntraj.append(len(self.M2[str(ii)]))
 
