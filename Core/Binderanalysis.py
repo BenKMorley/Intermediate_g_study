@@ -111,6 +111,7 @@ class Critical_analysis():
         self.dmsq_final = 0.
         self.datadir = h5data_dir
         self.freeze_inner_boot = False
+        self.use_128 = True  # If True use numpy.float128 data type
         self.MCMCdatafile = param_dict[N]["MCMC_data_file"]
 
         if filename is None:
@@ -190,6 +191,15 @@ class Critical_analysis():
             self.M2[str(ii)] = self.M2[str(ii)][self.therm:]
             self.M4[str(ii)] = self.M4[str(ii)][self.therm:]
             self.phi2[str(ii)] = self.phi2[str(ii)][self.therm:]
+
+            self.actualm0sqlist = numpy.array(self.actualm0sqlist)
+
+            # Convert the raw data to numpy.float128 if possible
+            if self.use_128:
+                self.M2[str(ii)] = self.M2[str(ii)].astype(numpy.float128)
+                self.M4[str(ii)] = self.M4[str(ii)].astype(numpy.float128)
+                self.phi2[str(ii)] = self.phi2[str(ii)].astype(numpy.float128)
+                self.actualm0sqlist = self.actualm0sqlist.astype(numpy.float128)
 
             self.Ntraj.append(len(self.M2[str(ii)]))
 
@@ -589,11 +599,13 @@ class Critical_analysis():
 
         # filter out occurences of NaNs and produce weighted average over reweighted results for
         # Binder cumulant
-        dres0 = [dx for x, dx in zip(res, dres) if ((not np.isnan(x)) and (dx != 0.))]
-        res0 = [x for x, dx in zip(res, dres) if ((not np.isnan(x)) and (dx != 0.))]
-        weights = [w for w, x, dx in zip(weights, res, dres) if ((not np.isnan(x)) and (dx != 0.))]
+        dres0 = [dx for x, dx in zip(res, dres) if (((not np.isnan(x)) and (dx != 0.)) and (not np.isnan(dx)))]
+        res0 = [x for x, dx in zip(res, dres) if (((not np.isnan(x)) and (dx != 0.)) and (not np.isnan(dx)))]
+        weights = [w for w, x, dx in zip(weights, res, dres) if (((not np.isnan(x)) and (dx != 0.)) and (not np.isnan(dx)))]
 
+        logging.debug(f'm^2 = {msq}')
         logging.debug(res0)
+        logging.debug(dres0)
         logging.debug(iinclude)
 
         if len(res0) > 0 and len(dres0) > 0:
@@ -607,7 +619,7 @@ class Critical_analysis():
 
             B = 1 - self.N * 1. / 3 * mean
 
-            logging.debug(B)
+            logging.debug(f"B - Bbar: {B - self.Bbar}\n")
 
             if sigma:
                 sigma_value = np.sqrt(np.sum(full_weights ** 2 * np.array(dres0) ** 2)) * self.N / 3
