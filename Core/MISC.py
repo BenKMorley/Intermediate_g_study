@@ -386,12 +386,11 @@ def weight_centered(z, f, v):
         INPUTS:
         -------
         z:  float
-        f:  float, this is the upper bound on deviation between the means of the extrapolated
+        f:  float, this is the deviation between the means of the extrapolated
             tr(phi^2) distribution and the tr(phi^2) mean of the mass point we are reweighting
-            from, for this mass to be used in a reweighting. This variable is called
-            self.frac_of_dist.
-        v:  float, the width of the transition from full inclusion (weight = 0) to no inclusion
-            (weight = 1)
+            from, for this mass to be used in a reweighting. This is the centre of the distribution
+            which has a weight of 0.5. This variable is called self.frac_of_dist.
+        v:  float, the width of the transition from full inclusion in units of sigma
     """
     assert v >= 0, "we need a finite width to the distribution"
     assert v <= 2 * f, "The transition needs to fit in the interval [0, f]"
