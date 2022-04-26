@@ -301,6 +301,241 @@ def model3(N, g, L, Bbar, alpha, c, f0, f1, lambduh, nu, omega):
   return mPT_1loop(g, N) + g ** 2 * (alpha + ((g * L) ** (-1 / nu) / (1 + c * (g * L) ** omega)) * ((Bbar - f0) / f1) - lambduh * K1(g, N))
 
 
+def Has_0(N, g, L, Bbar, alpha, f0, f1, lambduh, nu):
+    eps1 = 1.96375
+    eps3 = 2.023
+    omega = 0.8
+    d1 = 0
+    d3 = 0
+    c = 0
+
+    S_R = (g * L) ** (1 / nu) * (1 + d1 * (g * L) ** -eps1 + d3 * (g * L) ** -eps3) + c * (g * L) ** -omega
+
+    return mPT_1loop(g, N) + g ** 2 * (alpha + ((Bbar - f0) / (f1 * S_R)) - lambduh * K1(g, N))
+
+
+def Has_1(N, g, L, Bbar, alpha, c, f0, f1, lambduh, nu):
+    eps1 = 1.96375
+    eps3 = 2.023
+    omega = 0.8
+    d1 = 0
+    d3 = 0
+
+    S_R = (g * L) ** (1 / nu) * (1 + d1 * (g * L) ** -eps1 + d3 * (g * L) ** -eps3) + c * (g * L) ** -omega
+
+    return mPT_1loop(g, N) + g ** 2 * (alpha + ((Bbar - f0) / (f1 * S_R)) - lambduh * K1(g, N))
+
+
+def Has_var_0(N, g, L, Bbar, f0, f1, lambduh, nu):
+    eps1 = 1.96375
+    eps3 = 2.023
+    omega = 0.8
+    d1 = 0
+    d3 = 0
+    c = 0
+
+    S_R = (g * L) ** (1 / nu) * (1 + d1 * (g * L) ** -eps1 + d3 * (g * L) ** -eps3) + c * (g * L) ** -omega
+
+    return mPT_1loop(g, N) + g ** 2 * ((Bbar - f0) / (f1 * S_R) - lambduh * K1(g, N))
+
+
+def Has_var_1(N, g, L, Bbar, c, f0, f1, lambduh, nu):
+    eps1 = 1.96375
+    eps3 = 2.023
+    omega = 0.8
+    d1 = 0
+    d3 = 0
+
+    S_R = (g * L) ** (1 / nu) * (1 + d1 * (g * L) ** -eps1 + d3 * (g * L) ** -eps3) + c * (g * L) ** -omega
+
+    return mPT_1loop(g, N) + g ** 2 * ((Bbar - f0) / (f1 * S_R) - lambduh * K1(g, N))
+
+
+def Has_var_var_1(N, g, L, Bbar, c, f1, lambduh, nu):
+    eps1 = 1.96375
+    eps3 = 2.023
+    omega = 0.8
+    d1 = 0
+    d3 = 0
+    f0 = 0.5
+
+    S_R = (g * L) ** (1 / nu) * (1 + d1 * (g * L) ** -eps1 + d3 * (g * L) ** -eps3) + c * (g * L) ** -omega
+
+    return mPT_1loop(g, N) + g ** 2 * ((Bbar - f0) / (f1 * S_R) - lambduh * K1(g, N))
+
+
+def Has_var_2(N, g, L, Bbar, c, f0, f1, lambduh, nu, omega):
+    eps1 = 1.96375
+    eps3 = 2.023
+    d3 = 0
+    d1 = 0
+
+    S_R = (g * L) ** (1 / nu) * (1 + d1 * (g * L) ** -eps1 + d3 * (g * L) ** -eps3) + c * (g * L) ** -omega
+
+    return mPT_1loop(g, N) + g ** 2 * ((Bbar - f0) / (f1 * S_R) - lambduh * K1(g, N))
+
+
+def Has_1_1(N, g, L, Bbar, alpha, c, d1, d3, f0, f1, lambduh, nu):
+    eps1 = 1.96375
+    eps3 = 2.023
+    omega = 0.8
+
+    S_R = (g * L) ** (1 / nu) * (1 + d1 * (g * L) ** -eps1 + d3 * (g * L) ** -eps3) + c * (g * L) ** -omega
+
+    return mPT_1loop(g, N) + g ** 2 * (alpha + ((Bbar - f0) / (f1 * S_R)) - lambduh * K1(g, N))
+
+
+def simple_1_1(N, g, L, Bbar, a, lambduh, nu):
+    Scaling = a * (g * L) ** (-1 / nu)
+
+    return mPT_1loop(g, N) + g ** 2 * (Scaling - lambduh * K1(g, N))
+
+
+def simple_1_2(N, g, L, Bbar, a1, a2, lambduh, nu):
+    Bbar_list = list(numpy.sort(list(set(list(Bbar)))))
+    a = numpy.zeros_like(g)
+    a[Bbar == Bbar_list[0]] = a1
+    a[Bbar == Bbar_list[1]] = a2
+
+    Scaling = a * (g * L) ** (-1 / nu)
+
+    return mPT_1loop(g, N) + g ** 2 * (Scaling - lambduh * K1(g, N))
+
+
+def simple_2_1(N, g, L, Bbar, a, c, lambduh, nu):
+    omega = 0.8
+
+    Scaling = a * (g * L) ** (-1 / nu) + c * (g * L) ** (-omega - 1 / nu)
+
+    return mPT_1loop(g, N) + g ** 2 * (Scaling - lambduh * K1(g, N))
+
+def simple_2_2(N, g, L, Bbar, a1, a2, c1, c2, lambduh, nu):
+    Bbar_list = list(numpy.sort(list(set(list(Bbar)))))
+    a = numpy.zeros_like(g)
+    c = numpy.zeros_like(g)
+    omega = 0.8
+
+    a[Bbar == Bbar_list[0]] = a1
+    a[Bbar == Bbar_list[1]] = a2
+
+    c[Bbar == Bbar_list[0]] = c1
+    c[Bbar == Bbar_list[1]] = c2
+
+    Scaling = a * (g * L) ** (-1 / nu) + c * (g * L) ** (omega - 2 / nu)
+
+    return mPT_1loop(g, N) + g ** 2 * (Scaling - lambduh * K1(g, N))
+
+
+def simple_3_1(N, g, L, Bbar, a, c, e, lambduh, nu):
+    omega = 0.8
+    eps1 = 2.023
+
+    Scaling = a * (g * L) ** (-1 / nu) + c * (g * L) ** (-omega - 1 / nu) + e * (g * L) ** (-eps1 - 1 / nu)
+
+    return mPT_1loop(g, N) + g ** 2 * (Scaling - lambduh * K1(g, N))
+
+
+def simple_3_2(N, g, L, Bbar, a1, a2, c1, c2, e1, e2, lambduh, nu):
+    Bbar_list = list(numpy.sort(list(set(list(Bbar)))))
+    a = numpy.zeros_like(g)
+    c = numpy.zeros_like(g)
+    e = numpy.zeros_like(g)
+    omega = 0.8
+    eps1 = 2.023
+
+    a[Bbar == Bbar_list[0]] = a1
+    a[Bbar == Bbar_list[1]] = a2
+
+    c[Bbar == Bbar_list[0]] = c1
+    c[Bbar == Bbar_list[1]] = c2
+
+    e[Bbar == Bbar_list[0]] = e1
+    e[Bbar == Bbar_list[1]] = e2
+
+    Scaling = a * (g * L) ** (-1 / nu) + c * (g * L) ** (omega - 2 / nu) + e * (g * L) ** (eps1 - 2 / nu)
+
+    return mPT_1loop(g, N) + g ** 2 * (Scaling - lambduh * K1(g, N))
+
+
+def simple_4_1(N, g, L, Bbar, a, c, e1, e3, lambduh, nu):
+    omega = 0.8
+    eps1 = 2.023
+    eps3 = 1.96375
+
+    Scaling = a * (g * L) ** (-1 / nu) + c * (g * L) ** (-omega - 1 / nu) + e1 * (g * L) ** (-eps1 - 1 / nu) + e3 * (g * L) ** (-eps3 - 1 / nu)
+
+    return mPT_1loop(g, N) + g ** 2 * (Scaling - lambduh * K1(g, N))
+
+
+def test_4_2(N, g, L, Bbar, a, c1, c2, e1, e3, lambduh, nu):
+    Bbar_list = list(numpy.sort(list(set(list(Bbar)))))
+    c = numpy.zeros_like(g)
+
+    c[Bbar == Bbar_list[0]] = c1
+    c[Bbar == Bbar_list[1]] = c2
+
+    omega = 0.8
+    eps1 = 2.023
+    eps3 = 1.96375
+
+    Scaling = a * (g * L) ** (-1 / nu) + c * (g * L) ** (omega - 2 / nu) + e1 * (g * L) ** (eps1 - 2 / nu) + e3 * (g * L) ** (eps3 - 2 / nu)
+
+    return mPT_1loop(g, N) + g ** 2 * (Scaling - lambduh * K1(g, N))
+
+
+def Bbar_corr2(N, g, L, Bbar, alpha, f0, f1, nu, omega, c0, c1):
+    Bbar_s = numpy.sort(list(set(Bbar)))
+    c = numpy.zeros_like(g)
+    c[Bbar == Bbar_s[0]] = c0
+    c[Bbar == Bbar_s[1]] = c1
+
+    return mPT_1loop(g, N) + g ** 2 * (alpha + (1 / ((g * L) ** (1 / nu) * (1 + c * (g * L) ** -omega))) * ((Bbar - f0) / f1) - 1 * K1(g, N))
+
+
+def Bbar_corr3(N, g, L, Bbar, alpha, f0, f1, nu, omega, c0, c1, c2):
+    Bbar_s = numpy.sort(list(set(Bbar)))
+    c = numpy.zeros_like(g)
+    c[Bbar == Bbar_s[0]] = c0
+    c[Bbar == Bbar_s[1]] = c1
+    c[Bbar == Bbar_s[2]] = c2
+
+    # return mPT_1loop(g, N) + g ** 2 * (alpha + (g * L) ** (-1 / nu) * (((Bbar / (1 + c * (g * L) ** -omega)) - f0) / f1) - 1 * K1(g, N))
+
+    return mPT_1loop(g, N) + g ** 2 * (alpha + (1 / ((g * L) ** (1 / nu) * (1 + c * (g * L) ** -omega))) * ((Bbar - f0) / f1) - 1 * K1(g, N))
+
+
+def Bbar_corr4(N, g, L, Bbar, alpha, f0, f1, nu, omega, c0, c1, c2, c3):
+    Bbar_s = numpy.sort(list(set(Bbar)))
+    c = numpy.zeros_like(g)
+    c[Bbar == Bbar_s[0]] = c0
+    c[Bbar == Bbar_s[1]] = c1
+    c[Bbar == Bbar_s[2]] = c2
+    c[Bbar == Bbar_s[3]] = c3
+
+    return mPT_1loop(g, N) + g ** 2 * (alpha + (g * L) ** (-1 / nu) * (((Bbar / (1 + c * (g * L) ** -omega)) - f0) / f1) - 1 * K1(g, N))
+
+
+def Bbar_corr6(N, g, L, Bbar, alpha, f0, f1, nu, omega, c0, c1, c2, c3, c4, c5):
+    Bbar_s = numpy.sort(list(set(Bbar)))
+    c = numpy.zeros_like(g)
+    c[Bbar == Bbar_s[0]] = c0
+    c[Bbar == Bbar_s[1]] = c1
+    c[Bbar == Bbar_s[2]] = c2
+    c[Bbar == Bbar_s[3]] = c3
+    c[Bbar == Bbar_s[4]] = c4
+    c[Bbar == Bbar_s[5]] = c5
+
+    return mPT_1loop(g, N) + g ** 2 * (alpha + (g * L) ** (-1 / nu) * (((Bbar / (1 + c * (g * L) ** -omega)) - f0) / f1) - 1 * K1(g, N))
+
+
+def test(N, g, L, Bbar, alpha, c, f0, f1, nu):
+    return mPT_1loop(g, N) + g ** 2 * (alpha + (g * L) ** (-1 / nu) * ((Bbar * (1 + c * numpy.log(g * L)) - f0) / f1) - 1 * K1(g, N))
+
+# return Bbar_corr
+
+Bbar_models = {2: Bbar_corr2}
+
+
 def cov_matrix_calc(g_s, L_s, m_s, samples):
     """
         This function calculates the covariance matrix of the Binder crossing
@@ -394,7 +629,7 @@ def chisq_calc(x, cov_inv, model_function, res_function):
             print("Warning: Small nu led to very large (gL) ** -1 / nu")
 
             # This is to check the warning is indeed as expected
-            assert min(g_s * L_s) ** (- 1 / x[-1]) > 10 ** 10
+            # assert min(g_s * L_s) ** (- 1 / x[-1]) > 10 ** 10
 
     return chisq
 

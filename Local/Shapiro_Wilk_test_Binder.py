@@ -20,7 +20,6 @@ def count_non_normal(filename, N):
     p0_01 = 0
     p0_001 = 0
     p0_0001 = 0
-    p0_00000000001 = 0
 
     with h5py.File(filename, 'r') as f:
         # We only want to analyse a single N
@@ -75,11 +74,13 @@ def count_non_normal(filename, N):
                         p0_001 += 1
                     if p < 0.0001:
                         p0_0001 += 1
-                    if p < 0.00000000001:
-                        p0_00000000001 += 1
 
-    return p0_05, p0_01, p0_001, p0_0001, p0_00000000001
+    return p0_05, p0_01, p0_001, p0_0001
 
 
-for width in numpy.arange(10) / 10:
-    print(count_non_normal(f'h5data/width/width_{width:.1f}.h5', 2))
+for N in [2, 3, 4, 5]:
+    print(f"N = {N}")
+    print("(p < 0.05, p < 0.01, p < 0.001, p < 0.0001)")
+    for width in numpy.arange(10) / 10:
+        print(f"{count_non_normal(f'h5data/width/width_{width:.1f}.h5', N)}      width={width:.1f}")
+    print('')

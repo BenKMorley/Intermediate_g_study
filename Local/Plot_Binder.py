@@ -47,9 +47,9 @@ def fig3_color(gL, min_gL=0.79, max_gL=76.81, func=numpy.log):
 
 def plot_Binder(N, g_s, L_s, data_file=None, data_dir=None, minus_sign_override=True,
                 legend=True, ax=None, min_gL=3.1, max_gL=76.81, reweight=True, params=None,
-                GL_lim=0, mlims=None, min_traj=0, scale_with_fit=False,
+                GL_lim=0, plot_lims=None, min_traj=0, scale_with_fit=False,
                 no_reweight_samples=100, crossings_file=None, plot_crossings=False,
-                plot_histograms=False, width=0, remove_outliers=False):
+                plot_histograms=False, width=0, remove_outliers=False, plot_Bounds=False):
 
     dont_plot_hist = False
     text_height = 0.003
@@ -169,10 +169,10 @@ def plot_Binder(N, g_s, L_s, data_file=None, data_dir=None, minus_sign_override=
             masses = numpy.array(masses)
             max_gap = numpy.max(numpy.abs(masses[1:] - masses[:-1]))
 
-            if mlims is None:
+            if plot_lims is None:
                 min_m, max_m = min(masses) - max_gap, max(masses) + max_gap
             else:
-                min_m, max_m = mlims
+                min_m, max_m = plot_lims
 
             if reweight:
                 # Use Andreas's Critical Analysis Class to do the reweighting
@@ -343,6 +343,23 @@ def plot_Binder(N, g_s, L_s, data_file=None, data_dir=None, minus_sign_override=
 
                         except Exception:
                             print("Could not perform the Shapiro test")
+
+            ylims = ax.get_ylim()
+
+            if plot_Bounds:
+                # Plotting bounds is only necessary for running Binderanalysis
+                assert scale_with_fit is False
+
+                print('Plotting Bounds')
+                Lin = numpy.argwhere(numpy.array(Ls) == L)[0, 0]
+
+                try:
+                    fit_bounds = mlims[f'su{N}_{g:.1f}'][Lin]
+                    ax.vlines(fit_bounds[0], ylims[0], ylims[1], ls='--')
+                    ax.vlines(fit_bounds[1], ylims[0], ylims[1], ls='--')
+
+                except Exception:
+                    print(f'Could not find fit_bounds: L = {L}, g = {g}')
 
     f.close()
 
