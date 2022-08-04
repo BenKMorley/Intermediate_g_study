@@ -156,9 +156,9 @@ def K1(g, N):
         OUTPUTS :
         ---------
         float, value of the log term in the fit anzatz for the critical mass
-            with Lambda_IR = g / (4 pi N).
+            with Lambda_IR = g / (4 * pi * N).
     """
-    return numpy.log((g / (4 * numpy.pi * N))) *\
+    return numpy.log(g / (4 * numpy.pi * N)) *\
                     ((1 - (6 / N ** 2) + (18 / N ** 4)) / (4 * numpy.pi) ** 2)
 
 
@@ -409,6 +409,7 @@ def simple_2_1(N, g, L, Bbar, a, c, lambduh, nu):
 
     return mPT_1loop(g, N) + g ** 2 * (Scaling - lambduh * K1(g, N))
 
+
 def simple_2_2(N, g, L, Bbar, a1, a2, c1, c2, lambduh, nu):
     Bbar_list = list(numpy.sort(list(set(list(Bbar)))))
     a = numpy.zeros_like(g)
@@ -530,10 +531,6 @@ def Bbar_corr6(N, g, L, Bbar, alpha, f0, f1, nu, omega, c0, c1, c2, c3, c4, c5):
 
 def test(N, g, L, Bbar, alpha, c, f0, f1, nu):
     return mPT_1loop(g, N) + g ** 2 * (alpha + (g * L) ** (-1 / nu) * ((Bbar * (1 + c * numpy.log(g * L)) - f0) / f1) - 1 * K1(g, N))
-
-# return Bbar_corr
-
-Bbar_models = {2: Bbar_corr2}
 
 
 def cov_matrix_calc(g_s, L_s, m_s, samples):

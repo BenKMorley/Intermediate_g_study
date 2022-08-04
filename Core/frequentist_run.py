@@ -124,8 +124,8 @@ def run_frequentist_analysis(input_h5_file, model, N_s_in, g_s_in, L_s_in, Bbar_
 
     if print_info:
         print(seperator)
-        print(f"Config: N = {N}, Bbar_s = [{Bbar_s_in[0]}, {Bbar_s_in[1]}],"
-              f" gL_min = {gL_min}")
+        # print(f"Config: N = {N}, Bbar_s = [{Bbar_s_in[0]}, {Bbar_s_in[1]}],"
+        print(f" gL_min = {gL_min}")
         print(f"chisq = {chisq}")
         print(f"chisq/dof = {chisq / dof}")
         print(f"pvalue = {p}")

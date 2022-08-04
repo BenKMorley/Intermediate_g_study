@@ -385,7 +385,7 @@ def weight_centered(z, f, v):
 
         INPUTS:
         -------
-        z:  float
+        z:  float, number of sigma difference
         f:  float, this is the deviation between the means of the extrapolated
             tr(phi^2) distribution and the tr(phi^2) mean of the mass point we are reweighting
             from, for this mass to be used in a reweighting. This is the centre of the distribution
@@ -416,4 +416,3 @@ def weight_centered(z, f, v):
 
         else:
             return 0
-

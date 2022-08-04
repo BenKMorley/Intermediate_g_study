@@ -45,6 +45,15 @@ from Core.parameters import param_dict, seperator, h5data_dir
 from Core.MISC import calc_gL_mins
 
 
+# param_dict[2]["h5_data_file"] = "width/width_0.5.h5"
+param_dict[2]["Central_Bbar"] = [0.52]
+param_dict[2]["x0"]["model1_1a"] = [0.0016753042312584651, 0.5770732084695218, -0.0561283364493805,
+                                    1.0749343432148997, 0.7021775076828556]
+param_dict[5]["Central_Bbar"] = [0.42]
+param_dict[5]["gL_central"] = {}
+param_dict[5]["gL_central"][model1_1a.__name__] = 32
+
+
 def get_pvalues_central_fit(N):
     """
         This function will reproduce the p-value data against the gL_min cut
@@ -67,9 +76,9 @@ def get_pvalues_central_fit(N):
     Bbar_s = param_dict[N]["Central_Bbar"]
     g_s = param_dict[N]["g_s"]
     L_s = param_dict[N]["L_s"]
-    x0 = param_dict[N]["x0"]
     model_1 = param_dict[N]["model_1"]
     model_2 = param_dict[N]["model_2"]
+    x0 = param_dict[N]["x0"][model_1.__name__]
     h5_data_file = f"{h5data_dir}/{param_dict[N]['h5_data_file']}"
 
     gL_mins = calc_gL_mins(g_s, L_s)
@@ -136,10 +145,10 @@ def get_statistical_errors_central_fit(N, model_name="model_1"):
     Bbar_s = param_dict[N]["Central_Bbar"]
     g_s = param_dict[N]["g_s"]
     L_s = param_dict[N]["L_s"]
-    x0 = param_dict[N]["x0"]
     model = param_dict[N][model_name]
-    gL_min = param_dict[N]["gL_central"][model_name]
-    param_names = param_dict[N]["param_names"]
+    x0 = param_dict[N]["x0"][model.__name__]
+    gL_min = param_dict[N]["gL_central"][model.__name__]
+    param_names = model.__code__.co_varnames[4:]
     h5_data_file = f"{h5data_dir}/{param_dict[N]['h5_data_file']}"
 
     # Run once with the full dataset (no resampling)

@@ -25,14 +25,20 @@
 # field theory" https://arxiv.org/abs/2009.14768
 ###############################################################################
 
-
-from model_definitions import *
 import pymultinest
 import os
 import pickle
 import json
 import pdb
-from multiprocessing import Pool, current_process
+import sys
+
+# Import from the Core directory
+sys.path.append(os.getcwd() + '/..')
+sys.path.append(os.getcwd() + '/../Core')
+sys.path.append(os.getcwd())
+sys.path.append(os.getcwd() + '/Core')
+
+from Core.model_definitions import *
 
 
 # Function that returns likelihood function for use in MULTINEST

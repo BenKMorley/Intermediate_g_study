@@ -1,4 +1,6 @@
 Core/Binderanalysis_parallel.py
+Local/graphs/*
+Local/data/*
 Local/log/*
 Local/py_log/*
 Server/py_log/*
@@ -16,6 +18,7 @@ Iridis/run*
 Local/run*
 Server/run*
 Core/run*
+Core/__pycache__*
 Iridis/run*
 Local/graphs/*
 *__pycache__*
