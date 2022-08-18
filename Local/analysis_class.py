@@ -46,23 +46,6 @@ def make_function(function_name, omega, eps, model_type, A=4 * numpy.pi):
         if model_type == 2:
             PT = -beta * K2(L, N)
 
-        if model_type == 3:
-            pref = ((1 - (6 / N ** 2) + (18 / N ** 4)) / (4 * numpy.pi) ** 2)
-
-            PT = -beta * (numpy.where((g * L) > A * N,
-                            K1(g, N) - pref * numpy.log(A / (4 * numpy.pi)),
-                            K2(L, N)))
-
-            # Run a test to make sure this is okay
-            L = 16
-            assert abs(K1(A * N / L, N) - pref * numpy.log(A / (4 * numpy.pi)) - K2(L, N)) < 10 ** -10
-
-        # PT without the g^2 term
-        if model_type == 4:
-            PT = -beta * K2(L, N) + alpha * (g * L)
-
-            return mPT_1loop(g, N) + g ** 2 * (Scaling + PT)
-
         return mPT_1loop(g, N) + g ** 2 * (alpha + Scaling + PT)
 
     def modelB(N, g, L, Bbar, alpha, a1, a2, c1, c2, beta, nu):
@@ -85,23 +68,6 @@ def make_function(function_name, omega, eps, model_type, A=4 * numpy.pi):
 
         if model_type == 2:
             PT = -beta * K2(L, N)
-
-        if model_type == 3:
-            pref = ((1 - (6 / N ** 2) + (18 / N ** 4)) / (4 * numpy.pi) ** 2)
-
-            PT = -beta * (numpy.where((g * L) > A * N,
-                            K1(g, N) - pref * numpy.log(A / (4 * numpy.pi)),
-                            K2(L, N)))
-
-            # Run a test to make sure this is okay
-            L = 16
-            assert abs(K1(A * N / L, N) - pref * numpy.log(A / (4 * numpy.pi)) - K2(L, N)) < 10 ** -10
-
-        # PT without the g^2 term
-        if model_type == 4:
-            PT = -beta * K2(L, N) + alpha * (g * L)
-
-            return mPT_1loop(g, N) + g ** 2 * (Scaling + PT)
 
         return mPT_1loop(g, N) + g ** 2 * (alpha + Scaling + PT)
 
@@ -130,23 +96,6 @@ def make_function(function_name, omega, eps, model_type, A=4 * numpy.pi):
         if model_type == 2:
             PT = -beta * K2(L, N)
 
-        if model_type == 3:
-            pref = ((1 - (6 / N ** 2) + (18 / N ** 4)) / (4 * numpy.pi) ** 2)
-
-            PT = -beta * (numpy.where((g * L) > A * N,
-                            K1(g, N) - pref * numpy.log(A / (4 * numpy.pi)),
-                            K2(L, N)))
-
-            # Run a test to make sure this is okay
-            L = 16
-            assert abs(K1(A * N / L, N) - pref * numpy.log(A / (4 * numpy.pi)) - K2(L, N)) < 10 ** -10
-
-        # PT without the g^2 term
-        if model_type == 4:
-            PT = -beta * K2(L, N) + alpha * (g * L)
-
-            return mPT_1loop(g, N) + g ** 2 * (Scaling + PT)
-
         return mPT_1loop(g, N) + g ** 2 * (alpha + Scaling + PT)
 
     def modelD(N, g, L, Bbar, alpha1, alpha2, a1, a2, beta, nu):
@@ -169,23 +118,6 @@ def make_function(function_name, omega, eps, model_type, A=4 * numpy.pi):
 
         if model_type == 2:
             PT = -beta * K2(L, N)
-
-        if model_type == 3:
-            pref = ((1 - (6 / N ** 2) + (18 / N ** 4)) / (4 * numpy.pi) ** 2)
-
-            PT = -beta * (numpy.where((g * L) > A * N,
-                            K1(g, N) - pref * numpy.log(A / (4 * numpy.pi)),
-                            K2(L, N)))
-
-            # Run a test to make sure this is okay
-            L = 16
-            assert abs(K1(A * N / L, N) - pref * numpy.log(A / (4 * numpy.pi)) - K2(L, N)) < 10 ** -10
-
-        # PT without the g^2 term
-        if model_type == 4:
-            PT = -beta * K2(L, N) + alpha * (g * L)
-
-            return mPT_1loop(g, N) + g ** 2 * (Scaling + PT)
 
         return mPT_1loop(g, N) + g ** 2 * (alpha + Scaling + PT)
 
@@ -648,7 +580,6 @@ class analysis:
             self.chisqs = numpy.load(filename_chisqs)
 
             assert self.means.shape == (len(self.Bbar_pieces), len(self.gL_mins), self.n_params)
-            # raise(Exception)
 
         except Exception:
             self.means = numpy.zeros((len(self.Bbar_pieces), len(self.gL_mins), self.n_params))
@@ -668,7 +599,6 @@ class analysis:
                 self.full_results = numpy.load(filename)
                 assert self.full_results.shape == (len(self.Bbar_pieces), len(self.gL_mins),
                                                     self.no_samples, self.n_params)
-                # raise(Exception)
 
             except Exception:
                 self.full_results = numpy.zeros((len(self.Bbar_pieces), len(self.gL_mins),
@@ -916,26 +846,23 @@ class analysis:
             self.mean = [0, ] * len(self.param_names)
             self.var = [0, ] * len(self.param_names)
 
-        # Out of interest let's calculate the p-value of a constant fit across the Bbar's. This
-        # is not a statistically sound thing to do but will give us an idea on whether the results
-        # are coming out consistantly across Bbar.
+        # Also run calculations to find the overall critical mass. For model D we have the choice
+        # of using alpha_1 or alpha_2. We will choose to use alpha_1 here - the difference between
+        # should be negligable. As in the PRL we choose to focus on predictions for g = 0.1
+        if self.model_type == 1:
+            g = 0.1
+            alphas = self.full_results[..., 0]
+            betas = self.full_results[..., -2]
 
-        mean_pieces = numpy.array([self.mean_pieces[i][..., -1] for i in self.mean_pieces])
-        std_pieces = numpy.sqrt(numpy.array([self.var_pieces[i][..., -1] for i in self.var_pieces]))
+            critical_masses = mPT_1loop(0.1, self.N) + g ** 2 * (alphas - betas * K1(g, self.N))
+            means = numpy.mean(critical_masses, axis=2)
+            var_s = numpy.std(critical_masses, axis=2) ** 2
 
-        std_pieces = std_pieces[std_pieces > 0]
-        mean_pieces = mean_pieces[mean_pieces > 0]
+            self.mass_mean = numpy.average(means, weights=self.P_s, axis=(0, 1))
 
-        try:
-            mean = numpy.average(mean_pieces, weights=1 / std_pieces ** 2)
-            chisq = 0.5 * numpy.sum(((mean_pieces - mean) / std_pieces) ** 2)
-
-            p = chisq_pvalue(len(mean_pieces) - 1, chisq)
-
-        except ZeroDivisionError:
-            p = 0
-
-        return p
+            self.mass_var = numpy.average(var_s, weights=self.P_s, axis=(0, 1)) + \
+                            numpy.average(means ** 2, weights=self.P_s, axis=(0, 1)) - \
+                            self.mass_mean ** 2
 
     def BMM_plot_overall(self, plot_dict={'nu': [0, 1]}, show=False, params=None):
         mean_pieces = numpy.zeros((len(self.Bbar_pieces), len(self.param_names)))
