@@ -1,8 +1,6 @@
 import sys
 import os
-from math import floor
 from multiprocessing import Pool
-
 
 # Import from the Core directory
 sys.path.append(os.getcwd() + '/..')
@@ -11,6 +9,8 @@ sys.path.append(os.getcwd())
 sys.path.append(os.getcwd() + '/Local')
 
 from Local.analysis_class import *
+from Core.MISC import nice_string_print
+
 
 models = ['A', 'B', 'C', 'D']
 Ns = [2, 3, 4, 5]
@@ -54,56 +54,12 @@ for N in Ns:
             mean = a.mean[i]
             std = numpy.sqrt(a.var[i])
 
-            digit = floor(numpy.log10(abs(mean)))
-
-            # We want the standard deviation rounded to 2 s.f.
-            digit = floor(numpy.log10(abs(std)))
-            std = numpy.round(std, -digit + 1)
-
-            # Recaculate the digit for the edge case of a std that rounds up to 100
-            digit = floor(numpy.log10(abs(std + sys.float_info.epsilon)))
-
-            # Now round the mean to the same level as the standard deviation
-            mean = numpy.round(mean, -digit + 1)
-
-            # For the purpose of nice printing we want the std to print as a two digit number
-            # unless it should contain a decimal point
-
-            if mean == 0:
-                digit2 = 0
-
-            else:
-                digit2 = floor(numpy.log10(abs(mean)))
-
-            # We need to find the trailing zeros on the mean
-            int_mean = mean * 10 ** (-digit + 1)
-            factor = 10
-            trailing_zeros = 0
-
-            if digit != 0 and digit2 != 0:
-                while(int_mean // factor != 0):
-                    if int_mean % factor == 0:
-                        factor *= 10
-                        trailing_zeros += 1
-
-                    else:
-                        break
-
             if not ignore_comma:
                 string += ', '
 
-            if mean == 0:
-                string += rf'${param_names_latex[param]}$: $0({std})$'
+            string_piece = nice_string_print(mean, std)
 
-            elif digit == 0:
-                string += rf'${param_names_latex[param]}$: ${mean}{"0" * trailing_zeros}({std:.1f})$'
-
-            elif digit >= 1:
-                string += rf'${param_names_latex[param]}$: ${int(mean)}({int(std)})$'
-
-            else:
-                std *= 10 ** (-digit + 1)
-                string += rf'${param_names_latex[param]}$: ${mean}{"0" * trailing_zeros}({std:.0f})$'
+            string += rf'${param_names_latex[param]}$: ${string_piece}$'
 
             if len(string) > char_limit:
                 print(string + '\\\\')
@@ -134,56 +90,12 @@ for N in Ns:
             mean = a.mean[i]
             std = numpy.sqrt(a.var[i])
 
-            digit = floor(numpy.log10(abs(mean)))
-
-            # We want the standard deviation rounded to 2 s.f.
-            digit = floor(numpy.log10(abs(std)))
-            std = numpy.round(std, -digit + 1)
-
-            # Recaculate the digit for the edge case of a std that rounds up to 100
-            digit = floor(numpy.log10(abs(std + sys.float_info.epsilon)))
-
-            # Now round the mean to the same level as the standard deviation
-            mean = numpy.round(mean, -digit + 1)
-
-            # For the purpose of nice printing we want the std to print as a two digit number
-            # unless it should contain a decimal point
-
-            if mean == 0:
-                digit2 = 0
-
-            else:
-                digit2 = floor(numpy.log10(abs(mean)))
-
-            # We need to find the trailing zeros on the mean
-            int_mean = mean * 10 ** (-digit + 1)
-            factor = 10
-            trailing_zeros = 0
-
-            if digit != 0 and digit2 != 0:
-                while(int_mean // factor != 0):
-                    if int_mean % factor == 0:
-                        factor *= 10
-                        trailing_zeros += 1
-
-                    else:
-                        break
-
             if not ignore_comma:
                 string += ', '
 
-            if mean == 0:
-                string += rf'${param_names_latex[param]}$: $0({std})$'
+            string_piece = nice_string_print(mean, std)
 
-            elif digit == 0:
-                string += rf'${param_names_latex[param]}$: ${mean}{"0" * trailing_zeros}({std:.1f})$'
-
-            elif digit >= 1:
-                string += rf'${param_names_latex[param]}$: ${int(mean)}({int(std)})$'
-
-            else:
-                std *= 10 ** (-digit + 1)
-                string += rf'${param_names_latex[param]}$: ${mean}{"0" * trailing_zeros}({std:.0f})$'
+            string += rf'${param_names_latex[param]}$: ${string_piece}$'
 
             if len(string) > char_limit:
                 print(string + '\\\\')

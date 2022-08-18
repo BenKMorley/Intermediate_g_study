@@ -22,9 +22,9 @@
 # See the full license in the file "LICENSE" in the top level distribution
 # directory
 ###############################################################################
-import numpy as np
+import numpy
+from math import floor
 import sys
-import pdb
 from parameters import *
 
 separator = "##########################################################"
@@ -68,7 +68,7 @@ def MCMC_convention_g(g):
 
 
 def calc_gL_mins(g_s, L_s):
-    return np.sort(list(set(np.outer(g_s, L_s).reshape(len(g_s) * len(L_s))))).round(2)
+    return numpy.sort(list(set(numpy.outer(g_s, L_s).reshape(len(g_s) * len(L_s))))).round(2)
 
 
 class UWerr():
@@ -100,7 +100,7 @@ class UWerr():
             self.Nobs = 1
 
         # means of primary observables
-        v = np.mean(self.Data, 0)
+        v = numpy.mean(self.Data, 0)
 
         # means of secondary observables
         if self.function == []:  # if only primary observables
@@ -117,8 +117,8 @@ class UWerr():
             delta = self.Data - v
 
         else:
-            dum = np.array(v)
-            h = np.std(self.Data, 0) / np.sqrt(self.N)
+            dum = numpy.array(v)
+            h = numpy.std(self.Data, 0) / numpy.sqrt(self.N)
             D = h * 0.
 
             for i in range(self.Nobs):
@@ -142,19 +142,19 @@ class UWerr():
                     else:
                         D[i] = D[i] - self.function(dum)
 
-                    dum[i] = np.array(v[i])
+                    dum[i] = numpy.array(v[i])
                     D[i] = D[i] / (2. * h[i])
 
-            delta = np.dot((self.Data - v), D)
+            delta = numpy.dot((self.Data - v), D)
 
-        Gamma = np.zeros(int(np.floor(1. * self.N / 2)))
+        Gamma = numpy.zeros(int(numpy.floor(1. * self.N / 2)))
 
         try:
-            Gamma[0] = np.mean(delta ** 2)
+            Gamma[0] = numpy.mean(delta ** 2)
 
         except RuntimeWarning:
             print("Overflow: Gamma[0] = inf")
-            Gamma[0] = np.inf
+            Gamma[0] = numpy.inf
 
         if Gamma[0] == 0:
             print("UWerr: data contains no no fluctuations: Gamma[0]=0")
@@ -166,7 +166,7 @@ class UWerr():
             doGamma = 0
 
         else:
-            tmax = int(np.floor(1. * self.N / 2.))
+            tmax = int(numpy.floor(1. * self.N / 2.))
             doGamma = 1
             Gint = 0
 
@@ -175,9 +175,9 @@ class UWerr():
 
         while t <= tmax:
             try:
-                Gamma[t] = np.sum(delta[0: -(t)] * delta[t:]) / (self.N - t)
+                Gamma[t] = numpy.sum(delta[0: -(t)] * delta[t:]) / (self.N - t)
             except RuntimeWarning:
-                Gamma[t] = np.inf
+                Gamma[t] = numpy.inf
 
             if doGamma == 1:
                 Gint = Gint + Gamma[t] / Gamma[0]
@@ -185,10 +185,10 @@ class UWerr():
                     tauW = eps
 
                 else:
-                    tauW = self.Stau / (np.log((Gint + 1.) / Gint))
+                    tauW = self.Stau / (numpy.log((Gint + 1.) / Gint))
 
                 try:
-                    gW = np.exp(-1. * t / tauW) - tauW / np.sqrt(t * self.N)
+                    gW = numpy.exp(-1. * t / tauW) - tauW / numpy.sqrt(t * self.N)
 
                 except RuntimeWarning:
                     # Underflow
@@ -201,7 +201,7 @@ class UWerr():
 
                 if gW < 0:
                     Wopt = t
-                    tmax = np.min([tmax, 2 * t])
+                    tmax = numpy.min([tmax, 2 * t])
                     doGamma = 0
 
             t = t + 1
@@ -211,19 +211,19 @@ class UWerr():
             Wopt = tmax
 
         Gamma = Gamma[:t]
-        GammaOpt = Gamma[0] + 2. * np.sum(Gamma[1: Wopt + 1])
+        GammaOpt = Gamma[0] + 2. * numpy.sum(Gamma[1: Wopt + 1])
 
         if GammaOpt <= 0:
             print("UWerr: Gamma pathological with error below zero")
             raise ValueError
 
         Gamma = Gamma + GammaOpt / self.N
-        GammaOpt = Gamma[0] + 2. * np.sum(Gamma[1: Wopt])
-        dv = np.sqrt(GammaOpt / self.N)
-        ddv = dv * (np.sqrt((Wopt + .5) / self.N))
+        GammaOpt = Gamma[0] + 2. * numpy.sum(Gamma[1: Wopt])
+        dv = numpy.sqrt(GammaOpt / self.N)
+        ddv = dv * (numpy.sqrt((Wopt + .5) / self.N))
         rho = Gamma / Gamma[0]
-        tauint = (np.cumsum(rho)[Wopt] - 0.5)
-        dtauint = tauint * 2 * np.sqrt((Wopt - tauint + 0.5) / self.N)
+        tauint = (numpy.cumsum(rho)[Wopt] - 0.5)
+        dtauint = tauint * 2 * numpy.sqrt((Wopt - tauint + 0.5) / self.N)
 
         return (fv, dv, ddv, tauint, dtauint, Wopt)
 
@@ -255,10 +255,10 @@ def flatten(x):
     return result
 
 
-# utility to check whether input parameters match existing simulations
+# utility to check whether inumpyut parameters match existing simulations
 def check_exists(ss, x):
     """
-        Checks if simulation data for a particular input value of ag, L/a and N
+        Checks if simulation data for a particular inumpyut value of ag, L/a and N
         exists, exists if not
     """
     if ss == 'L/a':
@@ -298,7 +298,7 @@ def disperr3(val, dval):
         if dval[i] == 0. and val[i] == 0.:
             res[i] = "0"
 
-        elif np.isnan(val[i]) or np.isnan(dval[i]):
+        elif numpy.isnan(val[i]) or numpy.isnan(dval[i]):
             res[i] = "nan"
 
         elif dval[i] == 0. and val[i] != 0.:
@@ -306,11 +306,11 @@ def disperr3(val, dval):
             res[i] = value
 
         elif dval[i] < 1:
-            location = int(np.floor(np.log10(dval[i])))
-            append_err = "(" + str(int(np.round(dval[i] * 10 **
+            location = int(numpy.floor(numpy.log10(dval[i])))
+            append_err = "(" + str(int(numpy.round(dval[i] * 10 **
                                                 (-location + dig - 1)))) + ")"
 
-            if np.abs(val[i]) < 1e-100:
+            if numpy.abs(val[i]) < 1e-100:
                 val[i] = 0.
                 location = 1
 
@@ -319,15 +319,15 @@ def disperr3(val, dval):
             res[i] = sval + append_err
 
         elif dval[i] >= 1:
-            digits = min(0, int(np.ceil(np.log10(dval[i])) - 1)) + 1
-            error = np.around(dval[i], digits)
-            value = np.around(val[i], digits)
+            digits = min(0, int(numpy.ceil(numpy.log10(dval[i])) - 1)) + 1
+            error = numpy.around(dval[i], digits)
+            value = numpy.around(val[i], digits)
             serr = "%." + str(digits) + "f(%." + str(digits) + "f)"
             serr = serr % (value, error)
             res[i] = serr  # str(value)+"("+str(error)+")"
 
         else:
-            digits = max(0, int(np.ceil(np.log10(dval[i])) - 1))
+            digits = max(0, int(numpy.ceil(numpy.log10(dval[i])) - 1))
             error = int(round(dval[i] / 10 ** digits) * 10 ** digits)
             value = round(val[i] / 10 ** digits) * 10 ** digits
             res[i] = str(value) + "(" + str(error) + ")"
@@ -416,3 +416,81 @@ def weight_centered(z, f, v):
 
         else:
             return 0
+
+
+def nice_string_print(mean, std):
+    """
+        Produce a string that represents a mean value with standard deviation such that the
+        first two significant figures of the standard deviation are kept, and the appropriate
+        number of s.f. of the mean are kept such that the smallest digit matches the second
+        digit of the standard deviation
+
+        Examples:
+        ---------
+        mean = 584
+        std = 63
+        output: "584(63)"
+
+        mean = 687.245
+        std = 8.6
+        output: "687.2(8.6)"
+
+        mean = 0.643
+        std = 21
+        output: "0(21)"
+    """
+    digit = floor(numpy.log10(abs(mean)))
+
+    # We want the standard deviation rounded to 2 s.f.
+    digit = floor(numpy.log10(abs(std)))
+    std = numpy.round(std, -digit + 1)
+
+    # Recaculate the digit for the edge case of a std that rounds up to 100
+    digit = floor(numpy.log10(abs(std + sys.float_info.epsilon)))
+
+    # Now round the mean to the same level as the standard deviation
+    mean = numpy.round(mean, -digit + 1)
+
+    # For the purpose of nice printing we want the std to print as a two digit number
+    # unless it should contain a decimal point
+    if mean == 0:
+        digit2 = 0
+
+    else:
+        digit2 = floor(numpy.log10(abs(mean)))
+
+    # We need to find the trailing zeros on the mean
+    int_mean = mean * 10 ** (-digit + 1)
+    factor = 10
+    trailing_zeros = 0
+
+    if digit != 0 and digit2 != 0:
+        while(int_mean // factor != 0):
+            if int_mean % factor == 0:
+                factor *= 10
+                trailing_zeros += 1
+
+            else:
+                break
+
+    if mean == 0:
+        if (digit < 2):
+            string = f"0({std})"
+
+        elif (digit > 10):
+            string = f"0({std:.2g})"
+
+        else:
+            string = f"0({int(std)})"
+
+    elif digit == 0:
+        string = f"{mean}{'0' * trailing_zeros}({std:.1f})"
+
+    elif digit >= 1:
+        string = f"{int(mean)}({int(std)})"
+
+    else:
+        std *= 10 ** (-digit + 1)
+        string = f"{mean}{'0' * trailing_zeros}({std:.0f})"
+
+    return string
