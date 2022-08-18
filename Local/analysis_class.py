@@ -1,23 +1,15 @@
 #!/usr/bin/env python3
-from decimal import DivisionByZero
-import enum
 import json
-from typing import Optional, List, Tuple, Callable
-from importlib.metadata import metadata
-from multiprocessing import Pool, current_process, set_forkserver_preload
-from shutil import which
-from tkinter.tix import Tree
+from typing import Optional, List, Tuple
+from multiprocessing import current_process
 import matplotlib.pyplot as plt
 from matplotlib import colors
 import matplotlib.patches as patches
 from matplotlib.ticker import AutoMinorLocator
-import pdb
 import sys
 import os
 import re
 import numpy
-from pytest import mark
-from requests import delete
 from tqdm import tqdm
 from scipy.optimize import minimize, least_squares
 import pymultinest
@@ -1039,9 +1031,9 @@ class analysis:
             plt.legend()
             plt.title(f'N = {self.N}, model={self.model_name}')
             plt.xlabel(r'$gL_{min}$')
+            plt.savefig(f'Local/graphs/BMA_study/omega_plots/gL_min_overall{self.metadata}boot{self.no_samples}_param{param}.pdf')
 
             if not combine:
-                plt.savefig(f'Local/graphs/BMA_study/omega_plots/gL_min_overall{self.metadata}boot{self.no_samples}_param{param}.pdf')
                 plt.close('all')
 
         if combine:
