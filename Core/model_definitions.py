@@ -179,7 +179,7 @@ def K2(L, N):
 
 
 # No corrections to scaling model
-def model1_1a(N, g, L, Bbar, alpha, f0, f1, lambduh, nu):
+def model1_1a(N, g, L, Bbar, alpha, f0, f1, beta, nu):
     """
         Fit anzatz with Lambda_IR = g / (4 pi N) and a single value of alpha
 
@@ -192,7 +192,7 @@ def model1_1a(N, g, L, Bbar, alpha, f0, f1, lambduh, nu):
         alpha: As written in fit anzatz
         f0: Equal to f(0) in the fit anzatz
         f1: Equal to f'(0) in the fit anzatz
-        lambduh: Coefficient multiplying the log term in the fit anzatz
+        beta: Coefficient multiplying the log term in the fit anzatz
         nu: float, scaling exponent
 
         OUTPUTS :
@@ -202,12 +202,12 @@ def model1_1a(N, g, L, Bbar, alpha, f0, f1, lambduh, nu):
     """
     result = mPT_1loop(g, N) + g ** 2 *\
         (alpha + (g * L) ** (-1 / nu) * ((Bbar - f0) / f1)
-            - lambduh * K1(g, N))
+            - beta * K1(g, N))
 
     return result
 
 
-def model2_1a(N, g, L, Bbar, alpha, f0, f1, lambduh, nu):
+def model2_1a(N, g, L, Bbar, alpha, f0, f1, beta, nu):
     """
         Fit anzatz with Lambda_IR = L and a single value of alpha
 
@@ -220,7 +220,7 @@ def model2_1a(N, g, L, Bbar, alpha, f0, f1, lambduh, nu):
         alpha: As written in fit anzatz
         f0: Equal to f(0) in the fit anzatz
         f1: Equal to f'(0) in the fit anzatz
-        lambduh: Coefficient multiplying the log term in the fit anzatz
+        beta: Coefficient multiplying the log term in the fit anzatz
         nu: float, scaling exponent
 
         OUTPUTS :
@@ -230,10 +230,10 @@ def model2_1a(N, g, L, Bbar, alpha, f0, f1, lambduh, nu):
     """
     return mPT_1loop(g, N) + g ** 2 *\
                     (alpha + (g * L) ** (-1 / nu) * ((Bbar - f0) / f1)
-                        - lambduh * K2(L, N))
+                        - beta * K2(L, N))
 
 
-def model1_2a(N, g, L, Bbar, alpha1, alpha2, f0, f1, lambduh, nu):
+def model1_2a(N, g, L, Bbar, alpha1, alpha2, f0, f1, beta, nu):
     """
         Fit anzatz with Lambda_IR = g / (4 pi N) and two values of alpha
 
@@ -247,7 +247,7 @@ def model1_2a(N, g, L, Bbar, alpha1, alpha2, f0, f1, lambduh, nu):
         alpha2: As written in fit anzatz
         f0: Equal to f(0) in the fit anzatz
         f1: Equal to f'(0) in the fit anzatz
-        lambduh: Coefficient multiplying the log term in the fit anzatz
+        beta: Coefficient multiplying the log term in the fit anzatz
         nu: float, scaling exponent
 
         OUTPUTS :
@@ -260,10 +260,10 @@ def model1_2a(N, g, L, Bbar, alpha1, alpha2, f0, f1, lambduh, nu):
 
     return mPT_1loop(g, N) + g ** 2 *\
                     (alpha + (g * L) ** (-1 / nu) * ((Bbar - f0) / f1)
-                        - lambduh * K1(g, N))
+                        - beta * K1(g, N))
 
 
-def model2_2a(N, g, L, Bbar, alpha1, alpha2, f0, f1, lambduh, nu):
+def model2_2a(N, g, L, Bbar, alpha1, alpha2, f0, f1, beta, nu):
     """
         Fit anzatz with Lambda_IR = g / (4 pi N) and two values of alpha
 
@@ -277,7 +277,7 @@ def model2_2a(N, g, L, Bbar, alpha1, alpha2, f0, f1, lambduh, nu):
         alpha2: As written in fit anzatz
         f0: Equal to f(0) in the fit anzatz
         f1: Equal to f'(0) in the fit anzatz
-        lambduh: Coefficient multiplying the log term in the fit anzatz
+        beta: Coefficient multiplying the log term in the fit anzatz
         nu: float, scaling exponent
 
         OUTPUTS :
@@ -290,18 +290,18 @@ def model2_2a(N, g, L, Bbar, alpha1, alpha2, f0, f1, lambduh, nu):
 
     return mPT_1loop(g, N) + g ** 2 *\
                     (alpha + (g * L) ** (-1 / nu) * ((Bbar - f0) / f1)
-                        - lambduh * K2(L, N))
+                        - beta * K2(L, N))
 
 
-def model27(N, g, L, Bbar, alpha, c, f0, f1, lambduh, nu, omega):
-  return mPT_1loop(g, N) + g ** 2 * (alpha + (g * L) ** (-1 / nu) * (((Bbar / (1 + c * (g * L) ** -omega)) - f0) / f1) - lambduh * K1(g, N))
+def model27(N, g, L, Bbar, alpha, c, f0, f1, beta, nu, omega):
+  return mPT_1loop(g, N) + g ** 2 * (alpha + (g * L) ** (-1 / nu) * (((Bbar / (1 + c * (g * L) ** -omega)) - f0) / f1) - beta * K1(g, N))
 
 
-def model3(N, g, L, Bbar, alpha, c, f0, f1, lambduh, nu, omega):
-  return mPT_1loop(g, N) + g ** 2 * (alpha + ((g * L) ** (-1 / nu) / (1 + c * (g * L) ** omega)) * ((Bbar - f0) / f1) - lambduh * K1(g, N))
+def model3(N, g, L, Bbar, alpha, c, f0, f1, beta, nu, omega):
+  return mPT_1loop(g, N) + g ** 2 * (alpha + ((g * L) ** (-1 / nu) / (1 + c * (g * L) ** omega)) * ((Bbar - f0) / f1) - beta * K1(g, N))
 
 
-def Has_0(N, g, L, Bbar, alpha, f0, f1, lambduh, nu):
+def Has_0(N, g, L, Bbar, alpha, f0, f1, beta, nu):
     eps1 = 1.96375
     eps3 = 2.023
     omega = 0.8
@@ -311,10 +311,10 @@ def Has_0(N, g, L, Bbar, alpha, f0, f1, lambduh, nu):
 
     S_R = (g * L) ** (1 / nu) * (1 + d1 * (g * L) ** -eps1 + d3 * (g * L) ** -eps3) + c * (g * L) ** -omega
 
-    return mPT_1loop(g, N) + g ** 2 * (alpha + ((Bbar - f0) / (f1 * S_R)) - lambduh * K1(g, N))
+    return mPT_1loop(g, N) + g ** 2 * (alpha + ((Bbar - f0) / (f1 * S_R)) - beta * K1(g, N))
 
 
-def Has_1(N, g, L, Bbar, alpha, c, f0, f1, lambduh, nu):
+def Has_1(N, g, L, Bbar, alpha, c, f0, f1, beta, nu):
     eps1 = 1.96375
     eps3 = 2.023
     omega = 0.8
@@ -323,10 +323,10 @@ def Has_1(N, g, L, Bbar, alpha, c, f0, f1, lambduh, nu):
 
     S_R = (g * L) ** (1 / nu) * (1 + d1 * (g * L) ** -eps1 + d3 * (g * L) ** -eps3) + c * (g * L) ** -omega
 
-    return mPT_1loop(g, N) + g ** 2 * (alpha + ((Bbar - f0) / (f1 * S_R)) - lambduh * K1(g, N))
+    return mPT_1loop(g, N) + g ** 2 * (alpha + ((Bbar - f0) / (f1 * S_R)) - beta * K1(g, N))
 
 
-def Has_var_0(N, g, L, Bbar, f0, f1, lambduh, nu):
+def Has_var_0(N, g, L, Bbar, f0, f1, beta, nu):
     eps1 = 1.96375
     eps3 = 2.023
     omega = 0.8
@@ -336,10 +336,10 @@ def Has_var_0(N, g, L, Bbar, f0, f1, lambduh, nu):
 
     S_R = (g * L) ** (1 / nu) * (1 + d1 * (g * L) ** -eps1 + d3 * (g * L) ** -eps3) + c * (g * L) ** -omega
 
-    return mPT_1loop(g, N) + g ** 2 * ((Bbar - f0) / (f1 * S_R) - lambduh * K1(g, N))
+    return mPT_1loop(g, N) + g ** 2 * ((Bbar - f0) / (f1 * S_R) - beta * K1(g, N))
 
 
-def Has_var_1(N, g, L, Bbar, c, f0, f1, lambduh, nu):
+def Has_var_1(N, g, L, Bbar, c, f0, f1, beta, nu):
     eps1 = 1.96375
     eps3 = 2.023
     omega = 0.8
@@ -348,10 +348,10 @@ def Has_var_1(N, g, L, Bbar, c, f0, f1, lambduh, nu):
 
     S_R = (g * L) ** (1 / nu) * (1 + d1 * (g * L) ** -eps1 + d3 * (g * L) ** -eps3) + c * (g * L) ** -omega
 
-    return mPT_1loop(g, N) + g ** 2 * ((Bbar - f0) / (f1 * S_R) - lambduh * K1(g, N))
+    return mPT_1loop(g, N) + g ** 2 * ((Bbar - f0) / (f1 * S_R) - beta * K1(g, N))
 
 
-def Has_var_var_1(N, g, L, Bbar, c, f1, lambduh, nu):
+def Has_var_var_1(N, g, L, Bbar, c, f1, beta, nu):
     eps1 = 1.96375
     eps3 = 2.023
     omega = 0.8
@@ -361,10 +361,10 @@ def Has_var_var_1(N, g, L, Bbar, c, f1, lambduh, nu):
 
     S_R = (g * L) ** (1 / nu) * (1 + d1 * (g * L) ** -eps1 + d3 * (g * L) ** -eps3) + c * (g * L) ** -omega
 
-    return mPT_1loop(g, N) + g ** 2 * ((Bbar - f0) / (f1 * S_R) - lambduh * K1(g, N))
+    return mPT_1loop(g, N) + g ** 2 * ((Bbar - f0) / (f1 * S_R) - beta * K1(g, N))
 
 
-def Has_var_2(N, g, L, Bbar, c, f0, f1, lambduh, nu, omega):
+def Has_var_2(N, g, L, Bbar, c, f0, f1, beta, nu, omega):
     eps1 = 1.96375
     eps3 = 2.023
     d3 = 0
@@ -372,26 +372,26 @@ def Has_var_2(N, g, L, Bbar, c, f0, f1, lambduh, nu, omega):
 
     S_R = (g * L) ** (1 / nu) * (1 + d1 * (g * L) ** -eps1 + d3 * (g * L) ** -eps3) + c * (g * L) ** -omega
 
-    return mPT_1loop(g, N) + g ** 2 * ((Bbar - f0) / (f1 * S_R) - lambduh * K1(g, N))
+    return mPT_1loop(g, N) + g ** 2 * ((Bbar - f0) / (f1 * S_R) - beta * K1(g, N))
 
 
-def Has_1_1(N, g, L, Bbar, alpha, c, d1, d3, f0, f1, lambduh, nu):
+def Has_1_1(N, g, L, Bbar, alpha, c, d1, d3, f0, f1, beta, nu):
     eps1 = 1.96375
     eps3 = 2.023
     omega = 0.8
 
     S_R = (g * L) ** (1 / nu) * (1 + d1 * (g * L) ** -eps1 + d3 * (g * L) ** -eps3) + c * (g * L) ** -omega
 
-    return mPT_1loop(g, N) + g ** 2 * (alpha + ((Bbar - f0) / (f1 * S_R)) - lambduh * K1(g, N))
+    return mPT_1loop(g, N) + g ** 2 * (alpha + ((Bbar - f0) / (f1 * S_R)) - beta * K1(g, N))
 
 
-def simple_1_1(N, g, L, Bbar, a, lambduh, nu):
+def simple_1_1(N, g, L, Bbar, a, beta, nu):
     Scaling = a * (g * L) ** (-1 / nu)
 
-    return mPT_1loop(g, N) + g ** 2 * (Scaling - lambduh * K1(g, N))
+    return mPT_1loop(g, N) + g ** 2 * (Scaling - beta * K1(g, N))
 
 
-def simple_1_2(N, g, L, Bbar, a1, a2, lambduh, nu):
+def simple_1_2(N, g, L, Bbar, a1, a2, beta, nu):
     Bbar_list = list(numpy.sort(list(set(list(Bbar)))))
     a = numpy.zeros_like(g)
     a[Bbar == Bbar_list[0]] = a1
@@ -399,18 +399,18 @@ def simple_1_2(N, g, L, Bbar, a1, a2, lambduh, nu):
 
     Scaling = a * (g * L) ** (-1 / nu)
 
-    return mPT_1loop(g, N) + g ** 2 * (Scaling - lambduh * K1(g, N))
+    return mPT_1loop(g, N) + g ** 2 * (Scaling - beta * K1(g, N))
 
 
-def simple_2_1(N, g, L, Bbar, a, c, lambduh, nu):
+def simple_2_1(N, g, L, Bbar, a, c, beta, nu):
     omega = 0.8
 
     Scaling = a * (g * L) ** (-1 / nu) + c * (g * L) ** (-omega - 1 / nu)
 
-    return mPT_1loop(g, N) + g ** 2 * (Scaling - lambduh * K1(g, N))
+    return mPT_1loop(g, N) + g ** 2 * (Scaling - beta * K1(g, N))
 
 
-def simple_2_2(N, g, L, Bbar, a1, a2, c1, c2, lambduh, nu):
+def simple_2_2(N, g, L, Bbar, a1, a2, c1, c2, beta, nu):
     Bbar_list = list(numpy.sort(list(set(list(Bbar)))))
     a = numpy.zeros_like(g)
     c = numpy.zeros_like(g)
@@ -424,19 +424,19 @@ def simple_2_2(N, g, L, Bbar, a1, a2, c1, c2, lambduh, nu):
 
     Scaling = a * (g * L) ** (-1 / nu) + c * (g * L) ** (omega - 2 / nu)
 
-    return mPT_1loop(g, N) + g ** 2 * (Scaling - lambduh * K1(g, N))
+    return mPT_1loop(g, N) + g ** 2 * (Scaling - beta * K1(g, N))
 
 
-def simple_3_1(N, g, L, Bbar, a, c, e, lambduh, nu):
+def simple_3_1(N, g, L, Bbar, a, c, e, beta, nu):
     omega = 0.8
     eps1 = 2.023
 
     Scaling = a * (g * L) ** (-1 / nu) + c * (g * L) ** (-omega - 1 / nu) + e * (g * L) ** (-eps1 - 1 / nu)
 
-    return mPT_1loop(g, N) + g ** 2 * (Scaling - lambduh * K1(g, N))
+    return mPT_1loop(g, N) + g ** 2 * (Scaling - beta * K1(g, N))
 
 
-def simple_3_2(N, g, L, Bbar, a1, a2, c1, c2, e1, e2, lambduh, nu):
+def simple_3_2(N, g, L, Bbar, a1, a2, c1, c2, e1, e2, beta, nu):
     Bbar_list = list(numpy.sort(list(set(list(Bbar)))))
     a = numpy.zeros_like(g)
     c = numpy.zeros_like(g)
@@ -455,20 +455,20 @@ def simple_3_2(N, g, L, Bbar, a1, a2, c1, c2, e1, e2, lambduh, nu):
 
     Scaling = a * (g * L) ** (-1 / nu) + c * (g * L) ** (omega - 2 / nu) + e * (g * L) ** (eps1 - 2 / nu)
 
-    return mPT_1loop(g, N) + g ** 2 * (Scaling - lambduh * K1(g, N))
+    return mPT_1loop(g, N) + g ** 2 * (Scaling - beta * K1(g, N))
 
 
-def simple_4_1(N, g, L, Bbar, a, c, e1, e3, lambduh, nu):
+def simple_4_1(N, g, L, Bbar, a, c, e1, e3, beta, nu):
     omega = 0.8
     eps1 = 2.023
     eps3 = 1.96375
 
     Scaling = a * (g * L) ** (-1 / nu) + c * (g * L) ** (-omega - 1 / nu) + e1 * (g * L) ** (-eps1 - 1 / nu) + e3 * (g * L) ** (-eps3 - 1 / nu)
 
-    return mPT_1loop(g, N) + g ** 2 * (Scaling - lambduh * K1(g, N))
+    return mPT_1loop(g, N) + g ** 2 * (Scaling - beta * K1(g, N))
 
 
-def test_4_2(N, g, L, Bbar, a, c1, c2, e1, e3, lambduh, nu):
+def test_4_2(N, g, L, Bbar, a, c1, c2, e1, e3, beta, nu):
     Bbar_list = list(numpy.sort(list(set(list(Bbar)))))
     c = numpy.zeros_like(g)
 
@@ -481,7 +481,7 @@ def test_4_2(N, g, L, Bbar, a, c1, c2, e1, e3, lambduh, nu):
 
     Scaling = a * (g * L) ** (-1 / nu) + c * (g * L) ** (omega - 2 / nu) + e1 * (g * L) ** (eps1 - 2 / nu) + e3 * (g * L) ** (eps3 - 2 / nu)
 
-    return mPT_1loop(g, N) + g ** 2 * (Scaling - lambduh * K1(g, N))
+    return mPT_1loop(g, N) + g ** 2 * (Scaling - beta * K1(g, N))
 
 
 def Bbar_corr2(N, g, L, Bbar, alpha, f0, f1, nu, omega, c0, c1):
