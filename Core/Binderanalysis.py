@@ -24,6 +24,7 @@
 ###############################################################################
 
 # custom libraries for this project
+from copyreg import pickle
 from parameters import *
 from MISC import *
 
@@ -36,6 +37,7 @@ import pdb
 import warnings
 import matplotlib.pyplot as plt
 import argparse
+import pickle
 from time import sleep
 
 import logging
@@ -43,8 +45,9 @@ import logging
 from parse import parse
 
 # strict: raise exceptions in case of warnings
-np.seterr(all='warn')
-warnings.filterwarnings('error')
+if __name__ == "__main__":
+    np.seterr(all='warn')
+    warnings.filterwarnings('error')
 
 
 # begin class definition ######################################################
@@ -256,7 +259,7 @@ class Critical_analysis():
 
             if failed:
                 logging.debug(f'Removing mass {self.actualm0sqlist[i]}')
-                self.actualm0sqlist.remove(self.actualm0sqlist[i])
+                self.actualm0sqlist = numpy.delete(self.actualm0sqlist, i)
                 self.actualNm0sq -= 1
 
             else:
@@ -535,6 +538,24 @@ class Critical_analysis():
             - msq is target bare mass squared for for reweighting
             - L1bs/L0bs are L1/L0 bootstrap indices
         """
+        # Try loading the result
+        run = False
+        try:
+            B = pickle.load(open(f'Local/data/Reweight_Binder/B_N{self.N}_g{self.g}_L{self.L}_m{msq:.10f}_w{self.transition_w}.pcl', 'rb'))
+
+            if sigma:
+                sigma_value = pickle.load(open(f'Local/data/Reweight_Binder/sigma_N{self.N}_g{self.g}_L{self.L}_m{msq:.10f}_w{self.transition_w}.pcl', 'rb'))
+
+        except Exception:
+            run = True
+
+        if not run:
+            if sigma:
+                return B, sigma_value
+
+            else:
+                return B
+
         # compute reweighting factor for each ensemble, then reweight, then bin
         # Use the same bootstrap indices for this
         iinclude, weights = self.compute_overlap_weighted(msq, L1bs)
@@ -628,7 +649,10 @@ class Critical_analysis():
             B = np.nan
             sigma_value = np.nan
 
+        pickle.dump(B - self.Bbar, open(f'Local/data/Reweight_Binder/B_N{self.N}_g{self.g}_L{self.L}_m{msq:.10f}_w{self.transition_w}.pcl', 'wb'))
+
         if sigma:
+            pickle.dump(sigma_value, open(f'Local/data/Reweight_Binder/sigma_N{self.N}_g{self.g}_L{self.L}_m{msq:.10f}_w{self.transition_w}.pcl', 'wb'))
             return B - self.Bbar, sigma_value
 
         return B - self.Bbar

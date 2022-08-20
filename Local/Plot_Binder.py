@@ -1,15 +1,14 @@
-from tkinter.tix import Tree
 import h5py
 import re
 import pdb
 import numpy
 import matplotlib.pyplot as plt
-from scipy.optimize.nonlin import NoConvergence
+from matplotlib import cm
+from matplotlib.lines import Line2D
 from tqdm import tqdm
 import sys
 import os
 from scipy.stats import shapiro
-from multiprocessing import Pool
 
 
 # Import from the Core directory
@@ -17,12 +16,9 @@ sys.path.append(os.getcwd() + '/../Core')
 sys.path.append(os.getcwd())
 sys.path.append(os.getcwd() + '/Core')
 
-
-from Core.model_definitions import mPT_1loop, K1
-from publication_results import get_statistical_errors_central_fit
-from Core.MISC import weight
 from Core.Binderanalysis import Critical_analysis
 from Core.parameters import *
+from Local.analysis_class import *
 
 
 def fig3_color(gL, min_gL=0.79, max_gL=76.81, func=numpy.log):
@@ -45,12 +41,10 @@ def fig3_color(gL, min_gL=0.79, max_gL=76.81, func=numpy.log):
     return color_value
 
 
-def plot_Binder(N, g_s, L_s, data_file=None, data_dir=None, minus_sign_override=True,
-                legend=True, ax=None, min_gL=3.1, max_gL=76.81, reweight=True, params=None,
-                GL_lim=0, plot_lims=None, min_traj=0, scale_with_fit=False,
-                no_reweight_samples=100, crossings_file=None, plot_crossings=False,
-                plot_histograms=False, width=0, remove_outliers=False, plot_Bounds=False):
-
+def plot_Binder(N, g_s=None, L_s=None, data_file=None, data_dir=None, minus_sign_override=True,
+                legend=True, ax=None, min_gL=3.1, reweight=True, plot_lims=None, min_traj=0,
+                scale_with_fit=False, no_reweight_samples=100, crossings_file=None, model='A',
+                plot_crossings=False, plot_histograms=False, width=0.5, remove_outliers=False):
     dont_plot_hist = False
     text_height = 0.003
 
@@ -61,35 +55,68 @@ def plot_Binder(N, g_s, L_s, data_file=None, data_dir=None, minus_sign_override=
         crossings_file = param_dict[N]["h5_data_file"]
 
     if data_dir is None:
-        data_dir = h5data_dir
+        data_dir = f'{h5data_dir}/'
 
     if ax is None:
         fig, ax = plt.subplots()
-        ax.set_xlabel(r'$\frac{m^2 - m_c^2}{g^2} x^\frac{1}{\nu}$')
+        string = r'$\frac{m^2 - m_c^2}{g^2} x^\frac{1}{\nu}$'
+
+        if model == "B" or model == "C":
+            string += r'+ c(\bar{B})x^{-\omega}'
+
+        if model == "C":
+            string += r'+ e(\bar{B})x^{-\epsilon}'
+
+        ax.set_xlabel(string)
         ax.set_ylabel(r'$B(N, g, L)$')
 
     markers = {8: 'd', 16: 'v', 32: '<', 48: '^', 64: 's', 96: 'o', 128: 'd'}
 
     f = h5py.File(f"{data_dir}{data_file}", "r")
 
-    if scale_with_fit:
-        if params is None:
-            try:
-                params = get_statistical_errors_central_fit(N)['params_central']
+    a = analysis(N, model)
+    a.fit_all_gLmin_all_Bbar()
+    a.BMM_overall(perform_checks=True)
 
-                alpha = params[0]
-                beta = params[-2]
-                nu = params[-1]
+    if g_s is None:
+        g_s = set(a.g_s)
 
-            except Exception:
-                scale_with_fit = False
+    if L_s is None:
+        L_s = set(a.L_s)
 
     for g in g_s:
-        if scale_with_fit:
-            m_crit = mPT_1loop(g, N) + g ** 2 * (alpha - beta * K1(g, N))
+        m_crit = a.mass_mean[g]
+        nu = a.mean[-1]
+        a1 = a.mean[1]
+        a2 = a.mean[2]
+
+        if model == "B" or model == "C":
+            c1 = a.mean[3]
+            c2 = a.mean[4]
+
+        if model == "C":
+            e1 = a.mean[5]
+            e2 = a.mean[6]
+
+        # Correction to scaling term
+        def correction(B):
+            omega = 0.8
+            epsilon = 2
+
+            if model == "B":
+                return -(c1 * B + c2) * (g * L) ** -omega
+
+            if model == "C":
+                return -(c1 * B + c2) * (g * L) ** -omega - (e1 * B + e2) * (g * L) ** -epsilon
+
+            # For model A there is no correction
+            else:
+                return 0
 
         for L in L_s:
-            if (g * L) <= GL_lim:
+            print(f'Running for g = {g}, L = {L}')
+
+            if (g * L) <= min_gL:
                 continue
 
             data = f[f'N={N}'][f'g={g:.2f}'][f'L={L}']
@@ -145,27 +172,31 @@ def plot_Binder(N, g_s, L_s, data_file=None, data_dir=None, minus_sign_override=
                     M4_sample = M4_binned[boot_indices[i]]
                     M2_sample = M2_binned[boot_indices[i]]
 
-                    Binder_boot[i] = 1 - (N / 3) * numpy.mean(M4_sample) / (numpy.mean(M2_sample) ** 2)
+                    Binder_boot[i] = 1 - (N / 3) * numpy.mean(M4_sample) / \
+                                                  (numpy.mean(M2_sample) ** 2)
 
                 Binders.append(Binder)
                 Binder_sigmas.append(numpy.std(Binder_boot))
 
             masses = numpy.array(masses)
+            Binders = numpy.array(Binders)
 
             if scale_with_fit:
-                ax.errorbar(((masses - m_crit) / g ** 2) * (g * L) ** (1 / nu), Binders,
-                            Binder_sigmas, marker=markers[L], label=f'g={g}, L={L}',
-                            color=fig3_color(g * L, min_gL=min_gL, max_gL=max_gL), ls='',
+                correction_term = correction(Binders)
+
+                ax.errorbar(((masses - m_crit) / g ** 2) * (g * L) ** (1 / nu) + correction_term,
+                            Binders, Binder_sigmas, marker=markers[L], label=f'g={g}, L={L}',
+                            color=fig3_color(g * L, min_gL=min_gL), ls='',
                             fillstyle='none')
 
             else:
                 ax.errorbar(masses, Binders, Binder_sigmas, marker=markers[L],
                             label=f'g={g}, L={L}',
-                            color=fig3_color(g * L, min_gL=min_gL, max_gL=max_gL), ls='',
+                            color=fig3_color(g * L, min_gL=min_gL), ls='',
                             fillstyle='none')
 
-            # Find the largest deviation between masses and assume half
-            # of this is the reweighting length
+            # Find the largest deviation between masses and assume half of this is the reweighting
+            # length
             masses = numpy.array(masses)
             max_gap = numpy.max(numpy.abs(masses[1:] - masses[:-1]))
 
@@ -180,16 +211,9 @@ def plot_Binder(N, g_s, L_s, data_file=None, data_dir=None, minus_sign_override=
                 L0bs = System.refresh_L0_bsindices()
                 L1bs = []
                 trphi2 = []
-                print("mass     lower sigma     upper sigma")
 
                 for j in range(len(System.actualm0sqlist)):
                     trphi2.append(System.phi2[str(j)])
-                    lower_extreme_sigma = (numpy.mean(trphi2[j]) - min(trphi2[j])) / numpy.std(trphi2[j])
-                    upper_extreme_sigma = (max(trphi2[j]) - numpy.mean(trphi2[j])) / numpy.std(trphi2[j])
-                    print(f"{System.actualm0sqlist[j]:.3f}        ", end="")
-                    print(f"{lower_extreme_sigma:.2f}       ", end="")
-                    print(f"{upper_extreme_sigma:.2f}")
-
                     N_ = trphi2[j].shape[0]
                     L1bs.append(numpy.arange(int(numpy.floor(N_ / System.Nbin_tauint[j]))))
 
@@ -197,24 +221,21 @@ def plot_Binder(N, g_s, L_s, data_file=None, data_dir=None, minus_sign_override=
                 results = numpy.zeros(no_reweight_samples)
                 sigmas = numpy.zeros(no_reweight_samples)
 
-                # System.plot_tr_phi2_distributions()
-                # plt.show()
-
-                for i, m in tqdm(enumerate(mass_range)):
-                    Binder_bit, sigma = System.reweight_Binder(m, L1bs, L0bs, sigma=True)
-
-                    print(Binder_bit, sigma)
-
-                    results[i] = Binder_bit
-                    sigmas[i] = sigma
+                for i, m in enumerate(mass_range):
+                    results[i], sigmas[i] = System.reweight_Binder(m, L1bs, L0bs, sigma=True)
 
                 if scale_with_fit:
-                    ax.fill_between(((mass_range - m_crit) / g ** 2) * (g * L) ** (1 / nu),
-                                    results + System.Bbar - sigmas, results + System.Bbar + sigmas)
+                    correction_term = correction(results + System.Bbar)
+
+                    ax.fill_between(((mass_range - m_crit) / g ** 2) * (g * L) ** (1 / nu) +
+                                        correction_term, results + System.Bbar - sigmas,
+                                        results + System.Bbar + sigmas, alpha=0.2,
+                                        color=fig3_color(g * L, min_gL=min_gL))
 
                 else:
                     ax.fill_between(mass_range, results + System.Bbar - sigmas,
-                                    results + System.Bbar + sigmas)
+                                    results + System.Bbar + sigmas,
+                                    color=fig3_color(g * L, min_gL=min_gL))
 
                 # Now plot the Binderanalysis fits if possible
                 if plot_crossings:
@@ -247,19 +268,23 @@ def plot_Binder(N, g_s, L_s, data_file=None, data_dir=None, minus_sign_override=
                             # ax.text(mean - 2 * std, Bbar - text_height * 3, f'mu={mean:.5e}', color='g',
                             #         alpha=0.5)
 
+                    Bbar_s = numpy.array(Bbar_s)
+
                     if Bbar_s != []:
                         if scale_with_fit:
-                            ax.errorbar(((means - m_crit) / g ** 2) * (g * L) ** (1 / nu), Bbar_s,
+                            correction_term = correction(Bbar_s)
+
+                            ax.errorbar(((means - m_crit) / g ** 2) * (g * L) ** (1 / nu)
+                                        + correction_term, Bbar_s,
                                         xerr=(stds / g ** 2) * (g * L) ** (1 / nu), ls='', color='k')
 
                         else:
                             ax.errorbar(means, Bbar_s, xerr=stds, ls='', color='k')
+                            delta = max(means) - min(means)
+                            ax.set_xlim(min(means) - 0.1 * delta, max(means) + 0.1 * delta)
 
-                        # Scale the plot appropriately
-                        ax.set_ylim(min(Bbar_s) - 0.01, max(Bbar_s) + 0.01)
-
-                        delta = max(means) - min(means)
-                        ax.set_xlim(min(means) - 0.1 * delta, max(means) + 0.1 * delta)
+                            # Scale the plot appropriately
+                            ax.set_ylim(min(Bbar_s) - 0.01, max(Bbar_s) + 0.01)
 
                     else:
                         print('No crossing points found')
@@ -344,28 +369,22 @@ def plot_Binder(N, g_s, L_s, data_file=None, data_dir=None, minus_sign_override=
                         except Exception:
                             print("Could not perform the Shapiro test")
 
-            ylims = ax.get_ylim()
-
-            if plot_Bounds:
-                # Plotting bounds is only necessary for running Binderanalysis
-                assert scale_with_fit is False
-
-                print('Plotting Bounds')
-                Lin = numpy.argwhere(numpy.array(Ls) == L)[0, 0]
-
-                try:
-                    fit_bounds = mlims[f'su{N}_{g:.1f}'][Lin]
-                    ax.vlines(fit_bounds[0], ylims[0], ylims[1], ls='--')
-                    ax.vlines(fit_bounds[1], ylims[0], ylims[1], ls='--')
-
-                except Exception:
-                    print(f'Could not find fit_bounds: L = {L}, g = {g}')
-
     f.close()
 
     if legend:
         plt.legend()
 
-    ax.set_xlim(min_m, max_m)
+    if not scale_with_fit:
+        ax.set_xlim(min_m, max_m)
 
-    return ax, scale_with_fit
+    plt.title(rf"$N = {N}$, $\nu = {nu:.2f}$, model={model}")
+
+    # Make a legend
+    legend = []
+    for L in L_s:
+        legend.append(Line2D([0], [0], marker=markers[L], color='k', label=f'L = {L}',
+                              markerfacecolor=None))
+
+    ax.legend(handles=legend, loc='lower left')
+
+    return ax

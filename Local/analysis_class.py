@@ -27,17 +27,9 @@ from Core.bayesian_functions import likelihood_maker, prior_maker
 from Core.model_definitions import *
 
 
-def make_function(function_name, omega, eps, model_type, A=4 * numpy.pi):
+def make_function(function_name, omega, eps, model_type):
     def modelA(N, g, L, Bbar, alpha, a1, a2, beta, nu):
-        a = numpy.zeros_like(g)
-
-        a_s = (a1, a2)
-
-        Bbar_list = list(numpy.sort(list(set(list(Bbar)))))
-
-        for i in range(len(Bbar_list)):
-            a[Bbar == Bbar_list[i]] = a_s[i]
-
+        a = a1 * Bbar + a2
         Scaling = a * (g * L) ** (-1 / nu)
 
         if model_type == 1:
@@ -49,17 +41,8 @@ def make_function(function_name, omega, eps, model_type, A=4 * numpy.pi):
         return mPT_1loop(g, N) + g ** 2 * (alpha + Scaling + PT)
 
     def modelB(N, g, L, Bbar, alpha, a1, a2, c1, c2, beta, nu):
-        a = numpy.zeros_like(g)
-        c = numpy.zeros_like(g)
-
-        a_s = (a1, a2)
-        c_s = (c1, c2)
-
-        Bbar_list = list(numpy.sort(list(set(list(Bbar)))))
-
-        for i in range(len(Bbar_list)):
-            a[Bbar == Bbar_list[i]] = a_s[i]
-            c[Bbar == Bbar_list[i]] = c_s[i]
+        a = a1 * Bbar + a2
+        c = c1 * Bbar + c2
 
         Scaling = a * (g * L) ** (-1 / nu) + c * (g * L) ** -(omega + 1 / nu)
 
@@ -72,20 +55,9 @@ def make_function(function_name, omega, eps, model_type, A=4 * numpy.pi):
         return mPT_1loop(g, N) + g ** 2 * (alpha + Scaling + PT)
 
     def modelC(N, g, L, Bbar, alpha, a1, a2, c1, c2, e1, e2, beta, nu):
-        a = numpy.zeros_like(g)
-        c = numpy.zeros_like(g)
-        e = numpy.zeros_like(g)
-
-        a_s = (a1, a2)
-        c_s = (c1, c2)
-        e_s = (e1, e2)
-
-        Bbar_list = list(numpy.sort(list(set(list(Bbar)))))
-
-        for i in range(len(Bbar_list)):
-            a[Bbar == Bbar_list[i]] = a_s[i]
-            c[Bbar == Bbar_list[i]] = c_s[i]
-            e[Bbar == Bbar_list[i]] = e_s[i]
+        a = a1 * Bbar + a2
+        c = c1 * Bbar + c2
+        e = e1 * Bbar + e2
 
         Scaling = a * (g * L) ** (-1 / nu) + c * (g * L) ** -(omega + 1 / nu) +\
                 e * (g * L) ** -(eps + 1 / nu)
@@ -99,17 +71,14 @@ def make_function(function_name, omega, eps, model_type, A=4 * numpy.pi):
         return mPT_1loop(g, N) + g ** 2 * (alpha + Scaling + PT)
 
     def modelD(N, g, L, Bbar, alpha1, alpha2, a1, a2, beta, nu):
-        a = numpy.zeros_like(g)
+        a = a1 * Bbar + a2
+
         alpha = numpy.zeros_like(g)
-
-        a_s = (a1, a2)
         alpha_s = (alpha1, alpha2)
-
         Bbar_list = list(numpy.sort(list(set(list(Bbar)))))
 
         for i in range(len(Bbar_list)):
             alpha[Bbar == Bbar_list[i]] = alpha_s[i]
-            a[Bbar == Bbar_list[i]] = a_s[i]
 
         Scaling = a * (g * L) ** (-1 / nu)
 
@@ -122,15 +91,7 @@ def make_function(function_name, omega, eps, model_type, A=4 * numpy.pi):
         return mPT_1loop(g, N) + g ** 2 * (alpha + Scaling + PT)
 
     def modelGA(N, g, L, Bbar, alpha, a1, a2, beta1, beta2, nu):
-        a = numpy.zeros_like(g)
-
-        a_s = (a1, a2)
-
-        Bbar_list = list(numpy.sort(list(set(list(Bbar)))))
-
-        for i in range(len(Bbar_list)):
-            a[Bbar == Bbar_list[i]] = a_s[i]
-
+        a = a1 * Bbar + a2
         Scaling = a * (g * L) ** (-1 / nu)
 
         if model_type == 1:
@@ -147,17 +108,8 @@ def make_function(function_name, omega, eps, model_type, A=4 * numpy.pi):
         return mPT_1loop(g, N) + g ** 2 * (alpha + Scaling + PT)
 
     def modelGB(N, g, L, Bbar, alpha, a1, a2, c1, c2, beta1, beta2, nu):
-        a = numpy.zeros_like(g)
-        c = numpy.zeros_like(g)
-
-        a_s = (a1, a2)
-        c_s = (c1, c2)
-
-        Bbar_list = list(numpy.sort(list(set(list(Bbar)))))
-
-        for i in range(len(Bbar_list)):
-            a[Bbar == Bbar_list[i]] = a_s[i]
-            c[Bbar == Bbar_list[i]] = c_s[i]
+        a = a1 * Bbar + a2
+        c = c1 * Bbar + c2
 
         Scaling = a * (g * L) ** (-1 / nu) + c * (g * L) ** -(omega + 1 / nu)
 
@@ -173,20 +125,9 @@ def make_function(function_name, omega, eps, model_type, A=4 * numpy.pi):
         return mPT_1loop(g, N) + g ** 2 * (alpha + Scaling + PT)
 
     def modelGC(N, g, L, Bbar, alpha, a1, a2, c1, c2, e1, e2, beta1, beta2, nu):
-        a = numpy.zeros_like(g)
-        c = numpy.zeros_like(g)
-        e = numpy.zeros_like(g)
-
-        a_s = (a1, a2)
-        c_s = (c1, c2)
-        e_s = (e1, e2)
-
-        Bbar_list = list(numpy.sort(list(set(list(Bbar)))))
-
-        for i in range(len(Bbar_list)):
-            a[Bbar == Bbar_list[i]] = a_s[i]
-            c[Bbar == Bbar_list[i]] = c_s[i]
-            e[Bbar == Bbar_list[i]] = e_s[i]
+        a = a1 * Bbar + a2
+        c = c1 * Bbar + c2
+        e = e1 * Bbar + e2
 
         Scaling = a * (g * L) ** (-1 / nu) + c * (g * L) ** -(omega + 1 / nu) +\
                 e * (g * L) ** -(eps + 1 / nu)
@@ -203,17 +144,14 @@ def make_function(function_name, omega, eps, model_type, A=4 * numpy.pi):
         return mPT_1loop(g, N) + g ** 2 * (alpha + Scaling + PT)
 
     def modelGD(N, g, L, Bbar, alpha1, alpha2, a1, a2, beta1, beta2, nu):
-        a = numpy.zeros_like(g)
+        a = a1 * Bbar + a2
+
         alpha = numpy.zeros_like(g)
-
-        a_s = (a1, a2)
         alpha_s = (alpha1, alpha2)
-
         Bbar_list = list(numpy.sort(list(set(list(Bbar)))))
 
         for i in range(len(Bbar_list)):
             alpha[Bbar == Bbar_list[i]] = alpha_s[i]
-            a[Bbar == Bbar_list[i]] = a_s[i]
 
         Scaling = a * (g * L) ** (-1 / nu)
 
@@ -228,29 +166,10 @@ def make_function(function_name, omega, eps, model_type, A=4 * numpy.pi):
 
         return mPT_1loop(g, N) + g ** 2 * (alpha + Scaling + PT)
 
-    if function_name == "A":
-        return modelA
+    function_dict = {"A": modelA, "B": modelB, "C": modelC, "D": modelD,
+                     "GA": modelGA, "GB": modelGB, "GC": modelGC, "GD": modelGD}
 
-    if function_name == "B":
-        return modelB
-
-    if function_name == "C":
-        return modelC
-
-    if function_name == "D":
-        return modelD
-
-    if function_name == "GA":
-        return modelGA
-
-    if function_name == "GB":
-        return modelGB
-
-    if function_name == "GC":
-        return modelGC
-
-    if function_name == "GD":
-        return modelGD
+    return function_dict[function_name]
 
 
 def run_minimizer(cov_inv, x0, model, method, res_function):
@@ -284,9 +203,8 @@ def color_gs(g):
 
 
 class analysis:
-    def __init__(self, N, model_name, x0_dict=x0_dict, omega=0.8, eps=2, A=4 * numpy.pi,
-                 model_type=1, width=0.5, filename=None, no_samples=200, gL_max=numpy.inf,
-                 bayes_points=400, scale=10):
+    def __init__(self, N, model_name, x0_dict=x0_dict, omega=0.8, eps=2, model_type=1, width=0.5,
+                 filename=None, no_samples=200, bayes_points=400, scale=10):
         self.width = width
         if filename is None:
             filename = f'h5data/width/width_{width:.1f}.h5'
@@ -298,7 +216,7 @@ class analysis:
         self.evidence = None
         self.model_name = model_name
         self.model_type = model_type
-        self.model = make_function(model_name, omega, eps, model_type, A=A)
+        self.model = make_function(model_name, omega, eps, model_type)
         self.filename = filename
         self.N = N
         self.x0_dict = x0_dict
@@ -356,9 +274,7 @@ class analysis:
         self.var = None
 
         # For the purpose of saving data
-        self.metadata = f"N{N}_model{model_name}{model_type}_w{width}_" + \
-                        f"o{omega:.1f}_e{eps:.1f}_A{A:.1f}"
-
+        self.metadata = f"N{N}_model{model_name}{model_type}_w{width}_o{omega:.1f}_e{eps:.1f}"
         self.bayes_points = bayes_points
 
     def load_data(self):
@@ -752,7 +668,6 @@ class analysis:
         i = numpy.argwhere(numpy.array(self.Bbar_list) == Bbar)[0][0]
 
         p_values = chisq_pvalue(self.dof_matrix[i], self.chisqs[i])
-
         var_s = numpy.std(self.full_results[i], axis=1) ** 2
 
         ps = self.BMM_specific(Bbar, **kwargs)
@@ -761,7 +676,6 @@ class analysis:
         ps = ps / numpy.sum(ps)
 
         mean = self.mean_pieces[Bbar]
-
         var = self.var_pieces[Bbar]
 
         include = ps > 0
@@ -787,11 +701,12 @@ class analysis:
             else:
                 ax = ax_in
 
-            sc = ax.scatter(self.gL_mins[include], self.means[i, include, k], marker='_', color=color)
+            sc = ax.scatter(self.gL_mins[include], self.means[i, include, k], marker='_',
+                            color=color)
             color = sc.get_facecolors()[0]
 
-            ax.errorbar(self.gL_mins[include], self.means[i, include, k], numpy.sqrt(var_s[include, k]), ls='',
-                        color=color)
+            ax.errorbar(self.gL_mins[include], self.means[i, include, k],
+                        numpy.sqrt(var_s[include, k]), ls='', color=color)
 
             ax.fill_between([min(self.gL_mins), max(self.gL_mins)],
                         [mean[k] - numpy.sqrt(var[k]), mean[k] - numpy.sqrt(var[k])],
@@ -839,8 +754,8 @@ class analysis:
                 self.mean.append(numpy.average(self.means[..., i], weights=self.P_s, axis=(0, 1)))
 
                 self.var.append(numpy.average(var_s[..., i], weights=self.P_s, axis=(0, 1)) +
-                                numpy.average(self.means[..., i] ** 2, weights=self.P_s, axis=(0, 1))
-                            - self.mean[i] ** 2)
+                                numpy.average(self.means[..., i] ** 2, weights=self.P_s,
+                                              axis=(0, 1)) - self.mean[i] ** 2)
 
         except ZeroDivisionError:
             self.mean = [0, ] * len(self.param_names)
@@ -850,19 +765,22 @@ class analysis:
         # of using alpha_1 or alpha_2. We will choose to use alpha_1 here - the difference between
         # should be negligable. As in the PRL we choose to focus on predictions for g = 0.1
         if self.model_type == 1:
-            g = 0.1
+            self.mass_mean = {}
+            self.mass_var = {}
             alphas = self.full_results[..., 0]
             betas = self.full_results[..., -2]
 
-            critical_masses = mPT_1loop(0.1, self.N) + g ** 2 * (alphas - betas * K1(g, self.N))
-            means = numpy.mean(critical_masses, axis=2)
-            var_s = numpy.std(critical_masses, axis=2) ** 2
+            for g in set(self.g_s):
+                critical_masses = mPT_1loop(g, self.N) + g ** 2 * (alphas -
+                                                                     betas * K1(g, self.N))
+                means = numpy.mean(critical_masses, axis=2)
+                var_s = numpy.std(critical_masses, axis=2) ** 2
 
-            self.mass_mean = numpy.average(means, weights=self.P_s, axis=(0, 1))
+                self.mass_mean[g] = numpy.average(means, weights=self.P_s, axis=(0, 1))
 
-            self.mass_var = numpy.average(var_s, weights=self.P_s, axis=(0, 1)) + \
-                            numpy.average(means ** 2, weights=self.P_s, axis=(0, 1)) - \
-                            self.mass_mean ** 2
+                self.mass_var[g] = numpy.average(var_s, weights=self.P_s, axis=(0, 1)) + \
+                                   numpy.average(means ** 2, weights=self.P_s, axis=(0, 1)) - \
+                                   self.mass_mean[g] ** 2
 
     def BMM_plot_overall(self, plot_dict={'nu': [0, 1]}, show=False, params=None):
         mean_pieces = numpy.zeros((len(self.Bbar_pieces), len(self.param_names)))
