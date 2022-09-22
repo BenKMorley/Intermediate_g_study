@@ -18,15 +18,16 @@ models = ['A', 'B', 'C', 'D']
 Ns = [2, 3, 4, 5]
 model_type = 1
 run_params = []
-parallel = True
+parallel = False
+g = 0.1  # Show the g = 0.1 data
 
 for N in Ns:
     for model in models:
         run_params.append((N, model))
 
 
-def run(run_params):
-    N, model = run_params
+def run(params):
+    N, model = params
     a = analysis(N, model, model_type=model_type)
     a.fit_all_gLmin_all_Bbar()
 
@@ -37,11 +38,14 @@ if parallel:
 
 else:
     for params in run_params:
-        run(run_params)
+        run(params)
 
 
 print('Keeping all fits')
 print('_' * 100)
+
+print(rf'N & model & $m_c^2(g=0.1)$\\')
+
 for N in Ns:
     for model in models:
         a = analysis(N, model, model_type=model_type)
@@ -49,13 +53,15 @@ for N in Ns:
         a.BMM_overall()
         print(rf'{N} & {model} & ', end='')
 
-        string_piece = nice_string_print(a.mass_mean, numpy.sqrt(a.mass_var))
+        string_piece = nice_string_print(a.mass_mean[g], numpy.sqrt(a.mass_var[g]))
 
-        print(rf'$m_c^2(g=0.1)$: ${string_piece}$ \\')
+        print(rf'${string_piece}$ \\')
 
 print('', end='\n\n\n')
 print('Removing Insignificant Fits')
 print('_' * 100)
+
+print(rf'N & model & $m_c^2(g=0.1)$\\')
 
 for N in Ns:
     for model in models:
@@ -64,6 +70,6 @@ for N in Ns:
         a.BMM_overall(perform_checks=True)
         print(rf'{N} & {model} & ', end='')
 
-        string_piece = nice_string_print(a.mass_mean, numpy.sqrt(a.mass_var))
+        string_piece = nice_string_print(a.mass_mean[g], numpy.sqrt(a.mass_var[g]))
 
         print(rf'$m_c^2(g=0.1)$: ${string_piece}$ \\')

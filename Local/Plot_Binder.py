@@ -59,16 +59,9 @@ def plot_Binder(N, g_s=None, L_s=None, data_file=None, data_dir=None, minus_sign
 
     if ax is None:
         fig, ax = plt.subplots()
-        string = r'$\frac{m^2 - m_c^2}{g^2} x^\frac{1}{\nu}$'
 
-        if model == "B" or model == "C":
-            string += r'+ c(\bar{B})x^{-\omega}'
-
-        if model == "C":
-            string += r'+ e(\bar{B})x^{-\epsilon}'
-
-        ax.set_xlabel(string)
-        ax.set_ylabel(r'$B(N, g, L)$')
+        ax.set_xlabel(r'$m^2_r$')
+        ax.set_ylabel(r'$B$')
 
     markers = {8: 'd', 16: 'v', 32: '<', 48: '^', 64: 's', 96: 'o', 128: 'd'}
 
@@ -383,7 +376,7 @@ def plot_Binder(N, g_s=None, L_s=None, data_file=None, data_dir=None, minus_sign
     legend = []
     for L in L_s:
         legend.append(Line2D([0], [0], marker=markers[L], color='k', label=f'L = {L}',
-                              markerfacecolor=None))
+                              markerfacecolor="None", linestyle=''))
 
     ax.legend(handles=legend, loc='lower left')
 

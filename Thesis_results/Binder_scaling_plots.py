@@ -14,7 +14,7 @@ from Local.analysis_class import *
 from Local.Plot_Binder import plot_Binder
 
 
-models = ["A", "B", "C"]
+models = ["A", "B", "C", "D"]
 Ns = [2, 3, 4, 5]
 model_type = 1
 const_Bbar = True
@@ -26,7 +26,7 @@ scale_with_fit = True
 w = 0.5
 crossings_file = f"width/width_{w:.1f}.h5"
 make_data = False
-gL_min = 7.9
+gL_min = 3.9
 
 
 # Code from https://stackoverflow.com/questions/44970010/axes-class-set-explicitly-size-width-height-of-axes-in-given-units
@@ -86,16 +86,8 @@ for N in Ns:
             plot_crossings=plot_crossings, plot_histograms=plot_histograms, legend=False, width=w,
             crossings_file=crossings_file, scale_with_fit=scale_with_fit)
 
-        x_axis_string = r'$((m_c^2 - m^2) / g^2) x^{1 / \nu}'
-        if model in ["B", "C"]:
-            x_axis_string += r'+ c(\bar{B})x^{-\omega}'
-
-        if model == "C":
-            x_axis_string += r'+ e(\bar{B})x^{-\epsilon}'
-
-        x_axis_string += r'$'
-
-        ax.set_xlabel(x_axis_string)
+        ax.set_xlabel(r'$m^2_r$')
+        ax.set_ylabel(r'$B$')
 
         if N == 2:
             ax.set_xlim(-3, 3)

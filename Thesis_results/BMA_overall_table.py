@@ -36,7 +36,7 @@ if parallel:
 
 else:
     for params in run_params:
-        run(run_params)
+        run(params)
 
 
 print('Keeping all fits')

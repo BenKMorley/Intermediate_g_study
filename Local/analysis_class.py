@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import json
+from copy import deepcopy
 from typing import Optional, List, Tuple
 from multiprocessing import current_process
 import matplotlib.pyplot as plt
@@ -378,8 +379,8 @@ class analysis:
         L_s = self.L_s[keep]
         m_s = self.m_s[keep]
 
-        cov_matrix, different_ensemble = cov_matrix_calc(g_s, L_s, m_s, samples)
-        cov_1_2 = numpy.linalg.cholesky(cov_matrix)
+        self.cov_matrix, different_ensemble = cov_matrix_calc(g_s, L_s, m_s, samples)
+        cov_1_2 = numpy.linalg.cholesky(self.cov_matrix)
 
         # Record this so we can use it repeatedly in the bootstrap
         self.cov_inv = numpy.linalg.inv(cov_1_2)
@@ -387,12 +388,13 @@ class analysis:
     def fit(self, Bbar: float, gL_min: float, gL_max: float = numpy.inf, plot: bool = False,
             m_s: Optional[numpy.ndarray] = None, find_cov: bool = True,
             print_info: bool = False, ) -> Tuple[List[float], float, int]:
+        index = numpy.argwhere(self.Bbar_list == Bbar)
+        Bbar_s = [Bbar, self.Bbar_list[index + 1]]
+
         if find_cov:
             self.find_cov_matrix(Bbar, gL_min, gL_max=gL_max)
 
         keep = self.find_keep(Bbar, gL_min, gL_max=gL_max)
-
-        samples = self.samples[keep]
         g_s = self.g_s[keep]
         L_s = self.L_s[keep]
         Bbar_s = self.B_s[keep]
@@ -422,18 +424,30 @@ class analysis:
 
             print(string)
 
+        g_s_list = list(set(g_s))
+        g_s_list.sort()
+
         if plot:
-            for g in list(set(g_s)):
-                stds = numpy.sqrt(1 / numpy.sqrt(numpy.diag(self.cov_inv)[g_s == g]))
-                p = plt.errorbar(1 / (g * L_s[g_s == g]), m_s[g_s == g] / g, stds, ls='')
+            for g in g_s_list:
+                stds = numpy.sqrt(numpy.diag(self.cov_matrix)[g_s == g])
+                p = plt.errorbar(1 / (g * L_s[g_s == g]), m_s[g_s == g] / g, stds, ls='',
+                                 label=f'g = {g}')
 
-                L_s_curve = numpy.linspace(min(L_s), max(L_s), 1000)
-                results = self.model(self.N, numpy.ones_like(
-                    L_s_curve) * g, L_s_curve, numpy.ones_like(L_s_curve) * Bbar, *res.x)
-                plt.plot(1 / (g * L_s_curve), results /
-                         g, color=p[0].get_color())
+                plt.scatter(1 / (g * L_s[g_s == g]), m_s[g_s == g] / g, marker='o',
+                            facecolors='none', edgecolors=p[0].get_color())
 
-            plt.close()
+                L_s_curve = numpy.linspace(min(L_s[g_s == g]) * 0.9, max(L_s[g_s == g]) * 1.1, 1000)
+
+                for Bbar in Bbar_s:
+                    results = self.model(self.N, numpy.ones_like(L_s_curve) * g, L_s_curve,
+                                         numpy.ones_like(L_s_curve) * Bbar, *res.x)
+                    plt.plot(1 / (g * L_s_curve), results /
+                         g, color=p[0].get_color(), linewidth=0.5)
+
+            plt.legend()
+
+            plt.xlabel(r'$1 / gL$')
+            plt.ylabel(r'$m^2 / g$')
 
         return res.x, chisq
 
@@ -622,10 +636,31 @@ class analysis:
 
         return ps
 
-    def BMM_specific_gL_min(self, gL_min, perform_checks=False):
+    def BMM_specific_gLmin(self, gL_min, perform_checks=False, refactor=False, plot=False,
+                           params=None):
+        if refactor:
+            full_results = deepcopy(self.full_results)
+
+            if self.model_name == "B":
+                idx1 = numpy.argwhere(numpy.array(self.param_names) == 'c1')[0][0]
+                idx2 = numpy.argwhere(numpy.array(self.param_names) == 'c2')[0][0]
+
+                Bbar_s = self.Bbar_list
+
+                Bbar_s = Bbar_s.reshape((len(Bbar_s), 1, 1))
+
+                for i, s in enumerate(full_results.shape[1:-1]):
+                    Bbar_s = Bbar_s.repeat(s, axis=i + 1)
+
+                full_results[..., idx1] = Bbar_s[:-1] * self.full_results[..., idx1] + self.full_results[..., idx2]
+                full_results[..., idx2] = Bbar_s[1:] * self.full_results[..., idx1] + self.full_results[..., idx2]
+
+        else:
+            full_results = self.full_results
+
         i = numpy.argwhere(numpy.array(self.gL_mins) == gL_min)[0][0]
 
-        var_s = numpy.std(self.full_results[:, i], axis=1) ** 2
+        var_s = numpy.std(full_results[:, i], axis=1) ** 2
 
         # Find the probabilities of the models given this data
         exponents = -0.5 * self.chisqs[:, i] + self.dof_matrix[:, i]
@@ -659,6 +694,30 @@ class analysis:
 
         self.mean_pieces_gL[gL_min] = mean
         self.var_pieces_gL[gL_min] = var
+
+        if plot:
+            if params is None:
+                params = self.param_names
+
+            for k, param in enumerate(self.param_names):
+                if param not in params:
+                    continue
+
+                fig, ax = plt.subplots()
+
+                sc = ax.scatter(self.Bbar_pieces, self.means[:, i, k], marker='_')
+                color = sc.get_facecolors()[0]
+
+                ax.errorbar(self.Bbar_pieces, self.means[:, i, k],
+                            numpy.sqrt(var_s[:, k]), ls='', color=color)
+
+                ax.fill_between([min(self.Bbar_pieces), max(self.Bbar_pieces)],
+                            [mean[k] - numpy.sqrt(var[k]), mean[k] - numpy.sqrt(var[k])],
+                            [mean[k] + numpy.sqrt(var[k]), mean[k] + numpy.sqrt(var[k])],
+                            alpha=0.1, color=color, label=f'{param}')
+
+                ax.set_xlabel(r'$\bar{B}$')
+                ax.set_ylabel(rf'${param_names_latex[param]}$')
 
         return ps
 
@@ -844,7 +903,7 @@ class analysis:
 
         for i, gL_min in enumerate(self.gL_mins):
             if gL_min not in self.mean_pieces_gL:
-                self.BMM_specific_gL_min(gL_min)
+                self.BMM_specific_gLmin(gL_min)
 
             mean_pieces[i] = self.mean_pieces_gL[gL_min]
             var_pieces[i] = self.var_pieces_gL[gL_min]
