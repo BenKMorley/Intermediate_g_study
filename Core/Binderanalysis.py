@@ -24,7 +24,6 @@
 ###############################################################################
 
 # custom libraries for this project
-from copyreg import pickle
 from parameters import *
 from MISC import *
 
@@ -112,15 +111,11 @@ class Critical_analysis():
         self.Nboot = Nboot
         self.msq_final = 0.
         self.dmsq_final = 0.
-        self.datadir = h5data_dir
+        self.datadir = 'h5data/'
         self.freeze_inner_boot = False
         self.use_128 = True  # If True use numpy.float128 data type
         self.MCMCdatafile = param_dict[N]["MCMC_data_file"]
-
-        if filename is None:
-            self.resultsfile = param_dict[N]["h5_data_file"]
-        else:
-            self.resultsfile = filename
+        self.filename = f'width/width_{width}.h5'
 
         self.therm = param_dict[N]["therm"]  # Configurations to remove due to thermalization
         self.restrict = restrict
@@ -538,23 +533,32 @@ class Critical_analysis():
             - msq is target bare mass squared for for reweighting
             - L1bs/L0bs are L1/L0 bootstrap indices
         """
-        # Try loading the result
-        run = False
-        try:
-            B = pickle.load(open(f'Local/data/Reweight_Binder/B_N{self.N}_g{self.g}_L{self.L}_m{msq:.10f}_w{self.transition_w}.pcl', 'rb'))
+        # # Try loading the result
+        # run = False
+        # filename = f'Local/data/Reweight_Binder/B_N{self.N}_g{self.g}_L{self.L}_m{msq:.10f}_w{self.transition_w}'
 
-            if sigma:
-                sigma_value = pickle.load(open(f'Local/data/Reweight_Binder/sigma_N{self.N}_g{self.g}_L{self.L}_m{msq:.10f}_w{self.transition_w}.pcl', 'rb'))
+        # if self.use_128 is False:
+        #     filename += '_float64'
 
-        except Exception:
-            run = True
+        # if sigma:
+        #     sfilename = filename + '_sigma.pcl'
 
-        if not run:
-            if sigma:
-                return B, sigma_value
+        # filename += '.pcl'
 
-            else:
-                return B
+        # try:
+        #     sigma_value = pickle.load(open(sfilename, 'rb'))
+
+        #     B = pickle.load(open(filename, 'rb'))
+
+        # except Exception:
+        #     run = True
+
+        # if not run:
+        #     if sigma:
+        #         return B, sigma_value
+
+        #     else:
+        #         return B
 
         # compute reweighting factor for each ensemble, then reweight, then bin
         # Use the same bootstrap indices for this
@@ -649,10 +653,10 @@ class Critical_analysis():
             B = np.nan
             sigma_value = np.nan
 
-        pickle.dump(B - self.Bbar, open(f'Local/data/Reweight_Binder/B_N{self.N}_g{self.g}_L{self.L}_m{msq:.10f}_w{self.transition_w}.pcl', 'wb'))
+        # pickle.dump(B - self.Bbar, open(f'Local/data/Reweight_Binder/B_N{self.N}_g{self.g}_L{self.L}_m{msq:.10f}_w{self.transition_w}.pcl', 'wb'))
 
         if sigma:
-            pickle.dump(sigma_value, open(f'Local/data/Reweight_Binder/sigma_N{self.N}_g{self.g}_L{self.L}_m{msq:.10f}_w{self.transition_w}.pcl', 'wb'))
+            # pickle.dump(sigma_value, open(f'Local/data/Reweight_Binder/sigma_N{self.N}_g{self.g}_L{self.L}_m{msq:.10f}_w{self.transition_w}.pcl', 'wb'))
             return B - self.Bbar, sigma_value
 
         return B - self.Bbar
@@ -696,7 +700,7 @@ class Critical_analysis():
             logging.error("No crossing point found -- aborting")
             exit()
 
-        logging.info("Crossing point central value found at mc^2=%e" % (mcsq))
+        logging.info(f"Crossing point central value found at mc^2={mcsq:.10f}")
 
         # compute crossing under Bootstrap
         logging.info(f"Now starting bootstrap with {self.Nboot} samples:")
@@ -720,7 +724,7 @@ class Critical_analysis():
 
             bres.append(mcsq_i)
 
-            # Find the mass points that led to this crossing point determination
+            # Find the mass points that lead to each crossing point determination
             iinclude, weights = self.compute_overlap_weighted(mcsq_i, L1bs)
             iinclude = tuple(iinclude)
 
@@ -732,15 +736,12 @@ class Critical_analysis():
 
             logging.debug(bres_dict)
 
-            # Record the number of mass points that contributed
-            B = self.reweight_Binder(mcsq_i, L1bs, L0bs)
-
-            logging.info(f"bs sample {i}: mc^2={mcsq_i:e}")
+            logging.info(f"bs sample {i}: mc^2={mcsq_i:.10f}")
 
         # compute the BS error
         dmcsq = np.sqrt(np.real(np.sum((np.array(bres) - mcsq) ** 2, 0))) / np.sqrt(self.Nboot)
 
-        logging.info(f"result {mcsq:.6f} +/- {dmcsq:.6f}")
+        logging.info(f"result {mcsq:.10f} +/- {dmcsq:.10f}")
         logging.info(separator)
 
         self.msq_final = mcsq
@@ -795,7 +796,7 @@ def compute_Bindercrossing(N, g, Bbar, Lin, **kwargs):
     check_exists('L/a', Lin)
     check_exists('ag', g)
     check_exists('N', N)
-    iLin = np.where(np.array(Ls) == int(Lin))[0][0]
+    iLin = np.where(np.array(param_dict[N]["L_s"]) == int(Lin))[0][0]
 
     # instantiate analysis class
     run1 = Critical_analysis(N, g, Ls[iLin], **kwargs)
@@ -877,9 +878,19 @@ if __name__ == "__main__":
     width = kwargs['width']
 
     # # Initiate logger
-    logging.basicConfig(filename=f'{logging_base_name}N{args.N}_g{args.g}_L{args.L}_' +
-        f'Bbar{args.Bbar}_w{width}.txt', level=logging.INFO,
-        format='%(asctime)s :: %(levelname)s :: %(message)s')
+    log_file = f'{logging_base_name}N{args.N}_g{args.g}_L{args.L}_Bbar{args.Bbar}_w{width}.txt'
+
+    rootLogger = logging.getLogger()
+    logFormatter = logging.Formatter('%(asctime)s :: %(levelname)s :: %(message)s')
+
+    fileHandler = logging.FileHandler(log_file)
+    fileHandler.setFormatter(logFormatter)
+    rootLogger.addHandler(fileHandler)
+
+    consoleHandler = logging.StreamHandler(sys.stdout)
+    consoleHandler.setFormatter(logFormatter)
+    rootLogger.addHandler(consoleHandler)
+    rootLogger.setLevel(logging.INFO)
 
     ###########################################################################
     # call main routine

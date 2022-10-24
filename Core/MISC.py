@@ -408,10 +408,10 @@ def weight_centered(z, f, v):
         if z < f - v / 2:
             return 1
 
-        elif z <= f:
+        elif z < f:
             return 1 - a * (z - (f - v / 2)) ** 2
 
-        elif z <= f + v / 2:
+        elif z < f + v / 2:
             return a * (f + v / 2 - z) ** 2
 
         else:

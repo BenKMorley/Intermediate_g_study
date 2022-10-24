@@ -21,7 +21,10 @@ from Core.parameters import *
 from Local.analysis_class import *
 
 
-def fig3_color(gL, min_gL=0.79, max_gL=76.81, func=numpy.log):
+def fig3_color(gL, min_gL=0.79, max_gL=76.81, func=numpy.log, color=None):
+    if color is not None:
+        return color
+
     top = numpy.array([0.5, 0, 0.7])
     bottom = numpy.array([1, 1, 0])
 
@@ -44,7 +47,8 @@ def fig3_color(gL, min_gL=0.79, max_gL=76.81, func=numpy.log):
 def plot_Binder(N, g_s=None, L_s=None, data_file=None, data_dir=None, minus_sign_override=True,
                 legend=True, ax=None, min_gL=3.1, reweight=True, plot_lims=None, min_traj=0,
                 scale_with_fit=False, no_reweight_samples=100, crossings_file=None, model='A',
-                plot_crossings=False, plot_histograms=False, width=0.5, remove_outliers=False):
+                plot_crossings=False, plot_histograms=False, width=0.5, remove_outliers=False,
+                use_128=True, color=None, color_dict=None):
     dont_plot_hist = False
     text_height = 0.003
 
@@ -122,6 +126,7 @@ def plot_Binder(N, g_s=None, L_s=None, data_file=None, data_dir=None, minus_sign
             System.MCMCdatafile = data_file
             System.datadir = data_dir
             System.min_traj = min_traj
+            System.use_128 = use_128
 
             System.h5load_data()
 
@@ -179,17 +184,17 @@ def plot_Binder(N, g_s=None, L_s=None, data_file=None, data_dir=None, minus_sign
 
                 ax.errorbar(((masses - m_crit) / g ** 2) * (g * L) ** (1 / nu) + correction_term,
                             Binders, Binder_sigmas, marker=markers[L], label=f'g={g}, L={L}',
-                            color=fig3_color(g * L, min_gL=min_gL), ls='',
+                            color=fig3_color(g * L, min_gL=min_gL, color=color), ls='',
                             fillstyle='none')
 
             else:
                 ax.errorbar(masses, Binders, Binder_sigmas, marker=markers[L],
                             label=f'g={g}, L={L}',
-                            color=fig3_color(g * L, min_gL=min_gL), ls='',
+                            color=fig3_color(g * L, min_gL=min_gL, color=color), ls='',
                             fillstyle='none')
 
-            # Find the largest deviation between masses and assume half of this is the reweighting
-            # length
+            # Find the largest deviation between masses and assume
+            # half of this is the reweighting length
             masses = numpy.array(masses)
             max_gap = numpy.max(numpy.abs(masses[1:] - masses[:-1]))
 
@@ -223,12 +228,12 @@ def plot_Binder(N, g_s=None, L_s=None, data_file=None, data_dir=None, minus_sign
                     ax.fill_between(((mass_range - m_crit) / g ** 2) * (g * L) ** (1 / nu) +
                                         correction_term, results + System.Bbar - sigmas,
                                         results + System.Bbar + sigmas, alpha=0.2,
-                                        color=fig3_color(g * L, min_gL=min_gL))
+                                        color=fig3_color(g * L, min_gL=min_gL, color=color))
 
                 else:
                     ax.fill_between(mass_range, results + System.Bbar - sigmas,
-                                    results + System.Bbar + sigmas,
-                                    color=fig3_color(g * L, min_gL=min_gL))
+                                    results + System.Bbar + sigmas, alpha=0.2,
+                                    color=fig3_color(g * L, min_gL=min_gL, color=color))
 
                 # Now plot the Binderanalysis fits if possible
                 if plot_crossings:
@@ -287,7 +292,8 @@ def plot_Binder(N, g_s=None, L_s=None, data_file=None, data_dir=None, minus_sign
                     color_cycle = plt.rcParams['axes.prop_cycle'].by_key()['color']
                     current_color_index = 0
 
-                    color_dict = {}
+                    if color_dict is None:
+                        color_dict = {}
 
                     cross_file = h5py.File(f'{data_dir}{crossings_file}', 'r')
                     cross_data = cross_file[f'N={N}'][f'g={g:.2f}'][f'L={L}']
@@ -324,6 +330,7 @@ def plot_Binder(N, g_s=None, L_s=None, data_file=None, data_dir=None, minus_sign
                         m = m[m != 'central']
                         m = m[m != 'bs_bins']
                         m = m[m != 'std']
+                        labels = []
 
                         # Data that doesn't have contribution splitting
                         if len(m) == 0:
@@ -340,24 +347,41 @@ def plot_Binder(N, g_s=None, L_s=None, data_file=None, data_dir=None, minus_sign
 
                                 heights, sub_bins = numpy.histogram(sub_data, bins=bins)
 
+                                label = f'{sub_key}'
                                 if sub_key not in color_dict:
                                     color_dict[sub_key] = color_cycle[current_color_index % len(color_cycle)]
                                     current_color_index += 1
 
                                     # Add combination of reweighting contributions to the legend
-                                    ax.bar(sub_bins[:-1], heights / 10000, bottom=Bbar,
-                                        width=numpy.diff(bins), alpha=0.3,
-                                        color=color_dict[sub_key])
+                                    if legend and label not in labels:
+                                        ax.bar(sub_bins[:-1], heights / 10000, bottom=Bbar,
+                                            width=numpy.diff(bins), alpha=0.3,
+                                            color=color_dict[sub_key], label=label)
+
+                                        labels.append(label)
+
+                                    else:
+                                        ax.bar(sub_bins[:-1], heights / 10000, bottom=Bbar,
+                                            width=numpy.diff(bins), alpha=0.3,
+                                            color=color_dict[sub_key])
 
                                 else:
-                                    ax.bar(sub_bins[:-1], heights / 10000, bottom=Bbar,
-                                        width=numpy.diff(bins), alpha=0.3,
-                                        color=color_dict[sub_key])
+                                    if legend and label not in labels:
+                                        ax.bar(sub_bins[:-1], heights / 10000, bottom=Bbar,
+                                            width=numpy.diff(bins), alpha=0.3,
+                                            color=color_dict[sub_key], label=label)
+                                        labels.append(label)
+
+                                    else:
+                                        ax.bar(sub_bins[:-1], heights / 10000, bottom=Bbar,
+                                            width=numpy.diff(bins), alpha=0.3,
+                                            color=color_dict[sub_key])
 
                         # Do the shapiro test on the data
                         try:
                             W, p = shapiro(data)
-                            ax.text(mean - 2 * std, Bbar - text_height, f'p = {p:.4f}', color='k', alpha=0.5)
+                            ax.text(mean - 2 * std, Bbar - text_height, f'p = {p:.4f}', color='k',
+                                    alpha=0.5)
 
                         except Exception:
                             print("Could not perform the Shapiro test")
@@ -365,7 +389,7 @@ def plot_Binder(N, g_s=None, L_s=None, data_file=None, data_dir=None, minus_sign
     f.close()
 
     if legend:
-        plt.legend()
+        ax.legend()
 
     if not scale_with_fit:
         ax.set_xlim(min_m, max_m)
@@ -373,11 +397,12 @@ def plot_Binder(N, g_s=None, L_s=None, data_file=None, data_dir=None, minus_sign
     plt.title(rf"$N = {N}$, $\nu = {nu:.2f}$, model={model}")
 
     # Make a legend
-    legend = []
-    for L in L_s:
-        legend.append(Line2D([0], [0], marker=markers[L], color='k', label=f'L = {L}',
-                              markerfacecolor="None", linestyle=''))
+    if not plot_histograms:
+        legend = []
+        for L in L_s:
+            legend.append(Line2D([0], [0], marker=markers[L], color='k', label=f'L = {L}',
+                                markerfacecolor="None", linestyle=''))
 
-    ax.legend(handles=legend, loc='lower left')
+        ax.legend(handles=legend, loc='lower left')
 
     return ax

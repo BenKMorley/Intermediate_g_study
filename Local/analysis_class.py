@@ -473,9 +473,9 @@ class analysis:
             means[i], stds[i], p_values[i] = self.fit_all_gLmin(Bbar)
 
         # Only include contributions with at least one good fit
-        means = means[numpy.max(p_values, axis=1) > 0.05]
-        stds = stds[numpy.max(p_values, axis=1) > 0.05]
-        Bbar_list = Bbar_list[numpy.max(p_values, axis=1) > 0.05]
+        means = means[numpy.max(p_values, axis=1) > self.p_min]
+        stds = stds[numpy.max(p_values, axis=1) > self.p_min]
+        Bbar_list = Bbar_list[numpy.max(p_values, axis=1) > self.p_min]
 
         var_s = stds ** 2
 
@@ -841,7 +841,7 @@ class analysis:
                                    numpy.average(means ** 2, weights=self.P_s, axis=(0, 1)) - \
                                    self.mass_mean[g] ** 2
 
-    def BMM_plot_overall(self, plot_dict={'nu': [0, 1]}, show=False, params=None):
+    def BMM_plot_overall(self, plot_dict={'nu': [0, 1]}, show=False, params=None, return_ax=False):
         mean_pieces = numpy.zeros((len(self.Bbar_pieces), len(self.param_names)))
         var_pieces = numpy.zeros((len(self.Bbar_pieces), len(self.param_names)))
 
@@ -892,6 +892,9 @@ class analysis:
 
             if show:
                 plt.show()
+
+            elif return_ax:
+                return (fig, ax)
 
             else:
                 plt.close('all')
@@ -1345,8 +1348,8 @@ class CompareModels:
                 xpos = (j + 0.5) * (max(gL_mins) - min(gL_mins)) / len(gL_mins) + min(gL_mins)
                 ypos = (len(Bbars) - (i + 1) + 0.5) * (max(Bbars) - min(Bbars)) / len(Bbars) + min(Bbars)
 
-                edgecolor1 = 'k' if (ps1[i, j] > 0.05 and ps1[i, j] < 0.95) else None
-                edgecolor2 = 'k' if (ps2[i, j] > 0.05 and ps2[i, j] < 0.95) else None
+                edgecolor1 = 'k' if (ps1[i, j] > self.p_min and ps1[i, j] < 0.95) else None
+                edgecolor2 = 'k' if (ps2[i, j] > self.p_min and ps2[i, j] < 0.95) else None
 
                 h1, h2 = ps1[i, j] * del_Bbar * 0.8, ps2[i, j] * del_Bbar * 0.8
                 width = del_gL_min / 15

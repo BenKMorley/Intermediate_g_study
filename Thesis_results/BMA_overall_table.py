@@ -18,6 +18,7 @@ model_type = 1
 char_limit = 100
 run_params = []
 parallel = True
+params_to_use = ['alpha', 'alpha1', 'alpha2', 'beta', 'nu']
 
 for N in Ns:
     for model in models:
@@ -51,6 +52,9 @@ for N in Ns:
         ignore_comma = True
 
         for i, param in enumerate(a.param_names):
+            if param not in params_to_use:
+                continue
+
             mean = a.mean[i]
             std = numpy.sqrt(a.var[i])
 
@@ -87,6 +91,9 @@ for N in Ns:
         ignore_comma = True
 
         for i, param in enumerate(a.param_names):
+            if param not in params_to_use:
+                continue
+
             mean = a.mean[i]
             std = numpy.sqrt(a.var[i])
 

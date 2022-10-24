@@ -64,9 +64,9 @@ if make_data:
         fig, ax = plt.subplots()
 
         ax = plot_Binder(N, [g], [L], min_gL=0.7, max_gL=76.9, reweight=True, ax=ax,
-                plot_lims=plot_lims, plot_crossings=plot_crossings, m_crit=m_c,
-                nu=nu, plot_histograms=plot_histograms, legend=False, width=w,
-                crossings_file=crossings_file, plot_Bounds=plot_Bounds, scale_with_fit=True)
+                        plot_crossings=plot_crossings, m_crit=m_c,
+                        nu=nu, plot_histograms=plot_histograms, legend=False, width=w,
+                        crossings_file=crossings_file, scale_with_fit=True)
 
         plt.close('all')
 
