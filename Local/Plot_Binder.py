@@ -397,12 +397,13 @@ def plot_Binder(N, g_s=None, L_s=None, data_file=None, data_dir=None, minus_sign
     plt.title(rf"$N = {N}$, $\nu = {nu:.2f}$, model={model}")
 
     # Make a legend
-    if not plot_histograms:
-        legend = []
-        for L in L_s:
-            legend.append(Line2D([0], [0], marker=markers[L], color='k', label=f'L = {L}',
-                                markerfacecolor="None", linestyle=''))
+    if legend:
+        if not plot_histograms:
+            legend_ = []
+            for L in L_s:
+                legend_.append(Line2D([0], [0], marker=markers[L], color='k', label=f'L = {L}',
+                                    markerfacecolor="None", linestyle=''))
 
-        ax.legend(handles=legend, loc='lower left')
+            ax.legend(handles=legend, loc='lower left')
 
     return ax

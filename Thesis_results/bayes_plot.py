@@ -53,18 +53,18 @@ def plot_Bayes_freq(gL_mins, ps1, ps2, E, graph_lims):
 
     fig, ax = plt.subplots()
 
-    ax.scatter(gL_mins, E, label=r"$\log_{10}(K)$", marker='o', color='none', edgecolor='k')
+    ax.scatter(gL_mins, E, label=r"$\mathcal{E}$", marker='o', color='none', edgecolor='k')
 
     # Show the Jeffrey's scale
-    plt.fill_between([min(gL_mins) / 2, max(gL_mins) * 2], [-1, -1], [1, 1], color=color_blind_palette[7], alpha=0.5, label=r'$0 < |\log_{10}(K)| < 1$')
-    plt.fill_between([min(gL_mins) / 2, max(gL_mins) * 2], [1, 1], [2, 2], color=color_blind_palette[4], alpha=0.2, label=r'$0 < |\log_{10}(K)| < 1$')
-    plt.fill_between([min(gL_mins) / 2, max(gL_mins) * 2], [2, 2], [max_value * 1.1, max_value * 1.1], color=color_blind_palette[2], alpha=0.2, label=r'$|\log_{10}(K)| > 2$')
+    plt.fill_between([min(gL_mins) / 2, max(gL_mins) * 2], [-1, -1], [1, 1], color=color_blind_palette[7], alpha=0.5, label='Insignificant')
+    plt.fill_between([min(gL_mins) / 2, max(gL_mins) * 2], [1, 1], [2, 2], color=color_blind_palette[4], alpha=0.2, label='Strong')
+    plt.fill_between([min(gL_mins) / 2, max(gL_mins) * 2], [2, 2], [max_value * 1.1, max_value * 1.1], color=color_blind_palette[2], alpha=0.2, label='Decisive')
     plt.fill_between([min(gL_mins) / 2, max(gL_mins) * 2], [-2, -2], [-1, -1], color=color_blind_palette[4], alpha=0.2)
     plt.fill_between([min(gL_mins) / 2, max(gL_mins) * 2], [-10, -10], [-2, -2], color=color_blind_palette[2], alpha=0.2)
 
     ax = plt.gca()
-    ax.legend(loc=(0.02, 0.3), framealpha=1)
-    ax.set_ylabel(r"$\log_{10}(K)$")
+    ax.legend(loc=(0.02, 0.4), framealpha=1)
+    ax.set_ylabel(r"$\mathcal{E}$")
     ax.set_ylim(min_value + 1, max_value + 1)
     ax.set_xlim(min(gL_mins) - 1, max(gL_mins) + 1)
     ax.tick_params(direction='in')
@@ -85,7 +85,7 @@ def plot_Bayes_freq(gL_mins, ps1, ps2, E, graph_lims):
 
     fig.tight_layout()
     ax2.tick_params(direction='in')
-    ax2.legend(loc=(0.02, 0.15), framealpha=1)
+    ax2.legend(loc=(0.02, 0.25), framealpha=1)
     ax.set_ylim(0.5, max(E) * 1.1)
     ax.set_yscale('symlog', linthreshy=2.5)
     ax2.annotate(r"$p = 0.05$", xy=(25, 0.07), color='grey')

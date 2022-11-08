@@ -22,7 +22,7 @@ sys.path.append(os.getcwd() + '/../Core')
 sys.path.append(os.getcwd())
 sys.path.append(os.getcwd() + '/Core')
 
-from Core.parameters import param_dict, seperator, prior_range_dict_maker, \
+from Core.parameters import param_dict, seperator, bayes_prior_ranges, \
                             x0_dict, param_names_latex
 from Core.bayesian_functions import likelihood_maker, prior_maker
 from Core.model_definitions import *
@@ -30,7 +30,15 @@ from Core.model_definitions import *
 
 def make_function(function_name, omega, eps, model_type):
     def modelA(N, g, L, Bbar, alpha, a1, a2, beta, nu):
-        a = a1 * Bbar + a2
+        a = numpy.zeros_like(g)
+
+        a_s = (a1, a2)
+
+        Bbar_list = list(numpy.sort(list(set(list(Bbar)))))
+
+        for i in range(len(Bbar_list)):
+            a[Bbar == Bbar_list[i]] = a_s[i]
+
         Scaling = a * (g * L) ** (-1 / nu)
 
         if model_type == 1:
@@ -42,8 +50,17 @@ def make_function(function_name, omega, eps, model_type):
         return mPT_1loop(g, N) + g ** 2 * (alpha + Scaling + PT)
 
     def modelB(N, g, L, Bbar, alpha, a1, a2, c1, c2, beta, nu):
-        a = a1 * Bbar + a2
-        c = c1 * Bbar + c2
+        a = numpy.zeros_like(g)
+        c = numpy.zeros_like(g)
+
+        a_s = (a1, a2)
+        c_s = (c1, c2)
+
+        Bbar_list = list(numpy.sort(list(set(list(Bbar)))))
+
+        for i in range(len(Bbar_list)):
+            a[Bbar == Bbar_list[i]] = a_s[i]
+            c[Bbar == Bbar_list[i]] = c_s[i]
 
         Scaling = a * (g * L) ** (-1 / nu) + c * (g * L) ** -(omega + 1 / nu)
 
@@ -56,9 +73,20 @@ def make_function(function_name, omega, eps, model_type):
         return mPT_1loop(g, N) + g ** 2 * (alpha + Scaling + PT)
 
     def modelC(N, g, L, Bbar, alpha, a1, a2, c1, c2, e1, e2, beta, nu):
-        a = a1 * Bbar + a2
-        c = c1 * Bbar + c2
-        e = e1 * Bbar + e2
+        a = numpy.zeros_like(g)
+        c = numpy.zeros_like(g)
+        e = numpy.zeros_like(g)
+
+        a_s = (a1, a2)
+        c_s = (c1, c2)
+        e_s = (e1, e2)
+
+        Bbar_list = list(numpy.sort(list(set(list(Bbar)))))
+
+        for i in range(len(Bbar_list)):
+            a[Bbar == Bbar_list[i]] = a_s[i]
+            c[Bbar == Bbar_list[i]] = c_s[i]
+            e[Bbar == Bbar_list[i]] = e_s[i]
 
         Scaling = a * (g * L) ** (-1 / nu) + c * (g * L) ** -(omega + 1 / nu) +\
                 e * (g * L) ** -(eps + 1 / nu)
@@ -72,7 +100,14 @@ def make_function(function_name, omega, eps, model_type):
         return mPT_1loop(g, N) + g ** 2 * (alpha + Scaling + PT)
 
     def modelD(N, g, L, Bbar, alpha1, alpha2, a1, a2, beta, nu):
-        a = a1 * Bbar + a2
+        a = numpy.zeros_like(g)
+
+        a_s = (a1, a2)
+
+        Bbar_list = list(numpy.sort(list(set(list(Bbar)))))
+
+        for i in range(len(Bbar_list)):
+            a[Bbar == Bbar_list[i]] = a_s[i]
 
         alpha = numpy.zeros_like(g)
         alpha_s = (alpha1, alpha2)
@@ -92,7 +127,15 @@ def make_function(function_name, omega, eps, model_type):
         return mPT_1loop(g, N) + g ** 2 * (alpha + Scaling + PT)
 
     def modelGA(N, g, L, Bbar, alpha, a1, a2, beta1, beta2, nu):
-        a = a1 * Bbar + a2
+        a = numpy.zeros_like(g)
+
+        a_s = (a1, a2)
+
+        Bbar_list = list(numpy.sort(list(set(list(Bbar)))))
+
+        for i in range(len(Bbar_list)):
+            a[Bbar == Bbar_list[i]] = a_s[i]
+
         Scaling = a * (g * L) ** (-1 / nu)
 
         if model_type == 1:
@@ -109,8 +152,17 @@ def make_function(function_name, omega, eps, model_type):
         return mPT_1loop(g, N) + g ** 2 * (alpha + Scaling + PT)
 
     def modelGB(N, g, L, Bbar, alpha, a1, a2, c1, c2, beta1, beta2, nu):
-        a = a1 * Bbar + a2
-        c = c1 * Bbar + c2
+        a = numpy.zeros_like(g)
+        c = numpy.zeros_like(g)
+
+        a_s = (a1, a2)
+        c_s = (c1, c2)
+
+        Bbar_list = list(numpy.sort(list(set(list(Bbar)))))
+
+        for i in range(len(Bbar_list)):
+            a[Bbar == Bbar_list[i]] = a_s[i]
+            c[Bbar == Bbar_list[i]] = c_s[i]
 
         Scaling = a * (g * L) ** (-1 / nu) + c * (g * L) ** -(omega + 1 / nu)
 
@@ -126,9 +178,20 @@ def make_function(function_name, omega, eps, model_type):
         return mPT_1loop(g, N) + g ** 2 * (alpha + Scaling + PT)
 
     def modelGC(N, g, L, Bbar, alpha, a1, a2, c1, c2, e1, e2, beta1, beta2, nu):
-        a = a1 * Bbar + a2
-        c = c1 * Bbar + c2
-        e = e1 * Bbar + e2
+        a = numpy.zeros_like(g)
+        c = numpy.zeros_like(g)
+        e = numpy.zeros_like(g)
+
+        a_s = (a1, a2)
+        c_s = (c1, c2)
+        e_s = (e1, e2)
+
+        Bbar_list = list(numpy.sort(list(set(list(Bbar)))))
+
+        for i in range(len(Bbar_list)):
+            a[Bbar == Bbar_list[i]] = a_s[i]
+            c[Bbar == Bbar_list[i]] = c_s[i]
+            e[Bbar == Bbar_list[i]] = e_s[i]
 
         Scaling = a * (g * L) ** (-1 / nu) + c * (g * L) ** -(omega + 1 / nu) +\
                 e * (g * L) ** -(eps + 1 / nu)
@@ -145,7 +208,14 @@ def make_function(function_name, omega, eps, model_type):
         return mPT_1loop(g, N) + g ** 2 * (alpha + Scaling + PT)
 
     def modelGD(N, g, L, Bbar, alpha1, alpha2, a1, a2, beta1, beta2, nu):
-        a = a1 * Bbar + a2
+        a = numpy.zeros_like(g)
+
+        a_s = (a1, a2)
+
+        Bbar_list = list(numpy.sort(list(set(list(Bbar)))))
+
+        for i in range(len(Bbar_list)):
+            a[Bbar == Bbar_list[i]] = a_s[i]
 
         alpha = numpy.zeros_like(g)
         alpha_s = (alpha1, alpha2)
@@ -205,7 +275,7 @@ def color_gs(g):
 
 class analysis:
     def __init__(self, N, model_name, x0_dict=x0_dict, omega=0.8, eps=2, model_type=1, width=0.5,
-                 filename=None, no_samples=200, bayes_points=400, scale=10):
+                 filename=None, no_samples=200, bayes_points=400):
         self.width = width
         if filename is None:
             filename = f'h5data/width/width_{width:.1f}.h5'
@@ -228,10 +298,7 @@ class analysis:
         self.param_names = self.model.__code__.co_varnames[4:arg_count]
 
         self.x0 = [x0_dict[param] for param in self.param_names]
-
-        self.scale = scale
-        prior_ranges = prior_range_dict_maker(self.scale)
-        self.prior_ranges = [prior_ranges[param] for param in self.param_names]
+        self.prior_ranges = [bayes_prior_ranges[param] for param in self.param_names]
         self.param_names_latex = [param_names_latex[param] for param in self.param_names]
         self.prior = prior_maker(self.prior_ranges)
 
