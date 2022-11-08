@@ -37,7 +37,8 @@ def change_sign(MCMC_data_file, output_filename, pm=True):
                             else:
                                 m = -float(re.findall(r'\d+\.\d+', m_key)[0])
 
-                            f_new[f'N={N}'][f'g={g:.2f}'][f'L={L}'][f'msq={-m:.8f}'] = numpy.array(f[f'N={N}'][f'g={g:.2f}'][f'L={L}'][f'msq={m:.8f}'])
+                            f_new[f'N={N}'][f'g={g:.2f}'][f'L={L}'][f'msq={-m:.8f}'] = \
+                                numpy.array(f[f'N={N}'][f'g={g:.2f}'][f'L={L}'][f'msq={m:.8f}'])
 
 
 change_sign("MCMC_test.h5", "../h5data/MCMC_plussign_N3.h5", pm=False)

@@ -1,3 +1,4 @@
+import pdb
 import h5py
 import os
 import re
@@ -12,7 +13,8 @@ sys.path.append(os.getcwd() + '/Core')
 from Core.MISC import *
 
 
-def update(filename, N_s=None, g_s=None, L_s=None, m_s=None, OR=10, base_dir=f"/rds/project/dirac_vol4/rds-dirac-dp099/cosmhol-hbor", size=100001):
+def update(filename, N_s=None, g_s=None, L_s=None, m_s=None, OR=10,
+           base_dir=f"/rds/project/dirac_vol4/rds-dirac-dp099/cosmhol-hbor", size=100001):
     if os.path.isfile(filename):
         old_data = h5py.File(filename, "a")
 
@@ -38,7 +40,7 @@ def update(filename, N_s=None, g_s=None, L_s=None, m_s=None, OR=10, base_dir=f"/
     # Figure out which configurations we need to extract
     for g in available_data.keys():
         sub_dict = available_data[g]
-        sub_dir = f"{base_dir}/{GRID_convention_g(g)}"
+        sub_dir = f"{base_dir}/{GRID_conv_g(g)}"
         files = os.popen(f'ls {sub_dir}')
 
         if N_s is None:
@@ -57,7 +59,7 @@ def update(filename, N_s=None, g_s=None, L_s=None, m_s=None, OR=10, base_dir=f"/
 
         for N in sub_dict.keys():
             sub_dict2 = sub_dict[N]
-            sub_dir2 = sub_dir + "/" + GRID_convention_N(N)
+            sub_dir2 = sub_dir + "/" + GRID_conv_N(N)
 
             if L_s is None:
                 try:
@@ -80,7 +82,7 @@ def update(filename, N_s=None, g_s=None, L_s=None, m_s=None, OR=10, base_dir=f"/
 
             for L in sub_dict2.keys():
                 sub_dict3 = sub_dict2[L]
-                sub_dir3 = sub_dir2 + "/" + GRID_convention_L(L)
+                sub_dir3 = sub_dir2 + "/" + GRID_conv_L(L)
 
                 if m_s is None:
                     try:
@@ -118,31 +120,40 @@ def update(filename, N_s=None, g_s=None, L_s=None, m_s=None, OR=10, base_dir=f"/
 
                 for m in keys:
                     dict4 = dict3[m]
-                    file_root = f"{base_dir}/{GRID_convention_g(g)}/{GRID_convention_N(N)}/{GRID_convention_L(L)}/{GRID_convention_m(m)}/mag/cosmhol-hbor-{GRID_convention_N(N)}_{GRID_convention_L(L)}_{GRID_convention_g(g)}_{GRID_convention_m(m)}_or{OR}"
+                    file_root = f"{base_dir}/{GRID_conv_g(g)}/{GRID_conv_N(N)}/" +\
+                        f"{GRID_conv_L(L)}/{GRID_conv_m(m)}/mag/cosmhol-hbor-{GRID_conv_N(N)}" +\
+                        f"_{GRID_conv_L(L)}_{GRID_conv_g(g)}_{GRID_conv_m(m)}_or{OR}"
 
-                    if MCMC_convention_N(N) not in old_data.keys():
-                        old_data.create_group(MCMC_convention_N(N))
+                    if MCMC_conv_N(N) not in old_data.keys():
+                        old_data.create_group(MCMC_conv_N(N))
 
-                    if MCMC_convention_g(g) not in list(old_data[MCMC_convention_N(N)].keys()):
-                        old_data[MCMC_convention_N(N)].create_group(MCMC_convention_g(g))
+                    if MCMC_conv_g(g) not in list(old_data[MCMC_conv_N(N)].keys()):
+                        old_data[MCMC_conv_N(N)].create_group(MCMC_conv_g(g))
 
-                    if MCMC_convention_L(L) not in list(old_data[MCMC_convention_N(N)][MCMC_convention_g(g)].keys()):
-                        old_data[MCMC_convention_N(N)][MCMC_convention_g(g)].create_group(MCMC_convention_L(L))
+                    if MCMC_conv_L(L) not in list(old_data[MCMC_conv_N(N)][MCMC_conv_g(g)].keys()):
+                        old_data[MCMC_conv_N(N)][MCMC_conv_g(g)].create_group(MCMC_conv_L(L))
 
                     too_small = False
                     data_not_found = False
-                    if MCMC_convention_m(m) in list(old_data[MCMC_convention_N(N)][MCMC_convention_g(g)][MCMC_convention_L(L)].keys()):
-                        print(f"{MCMC_convention_N(N)}, {MCMC_convention_g(g)}, {MCMC_convention_L(L)}, {MCMC_convention_m(m)} data already present")
+
+                    NgL = old_data[MCMC_conv_N(N)][MCMC_conv_g(g)][MCMC_conv_L(L)]
+
+                    if MCMC_conv_m(m) in list(NgL.keys()):
+                        print(f"{MCMC_conv_N(N)}, {MCMC_conv_g(g)}, {MCMC_conv_L(L)}," +
+                              f"{MCMC_conv_m(m)} data already present")
 
                         # Make sure the data contains the desired number of configs
-                        data_size = old_data[MCMC_convention_N(N)][MCMC_convention_g(g)][MCMC_convention_L(L)][MCMC_convention_m(m)].shape[1]
-        
+                        data_size = NgL[MCMC_conv_m(m)].shape[1]
+
                         if data_size < size:
-                            print(f"Exisiting data present too small: Expected {size} got {data_size}")
+                            print(f"Exisiting data present too small: Expected {size} got" +
+                                  f"{data_size}")
                             print(f"Deleting entry")
-                            del old_data[MCMC_convention_N(N)][MCMC_convention_g(g)][MCMC_convention_L(L)][MCMC_convention_m(m)]
+
+                            del NgL[MCMC_conv_m(m)]
+
                             too_small = True
-                        
+
                     else:
                         data_not_found = True
 
@@ -156,8 +167,9 @@ def update(filename, N_s=None, g_s=None, L_s=None, m_s=None, OR=10, base_dir=f"/
                         Files_not_found = False
                         try:
                             files = os.listdir(directory)
-                            files = list(filter(lambda x: x.endswith('.dat') and f'{file_start}_phi2.' in x, files))
-                        
+                            files = list(filter(lambda x: x.endswith('.dat') and
+                                                f'{file_start}_phi2.' in x, files))
+
                         except Exception:
                             Files_not_found = True
 
@@ -197,26 +209,28 @@ def update(filename, N_s=None, g_s=None, L_s=None, m_s=None, OR=10, base_dir=f"/
 
                                     if delta_start > 0:
                                         try:
-                                            diff = numpy.sum(numpy.abs(new_data_piece[:delta_start] - old_data_piece[-delta_start:]))
-                                        
-                                        except:
+                                            diff = numpy.sum(numpy.abs(new_data_piece[:delta_start]
+                                                                - old_data_piece[-delta_start:]))
+
+                                        except Exception:
                                             pdb.set_trace()
 
-                                        # Check that the boundaries match (boundaries can be > 1 config)
+                                        # Check that the boundaries match (boundaries can be >
+                                        # 1 config)
                                         if diff != 0:
                                             print(f"Data not consistant! (config {start})")
                                             pdb.set_trace()
                                             inconsistant_data = True
 
-
-                                prev_start = start                               
+                                prev_start = start
                                 prev_length = current_length
                                 old_data_piece = new_data_piece
-                            
+
                             total_length = start + current_length
 
                             if total_length < size:
-                                print(f"Not enough data to read in: Expected {size}, got {total_length}")
+                                print(f"Not enough data to read in: Expected {size}, got" +
+                                      f"{total_length}")
 
                             # If the data is consistant and of the expected size then read it in
                             elif not inconsistant_data:
@@ -225,14 +239,19 @@ def update(filename, N_s=None, g_s=None, L_s=None, m_s=None, OR=10, base_dir=f"/
                                 m4 = numpy.zeros(total_length)
 
                                 for i, start in enumerate(start_configs):
-                                    phi2[start: start + lengths[i]] = numpy.loadtxt(file_root + f"_phi2.{start}.dat")
-                                    m2[start: start + lengths[i]] = numpy.loadtxt(file_root + f"_m2.{start}.dat")
-                                    m4[start: start + lengths[i]] = numpy.loadtxt(file_root + f"_m4.{start}.dat")
+                                    phi2[start: start + lengths[i]] = numpy.loadtxt(file_root +
+                                                                              f"_phi2.{start}.dat")
+                                    m2[start: start + lengths[i]] = numpy.loadtxt(file_root +
+                                                                              f"_m2.{start}.dat")
+                                    m4[start: start + lengths[i]] = numpy.loadtxt(file_root +
+                                                                              f"_m4.{start}.dat")
 
-                                old_data[MCMC_convention_N(N)][MCMC_convention_g(g)][MCMC_convention_L(L)].create_dataset(MCMC_convention_m(m), (3, len(phi2)), dtype='<f8')
+                                NgL = old_data[MCMC_conv_N(N)][MCMC_conv_g(g)][MCMC_conv_L(L)]
 
-                                old_data[MCMC_convention_N(N)][MCMC_convention_g(g)][MCMC_convention_L(L)][MCMC_convention_m(m)][0] = m2
-                                old_data[MCMC_convention_N(N)][MCMC_convention_g(g)][MCMC_convention_L(L)][MCMC_convention_m(m)][1] = m4
-                                old_data[MCMC_convention_N(N)][MCMC_convention_g(g)][MCMC_convention_L(L)][MCMC_convention_m(m)][2] = phi2
+                                NgL.create_dataset(MCMC_conv_m(m), (3, len(phi2)), dtype='<f8')
+
+                                NgL[MCMC_conv_m(m)][0] = m2
+                                NgL[MCMC_conv_m(m)][1] = m4
+                                NgL[MCMC_conv_m(m)][2] = phi2
 
     return old_data

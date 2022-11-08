@@ -34,36 +34,36 @@ separator = "##########################################################"
 eps = sys.float_info.epsilon
 
 
-# Naming conventions
-def GRID_convention_m(m):
+# Naming convs
+def GRID_conv_m(m):
     return f"m2{m}".rstrip('0')
 
 
-def MCMC_convention_m(m):
+def MCMC_conv_m(m):
     return f"msq={-m:.8f}"
 
 
-def GRID_convention_N(N):
+def GRID_conv_N(N):
     return f"su{N}"
 
 
-def MCMC_convention_N(N):
+def MCMC_conv_N(N):
     return f"N={N}"
 
 
-def GRID_convention_L(L):
+def GRID_conv_L(L):
     return f"L{L}"
 
 
-def MCMC_convention_L(L):
+def MCMC_conv_L(L):
     return f"L={L}"
 
 
-def GRID_convention_g(g):
+def GRID_conv_g(g):
     return f"g{g}".rstrip('0').rstrip('.')
 
 
-def MCMC_convention_g(g):
+def MCMC_conv_g(g):
     return f"g={g:.2f}"
 
 

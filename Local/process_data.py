@@ -48,4 +48,4 @@ def process(filename, size=100001):
                         break
 
                     else:
-                        del data[MCMC_convention_N(N)][MCMC_convention_g(g)][MCMC_convention_L(L)][MCMC_convention_m(-value)]
+                        del data[MCMC_conv_N(N)][MCMC_conv_g(g)][MCMC_conv_L(L)][MCMC_conv_m(-value)]

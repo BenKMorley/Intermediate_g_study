@@ -1,14 +1,8 @@
 import sqlite3
 import h5py
-import pdb
 import numpy
 import os
 import re
-import sys
-
-sys.path.append("/home/dc-kitc1/Documents/Intermediate_g_study/")
-
-from mass_array import get_masses
 
 
 def g_string(g):
@@ -31,14 +25,11 @@ def get_SQL_data(N, L, g, OR):
     found = {}
 
     for m in masses:
-        file_name = f"cosmhol-scalar-hbor-su{N}_L{L}_g" + f"{g:.1f}".rstrip('0') + f"_m2{float(m):.5f}".rstrip('0') + f"_or{OR}_database.0.db"
-
+        file_name = f"cosmhol-scalar-hbor-su{N}_L{L}_g" + f"{g:.1f}".rstrip('0') +\
+                    f"_m2{float(m):.5f}".rstrip('0') + f"_or{OR}_database.0.db"
         conn = sqlite3.connect(f"{directory}/m2{m:.5f}/mag/{file_name}")
-
         cur = conn.execute('select * from Observables')
-
         names = list(map(lambda x: x[0], cur.description))
-        
         found = True
 
         try:
@@ -48,14 +39,15 @@ def get_SQL_data(N, L, g, OR):
 
             num_entries[m] = len(m2[m])
 
-        except:
+        except Exception:
             print(f"Data File not found: N={N}, g={g}, L={L}, m={m}")
             Found = False
 
     return phi2, m2, m4, num_entries, masses, found
 
 
-def get_raw_data_flexible(N_s=None, g_s=None, L_s=None, m_s=None, OR=10, base_dir=f"/rds/project/dirac_vol4/rds-dirac-dp099/cosmhol-hbor", change_sign=False):
+def get_raw_data_flexible(N_s=None, g_s=None, L_s=None, m_s=None, OR=10,
+        base_dir=f"/rds/project/dirac_vol4/rds-dirac-dp099/cosmhol-hbor", change_sign=False):
     ensemble_dict = {}
 
     if g_s is None:
@@ -118,7 +110,7 @@ def get_raw_data_flexible(N_s=None, g_s=None, L_s=None, m_s=None, OR=10, base_di
 
                     for name in files:
                         if len(re.findall(r'm2-\d+\.\d+', name)) != 0:
-                            if change_sign == False:
+                            if not change_sign:
                                 value = -float(re.findall(r'\d+\.\d+', name)[0])
                                 sub_dict3[f"m2{value:.5f}"] = {}
 
@@ -127,7 +119,7 @@ def get_raw_data_flexible(N_s=None, g_s=None, L_s=None, m_s=None, OR=10, base_di
                                 sub_dict3[f"m2{value:.5f}"] = {}
 
                         elif len(re.findall(r'm2\d+\.\d+', name)) != 0:
-                            if change_sign == False:
+                            if not change_sign:
                                 value = float(re.findall(r'\d+\.\d+', name)[0])
                                 sub_dict3[f"m2{value:.5f}"] = {}
 
@@ -153,7 +145,8 @@ def get_raw_data_flexible(N_s=None, g_s=None, L_s=None, m_s=None, OR=10, base_di
 
                 for m in keys:
                     dict4 = dict3[m]
-                    file_root = f"{base_dir}/{g}/{N}/{L}/" + m.rstrip('0') + f"/mag/cosmhol-hbor-{N}_{L}_{g}_{m}".rstrip('0') + f"_or{OR}"
+                    file_root = f"{base_dir}/{g}/{N}/{L}/" + m.rstrip('0') +\
+                                f"/mag/cosmhol-hbor-{N}_{L}_{g}_{m}".rstrip('0') + f"_or{OR}"
 
                     print("Loading in data from: " + file_root)
 
@@ -197,7 +190,7 @@ def get_raw_data(N, L, g, OR=10, sub_dir="cosmhol-hbor"):
 
             num_entries[m] = len(m2[m])
 
-        except:
+        except Exception:
             print(f"Data File not found: N={N}, g={g}, L={L}, m={m}")
             found[m] = False
 
@@ -205,7 +198,8 @@ def get_raw_data(N, L, g, OR=10, sub_dir="cosmhol-hbor"):
 
 
 def get_raw_data_one_m(N, L, g, m, OR=10, sub_dir="cosmhol-hbor"):
-    base_dir = f"/rds/project/dirac_vol4/rds-dirac-dp099/{sub_dir}/g{g:.1f}/su{N}/L{L}/" + f"m2{m:.5f}".rstrip('0')  + "/mag"
+    base_dir = f"/rds/project/dirac_vol4/rds-dirac-dp099/{sub_dir}/g{g:.1f}/su{N}/L{L}/" +\
+               f"m2{m:.5f}".rstrip('0') + "/mag"
 
     file_prefix = f"cosmhol-hbor-su{N}_L{L}_g{g}_" + f"m2{m:.5f}".rstrip('0') + f"_or{OR}"
     in_dir = f"{base_dir}/m2{m}/mag"
@@ -219,14 +213,15 @@ def get_raw_data_one_m(N, L, g, m, OR=10, sub_dir="cosmhol-hbor"):
 
         num_entries = len(m2)
 
-    except:
+    except Exception:
         print(f"Data File not found: N={N}, g={g}, L={L}, m={m}")
         found = False
 
-    return phi2, m2, m4, num_entries, masses, found
+    return phi2, m2, m4, num_entries, found
 
 
-def write_data_to_MCMC(N, L, g, m, phi2, m2, m4, num_entries, rewrite_data=False, filename="MCMC_test.h5", change_sign=False):
+def write_data_to_MCMC(N, L, g, m, phi2, m2, m4, num_entries, rewrite_data=False,
+                       filename="MCMC_test.h5", change_sign=False):
     with h5py.File(filename, "a") as f:
         m2 = numpy.array(m2)
         m4 = numpy.array(m4)
