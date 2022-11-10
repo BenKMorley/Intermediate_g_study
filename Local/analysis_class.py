@@ -10,6 +10,7 @@ from matplotlib.ticker import AutoMinorLocator
 import sys
 import os
 import re
+import pickle
 import numpy
 from tqdm import tqdm
 from scipy.optimize import minimize, least_squares
@@ -144,8 +145,6 @@ def make_function(function_name, omega, eps, model_type):
         if model_type == 2:
             PT = -beta2 * K2(L, N)
 
-        # lambda1 ~ [1, 1.2], lambda2 ~ [1.3, 1.5]
-        # log(g) ~ [1.3, 1.5], log(L) ~ [-0.3, -0.1]
         if model_type == 3:
             PT = - beta1 * K1(g, N) - beta2 * K2(L, N)
 
@@ -456,7 +455,7 @@ class analysis:
             m_s: Optional[numpy.ndarray] = None, find_cov: bool = True,
             print_info: bool = False, ) -> Tuple[List[float], float, int]:
         index = numpy.argwhere(self.Bbar_list == Bbar)
-        Bbar_s = [Bbar, self.Bbar_list[index + 1]]
+        Bbar_s_list = [Bbar, self.Bbar_list[index + 1]]
 
         if find_cov:
             self.find_cov_matrix(Bbar, gL_min, gL_max=gL_max)
@@ -505,11 +504,19 @@ class analysis:
 
                 L_s_curve = numpy.linspace(min(L_s[g_s == g]) * 0.9, max(L_s[g_s == g]) * 1.1, 1000)
 
-                for Bbar in Bbar_s:
-                    results = self.model(self.N, numpy.ones_like(L_s_curve) * g, L_s_curve,
-                                         numpy.ones_like(L_s_curve) * Bbar, *res.x)
-                    plt.plot(1 / (g * L_s_curve), results /
-                         g, color=p[0].get_color(), linewidth=0.5)
+                # This is a very janky way of getting the model to use the first and second
+                # Bbar coefficients
+                Bbars_1 = numpy.ones(len(L_s_curve) + 1) * Bbar_s_list[0]
+                Bbars_2 = numpy.ones(len(L_s_curve) + 1) * Bbar_s_list[0]
+                Bbars_1[0] = Bbar + 0.1
+                Bbars_2[0] = Bbar - 0.1
+
+                for Bbars in [Bbars_1, Bbars_2]:
+                    L_s_curve_big = numpy.array([1] + list(L_s_curve))
+                    results = self.model(self.N, numpy.ones(len(L_s_curve) + 1) * g, L_s_curve_big,
+                                         Bbars, *res.x)[1:]
+                    plt.plot(1 / (g * L_s_curve), results / g,
+                            color=p[0].get_color(), linewidth=0.5)
 
             plt.legend()
 
@@ -562,7 +569,8 @@ class analysis:
             ax.fill_between([min(Bbar_list), max(Bbar_list)],
                             [mean[i] - numpy.sqrt(var[i]),
                              mean[i] - numpy.sqrt(var[i])],
-                            [mean[i] + numpy.sqrt(var[i]), mean[i] + numpy.sqrt(var[i])], alpha=0.1, color='k')
+                            [mean[i] + numpy.sqrt(var[i]), mean[i] + numpy.sqrt(var[i])],
+                            alpha=0.1, color='k')
             ax.set_title(param)
 
             fig.savefig(f'Local/graphs/fit_params{self.param_names}_N{self.N}_{param}.pdf')
@@ -719,8 +727,10 @@ class analysis:
                 for i, s in enumerate(full_results.shape[1:-1]):
                     Bbar_s = Bbar_s.repeat(s, axis=i + 1)
 
-                full_results[..., idx1] = Bbar_s[:-1] * self.full_results[..., idx1] + self.full_results[..., idx2]
-                full_results[..., idx2] = Bbar_s[1:] * self.full_results[..., idx1] + self.full_results[..., idx2]
+                full_results[..., idx1] = Bbar_s[:-1] * self.full_results[..., idx1] +\
+                                                        self.full_results[..., idx2]
+                full_results[..., idx2] = Bbar_s[1:] * self.full_results[..., idx1] +\
+                                                       self.full_results[..., idx2]
 
         else:
             full_results = self.full_results
@@ -790,7 +800,7 @@ class analysis:
 
     def BMM_plot_gLmin(self, Bbar, params=None, ax_in=None, plot_dict={'nu': [0, 1],
                     'beta': [-2, 2], 'beta1': [-2, 2], 'beta2': [-2, 2]},
-                    show_pvalue=True, colors=None, show=False, **kwargs):
+                    show_pvalue=True, colors=None, **kwargs):
         i = numpy.argwhere(numpy.array(self.Bbar_list) == Bbar)[0][0]
 
         p_values = chisq_pvalue(self.dof_matrix[i], self.chisqs[i])
@@ -857,10 +867,7 @@ class analysis:
             plt.legend()
 
             if ax_in is None:
-                fig.savefig(f'Local/graphs/BMA_study/gLmin_plots/{self.metadata}boot{self.no_samples}_param{param}_Bbar{Bbar}.pdf')
-
-                if show:
-                    plt.show()
+                plt.show()
 
         if ax_in is None:
             plt.close('all')
@@ -955,8 +962,6 @@ class analysis:
             ax2.set_ylabel('weights')
             ax2.scatter(self.Bbar_pieces, ps, marker='x', color='g', label='weights')
 
-            fig.savefig(f'Local/graphs/BMA_study/omega_plots/{self.metadata}boot{self.no_samples}_param{param}.pdf')
-
             if show:
                 plt.show()
 
@@ -966,8 +971,15 @@ class analysis:
             else:
                 plt.close('all')
 
+    def BMM_run_all_plots(self, plot_dict={'nu': [0, 1]}):
+        for Bbar in self.Bbar_pieces:
+            self.BMM_plot_gLmin(Bbar, plot_dict=plot_dict)
+
+        self.BMM_plot_overall(plot_dict=plot_dict)
+
     def BMM_plot_overall_gL(self, combine=False, params=None, plot_dict={'nu': [0, 1],
-                            'beta': [-2, 2], 'beta1': [-2, 2], 'beta2': [-2, 2]}, colors=None):
+                            'beta': [-2, 2], 'beta1': [-2, 2], 'beta2': [-2, 2]}, colors=None,
+                            ax_in=None):
         mean_pieces = numpy.zeros((len(self.gL_mins), len(self.param_names)))
         var_pieces = numpy.zeros((len(self.gL_mins), len(self.param_names)))
 
@@ -982,6 +994,12 @@ class analysis:
             self.BMM_overall()
 
         color_idx = 0
+
+        if ax_in:
+            ax = ax_in
+
+        else:
+            fig, ax = plt.subplots()
 
         for i, param in enumerate(self.param_names):
             if params is not None:
@@ -1005,19 +1023,15 @@ class analysis:
             plt.legend()
             plt.title(f'N = {self.N}, model={self.model_name}')
             plt.xlabel(r'$gL_{min}$')
-            plt.savefig(f'Local/graphs/BMA_study/omega_plots/gL_min_overall{self.metadata}boot{self.no_samples}_param{param}.pdf')
 
             if not combine:
                 plt.close('all')
 
-        if combine:
+        if ax_in is not None:
+            return ax
+
+        else:
             plt.show()
-
-    def BMM_run_all_plots(self, plot_dict={'nu': [0, 1]}):
-        for Bbar in self.Bbar_pieces:
-            self.BMM_plot_gLmin(Bbar, plot_dict=plot_dict)
-
-        self.BMM_plot_overall(plot_dict=plot_dict)
 
     def BMM_plot_fit(self):
         for i, Bbar in enumerate(self.Bbar_pieces):
@@ -1202,7 +1216,8 @@ class analysis_Bayes(analysis):
             return analysis_data
 
     def run_Bayes(self, Bbar, gL_min, *args, **kwargs):
-        filename = f"Local/data/Bayes_{self.metadata}p{self.bayes_points}_s{self.scale}_B{Bbar:.2f}_gLm{gL_min:.1f}.pcl"
+        filename = f"Local/data/Bayes_{self.metadata}p{self.bayes_points}_s{self.scale}" +\
+                   f"_B{Bbar:.2f}_gLm{gL_min:.1f}.pcl"
         try:
             results = pickle.load(open(filename, 'rb'))
 
@@ -1272,7 +1287,8 @@ class CompareModels:
         self.N = N
         self.model_name = model_name
 
-    def GRID_plot(self, chisq_only=False, compare=(1, 2), test_fit_sig=False, show=False):
+    def GRID_plot(self, chisq_only=False, compare=(1, 2), test_fit_sig=False, show=False,
+                    ax_in=None):
         models = {"1": self.model1,
                   "2": self.model2,
                   "3": self.model3,
@@ -1294,7 +1310,12 @@ class CompareModels:
         chisqs2 = model2.chisqs
         del_chisqs = chisqs2 - chisqs1
 
-        fig, ax = plt.subplots()
+        if ax_in is None:
+            fig, ax = plt.subplots()
+
+        else:
+            ax = ax_in
+            fig = plt.gcf()
 
         if not chisq_only:
             model1.run_Bayes_all()
@@ -1332,7 +1353,8 @@ class CompareModels:
             ratio1 = numpy.abs(model1.means) / stds1
             ratio2 = numpy.abs(model2.means) / stds2
 
-            # Find the worst value of the ratio - lowest abs of fit_param_value) / std(fit_param_value)
+            # Find the worst value of the ratio - lowest abs of
+            # fit_param_value / std(fit_param_value)
             ratio1 = numpy.min(ratio1, axis=2)
             ratio2 = numpy.min(ratio2, axis=2)
 
@@ -1355,7 +1377,7 @@ class CompareModels:
         minor_locator = AutoMinorLocator(2)
         ax.xaxis.set_minor_locator(minor_locator)
 
-        x_labels = ["", ] + [str(i) + ' ' * 20 for i in list(gL_mins)]
+        x_labels = ["", ] + [str(i) + ' ' * 1 for i in list(gL_mins)]
         y_labels = ["", ] + [str(i) + '\n' * 6 for i in list(Bbars)][::-1]
 
         ax.set_xticklabels(x_labels)
@@ -1386,88 +1408,86 @@ class CompareModels:
                     width = del_gL_min / 20
                     height = del_Bbar
 
-                    xpos = (j - 0.025) * (max(gL_mins) - min(gL_mins)) / len(gL_mins) + min(gL_mins)
+                    xpos = (j - 0.025) * (max(gL_mins) - min(gL_mins)) / len(gL_mins) +\
+                            min(gL_mins)
 
-                    ypos = (len(Bbars) - (i + 1)) * (max(Bbars) - min(Bbars)) / len(Bbars) + min(Bbars)
+                    ypos = (len(Bbars) - (i + 1)) * (max(Bbars) - min(Bbars)) / len(Bbars) +\
+                            min(Bbars)
 
                     rect1 = patches.Rectangle((xpos, ypos), width, height, linewidth=1,
-                                            edgecolor='purple', facecolor='purple', zorder=numpy.inf)
+                                            edgecolor='purple', facecolor='purple',
+                                            zorder=numpy.inf)
 
                     ax.add_patch(rect1)
 
                 current_best = new_best
                 if test_fit_sig:
                     if insignificant_fit[i, j]:
-                        ypos = (len(Bbars) - (i + 1) + 0.15) * (max(Bbars) - min(Bbars)) / len(Bbars) + min(Bbars)
+                        ypos = (len(Bbars) - (i + 1) + 0.15) * (max(Bbars) - min(Bbars)) /\
+                                                                len(Bbars) + min(Bbars)
 
                         if insignificant_fit1[i, j]:
-                            xpos = (j + 0.15) * (max(gL_mins) - min(gL_mins)) / len(gL_mins) + min(gL_mins)
+                            xpos = (j + 0.15) * (max(gL_mins) - min(gL_mins)) / len(gL_mins) +\
+                                    min(gL_mins)
 
                             ax.scatter(xpos, ypos, marker='s', facecolors=(0.2, 0.2, 0.2),
                                     edgecolors=None, s=35)
 
                         if insignificant_fit2[i, j]:
-                            xpos = (j + 0.3) * (max(gL_mins) - min(gL_mins)) / len(gL_mins) + min(gL_mins)
+                            xpos = (j + 0.3) * (max(gL_mins) - min(gL_mins)) / len(gL_mins) +\
+                                    min(gL_mins)
 
                             ax.scatter(xpos, ypos, marker='^', facecolors=(0.2, 0.2, 0.2),
                                     edgecolors=None, s=35)
 
                 xpos = (j + 0.5) * (max(gL_mins) - min(gL_mins)) / len(gL_mins) + min(gL_mins)
-                ypos = (len(Bbars) - (i + 1) + 0.5) * (max(Bbars) - min(Bbars)) / len(Bbars) + min(Bbars)
+                ypos = (len(Bbars) - (i + 1) + 0.5) * (max(Bbars) - min(Bbars)) / len(Bbars) +\
+                        min(Bbars)
 
-                edgecolor1 = 'k' if (ps1[i, j] > self.p_min and ps1[i, j] < 0.95) else None
-                edgecolor2 = 'k' if (ps2[i, j] > self.p_min and ps2[i, j] < 0.95) else None
+                edgecolor1 = 'k' if (ps1[i, j] > 0.05 and ps1[i, j] < 0.95) else None
+                edgecolor2 = 'k' if (ps2[i, j] > 0.05 and ps2[i, j] < 0.95) else None
 
                 h1, h2 = ps1[i, j] * del_Bbar * 0.8, ps2[i, j] * del_Bbar * 0.8
                 width = del_gL_min / 15
 
-                rect1 = patches.Rectangle((xpos - width / 2, ypos - h1 / 2), width, h1, linewidth=1,
-                                           edgecolor=edgecolor1, facecolor='orange')
-                rect2 = patches.Rectangle((xpos + width / 2, ypos - h2 / 2), width, h2, linewidth=1,
-                                           edgecolor=edgecolor2, facecolor='green')
+                rect1 = patches.Rectangle((xpos - width / 2, ypos - h1 / 2), width, h1,
+                                            linewidth=1, edgecolor=edgecolor1, facecolor='orange')
+                rect2 = patches.Rectangle((xpos + width / 2, ypos - h2 / 2), width, h2,
+                                            linewidth=1, edgecolor=edgecolor2, facecolor='green')
 
                 ax.add_patch(rect1)
                 ax.add_patch(rect2)
 
                 # Add in significance of fit symbols
-                ypos = (len(Bbars) - (i + 1) + 0.8) * (max(Bbars) - min(Bbars)) / len(Bbars) + min(Bbars)
-
-                # ax.scatter(xpos, ypos, marker='o', facecolors='orange', edgecolors='r', s=50)
-                # ax.scatter(xpos, ypos, marker='^', facecolors='green', edgecolors='k', s=50)
-
-                # if ps3[i, j] > 0.05:
-                #     xpos = (j + 0.8) * (max(gL_mins) - min(gL_mins)) / len(gL_mins) + min(gL_mins)
-
-                #     ax.scatter(xpos, ypos, marker='s', facecolors='purple', edgecolors='k', s=50)
+                ypos = (len(Bbars) - (i + 1) + 0.8) * (max(Bbars) - min(Bbars)) / len(Bbars) +\
+                        min(Bbars)
 
                 if not chisq_only:
                     if abs(acc_matrix[i, j] - 1) < 10 ** -12:
                         xpos = (j + 0.8) * (max(gL_mins) - min(gL_mins)) / len(gL_mins) + min(gL_mins)
-                        ypos = (len(Bbars) - (i + 1) + 0.2) * (max(Bbars) - min(Bbars)) / len(Bbars) + min(Bbars)
+                        ypos = (len(Bbars) - (i + 1) + 0.2) * (max(Bbars) - min(Bbars)) /\
+                                len(Bbars) + min(Bbars)
 
-                        ax.scatter(xpos, ypos, marker='*', facecolors='yellow', edgecolors='k', s=50)
+                        ax.scatter(xpos, ypos, marker='*', facecolors='yellow', edgecolors='k',
+                                    s=50)
 
                 # Add in the delta_chisq_max as a check
                 xpos = (j + 0.2) * (max(gL_mins) - min(gL_mins)) / len(gL_mins) + min(gL_mins)
 
-                ypos = (len(Bbars) - (i + 1) + 0.5) * (max(Bbars) - min(Bbars)) / len(Bbars) + min(Bbars)
-
-                # ax.text(xpos, ypos, f'{del_chisqs[i, j]:.0f}')
+                ypos = (len(Bbars) - (i + 1) + 0.5) * (max(Bbars) - min(Bbars)) / len(Bbars) +\
+                        min(Bbars)
 
         pivot = numpy.median(crossovers)
         pivot2 = numpy.median(crossovers2)
-        title = f'N = {self.N}, model = {self.model_name}, pivot = {pivot}, pivot2 = {pivot2}'
+        title = f'N = {self.N}, model = {self.model_name}'
 
         if not chisq_only:
-            title += f'points={model1.bayes_points}, scale={model1.scale}, accuracy={accuracy:.1f}%'
+            title += f'points={model1.bayes_points},scale={model1.scale},accuracy={accuracy:.1f}%'
 
         plt.title(title)
 
-        if chisq_only:
-            plt.savefig(f'Local/graphs/BMA_study/Chisqs/combined_plot_compare{compare}_{model1.metadata}.pdf')
-
-        else:
-            plt.savefig(f'Local/graphs/BMA_study/Bayes/combined_plot_compare{compare}_{model1.metadata}_p{model1.bayes_points}_s{model1.scale}.pdf')
+        if ax_in is not None:
+            return ax
 
         if show:
             plt.show()

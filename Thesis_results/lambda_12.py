@@ -24,4 +24,7 @@ a.fit_all_gLmin_all_Bbar()
 fig, ax = plt.subplots()
 
 a.BMM_overall()
-a.BMM_plot_overall_gL(combine=True, params=['beta1', 'beta2'], colors=['green', 'purple'])
+a.BMM_plot_overall_gL(combine=True, params=['beta1', 'beta2'], colors=['green', 'purple'],
+                      ax_in=ax)
+plt.title(rf'N = {N}, model=${model[-1]}_3$')
+plt.show()

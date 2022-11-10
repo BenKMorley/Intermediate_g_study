@@ -32,8 +32,16 @@ fig, ax = plt.subplots()
 ax = plot_Binder(N, [g], [L], reweight=False, crossings_file=crossings_file, ax=ax,
                  legend=False)
 
-plt.title(rf'$N = {N}$, $g = {g}$, $L = {L}$')
-plt.xlabel(r'$m^2$')
-plt.ylabel('$B$', rotation=0)
+font_size = 10
+
+plt.title(rf'$N = {N}$, $g = {g}$, $L = {L}$', fontsize=font_size * 1.5)
+plt.xlabel(r'$m^2$', fontsize=font_size)
+plt.ylabel(r'$B$', rotation=0, fontsize=font_size)
+
+ax.tick_params(axis='both', which='major', labelsize=font_size)
+ax.tick_params(axis='both', which='major', labelsize=font_size)
+
+fig.set_size_inches(6, 4)
+
 plt.savefig('Thesis_results/binder_plot_example.pdf')
 plt.show()

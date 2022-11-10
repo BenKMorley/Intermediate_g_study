@@ -533,33 +533,6 @@ class Critical_analysis():
             - msq is target bare mass squared for for reweighting
             - L1bs/L0bs are L1/L0 bootstrap indices
         """
-        # # Try loading the result
-        # run = False
-        # filename = f'Local/data/Reweight_Binder/B_N{self.N}_g{self.g}_L{self.L}_m{msq:.10f}_w{self.transition_w}'
-
-        # if self.use_128 is False:
-        #     filename += '_float64'
-
-        # if sigma:
-        #     sfilename = filename + '_sigma.pcl'
-
-        # filename += '.pcl'
-
-        # try:
-        #     sigma_value = pickle.load(open(sfilename, 'rb'))
-
-        #     B = pickle.load(open(filename, 'rb'))
-
-        # except Exception:
-        #     run = True
-
-        # if not run:
-        #     if sigma:
-        #         return B, sigma_value
-
-        #     else:
-        #         return B
-
         # compute reweighting factor for each ensemble, then reweight, then bin
         # Use the same bootstrap indices for this
         iinclude, weights = self.compute_overlap_weighted(msq, L1bs)
@@ -754,7 +727,7 @@ class Critical_analysis():
             store final result and information on underlying data into results
             file
         """
-        f = h5py.File(self.datadir + self.resultsfile, 'a')
+        f = h5py.File(self.datadir + self.filename, 'a')
         key = 'N=%d/g=%.2f/L=%d/Bbar=%.3f' % (self.N, self.g, self.L, self.Bbar)
 
         if key in f:

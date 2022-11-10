@@ -34,7 +34,8 @@ def fig3_color(gL, min_gL=0.79, max_gL=76.81, func=numpy.log, color=None):
     gL_relative = (func(gL) - gL_low) / (gL_high - gL_low)
 
     try:
-        assert (0 <= gL_relative) and (1 >= gL_relative), "Please use a gL in the range [gL_min, gL_max]"
+        assert (0 <= gL_relative) and (1 >= gL_relative),\
+                "Please use a gL in the range [gL_min, gL_max]"
 
     except Exception:
         pdb.set_trace()
@@ -261,11 +262,6 @@ def plot_Binder(N, g_s=None, L_s=None, data_file=None, data_dir=None, minus_sign
                             means.append(mean)
                             stds.append(std)
 
-                            # ax.text(mean - 2 * std, Bbar - text_height * 2, f'sigma={std:.2e}', color='r',
-                            #         alpha=0.5)
-                            # ax.text(mean - 2 * std, Bbar - text_height * 3, f'mu={mean:.5e}', color='g',
-                            #         alpha=0.5)
-
                     Bbar_s = numpy.array(Bbar_s)
 
                     if Bbar_s != []:
@@ -274,7 +270,8 @@ def plot_Binder(N, g_s=None, L_s=None, data_file=None, data_dir=None, minus_sign
 
                             ax.errorbar(((means - m_crit) / g ** 2) * (g * L) ** (1 / nu)
                                         + correction_term, Bbar_s,
-                                        xerr=(stds / g ** 2) * (g * L) ** (1 / nu), ls='', color='k')
+                                        xerr=(stds / g ** 2) * (g * L) ** (1 / nu), ls='',
+                                        color='k')
 
                         else:
                             ax.errorbar(means, Bbar_s, xerr=stds, ls='', color='k')
@@ -316,7 +313,8 @@ def plot_Binder(N, g_s=None, L_s=None, data_file=None, data_dir=None, minus_sign
 
                         if remove_outliers:
                             data = cross_data[key]['bs_bins'][()]
-                            print(f'Max deviation = {numpy.max(numpy.abs(data - mean)) / std} sigma')
+                            print(f'Max deviation = {numpy.max(numpy.abs(data - mean)) / std}' +
+                                    'sigma')
                             data = data[numpy.abs(data - mean) < 5 * std]
                             mean = numpy.mean(data)
                             std = numpy.std(data)
@@ -342,14 +340,20 @@ def plot_Binder(N, g_s=None, L_s=None, data_file=None, data_dir=None, minus_sign
                                 sub_data = cross_data[key][sub_key]
 
                                 if remove_outliers:
-                                    print(f'Max deviation = {numpy.max(numpy.abs(sub_data - cross_data[key]["central"][()])) / cross_data[key]["std"][()]} sigma')
-                                    sub_data = sub_data[numpy.abs(sub_data - cross_data[key]['central'][()]) < 5 * cross_data[key]['std'][()]]
+                                    dev = numpy.max(
+                                        numpy.abs(sub_data - cross_data[key]["central"][()])) /\
+                                        cross_data[key]["std"][()]
+                                    print(f'Max deviation = {dev} sigma')
+                                    sub_data = sub_data[numpy.abs(
+                                        sub_data - cross_data[key]['central'][()]) <
+                                             5 * cross_data[key]['std'][()]]
 
                                 heights, sub_bins = numpy.histogram(sub_data, bins=bins)
 
                                 label = f'{sub_key}'
                                 if sub_key not in color_dict:
-                                    color_dict[sub_key] = color_cycle[current_color_index % len(color_cycle)]
+                                    color_dict[sub_key] = color_cycle[current_color_index %
+                                                                      len(color_cycle)]
                                     current_color_index += 1
 
                                     # Add combination of reweighting contributions to the legend
@@ -381,7 +385,7 @@ def plot_Binder(N, g_s=None, L_s=None, data_file=None, data_dir=None, minus_sign
                         try:
                             W, p = shapiro(data)
                             ax.text(mean - 2 * std, Bbar - text_height, f'p = {p:.4f}', color='k',
-                                    alpha=0.5)
+                                    alpha=0.5, fontsize=10)
 
                         except Exception:
                             print("Could not perform the Shapiro test")
@@ -404,6 +408,6 @@ def plot_Binder(N, g_s=None, L_s=None, data_file=None, data_dir=None, minus_sign
                 legend_.append(Line2D([0], [0], marker=markers[L], color='k', label=f'L = {L}',
                                     markerfacecolor="None", linestyle=''))
 
-            ax.legend(handles=legend, loc='lower left')
+            ax.legend(handles=legend, loc='lower left', fontsize=10)
 
     return ax

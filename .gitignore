@@ -9,6 +9,7 @@ Core/parameters.py
 Photon/log/*
 Iridis/log/*
 log/*
+*.zip
 *.pdf
 Data/*
 settings.json
